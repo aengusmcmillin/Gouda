@@ -244,8 +244,17 @@ impl ECS {
         self.components.insert(e);
     }
 
+
     pub fn new_entity(&mut self) -> Entity {
         self.entity_allocator.allocate()
+    }
+
+    pub fn build_entity(&mut self) -> EntityBuilder {
+        let e = self.entity_allocator.allocate();
+        EntityBuilder {
+            ecs: self,
+            entity: e,
+        }
     }
 
     pub fn delete_entity(&mut self, entity: &Entity) {
@@ -339,5 +348,21 @@ impl ECS {
 impl Default for ECS {
     fn default() -> Self {
         ECS::new()
+    }
+}
+
+pub struct EntityBuilder<'a> {
+    ecs: &'a mut ECS,
+    entity: Entity,
+}
+
+impl <'a> EntityBuilder<'a> {
+    pub fn add<T: 'static + Debug>(&mut self, c: T) -> &mut EntityBuilder<'a> {
+        self.ecs.add_component(&self.entity, c);
+        self
+    }
+
+    pub fn entity(&mut self) -> Entity {
+        self.entity.clone()
     }
 }
