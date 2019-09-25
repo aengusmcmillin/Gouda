@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use anymap::AnyMap;
 use std::fmt::Debug;
 
@@ -359,17 +361,17 @@ impl ECS {
         return None;
     }
 
-    impl_read!(read1, [T1]);
-    impl_read!(read2, [T1, T2]);
-    impl_read!(read3, [T1, T2, T3]);
-    impl_read!(read4, [T1, T2, T3, T4]);
-    impl_read!(read5, [T1, T2, T3, T4, T5]);
+    impl_read!(read1, [t1]);
+    impl_read!(read2, [t1, t2]);
+    impl_read!(read3, [t1, t2, t3]);
+    impl_read!(read4, [t1, t2, t3, t4]);
+    impl_read!(read5, [t1, t2, t3, t4, t5]);
 
-    impl_get!(get1, [T1]);
-    impl_get!(get2, [T1, T2]);
-    impl_get!(get3, [T1, T2, T3]);
-    impl_get!(get4, [T1, T2, T3, T4]);
-    impl_get!(get5, [T1, T2, T3, T4, T5]);
+    impl_get!(get1, [t1]);
+    impl_get!(get2, [t1, t2]);
+    impl_get!(get3, [t1, t2, t3]);
+    impl_get!(get4, [t1, t2, t3, t4]);
+    impl_get!(get5, [t1, t2, t3, t4, t5]);
 
     pub fn new() -> ECS  {
         ECS {
