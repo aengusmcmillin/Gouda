@@ -137,9 +137,18 @@ impl<T> GenIndexArray<T> {
 pub type Entity = GenIndex;
 type EntityMap<T> = GenIndexArray<T>;
 
+pub trait Mutation {
+    fn apply(&self, ecs: &mut ECS);
+}
+
+pub type Mutations = Vec<Box<dyn Mutation>>;
+pub type System = Fn(&ECS) -> Mutations;
+
 pub struct ECS {
     entity_allocator: GenIndexAllocator,
     components: AnyMap,
+    resources: AnyMap,
+    systems: Vec<Box<System>>,
 }
 
 #[macro_use]
@@ -239,11 +248,24 @@ impl From<&str> for MissingComponentError {
 }
 
 impl ECS {
+    pub fn add_system(&mut self, system: Box<System>) {
+        self.systems.push(system);
+    }
+
     pub fn register_component_type<T: 'static + Debug>(&mut self) {
         let e: EntityMap<T> = EntityMap::new();
         self.components.insert(e);
     }
 
+    pub fn run_systems(&mut self) {
+        let num_systems = self.systems.len();
+        for i in 0..num_systems {
+            let mutations = self.systems[i](&self);
+            for mutation in mutations {
+                mutation.apply(self);
+            }
+        }
+    }
 
     pub fn new_entity(&mut self) -> Entity {
         self.entity_allocator.allocate()
@@ -300,6 +322,18 @@ impl ECS {
         }
     }
 
+    pub fn add_res<T: 'static>(&mut self, value: T) {
+        self.resources.insert(value);
+    }
+
+    pub fn read_res<T: 'static>(&self) -> &T {
+        self.resources.get::<T>().unwrap()
+    }
+
+    pub fn write_res<T: 'static>(&mut self) -> &mut T {
+        self.resources.get_mut::<T>().unwrap()
+    }
+
     pub fn read<T: 'static>(&self, entity: &Entity) -> Option<&T>{
         let i = self.components.get::<EntityMap<T>>().unwrap().0.get(entity.index);
         match i {
@@ -341,6 +375,8 @@ impl ECS {
         ECS {
             entity_allocator: GenIndexAllocator::new(),
             components: AnyMap::new(),
+            resources: AnyMap::new(),
+            systems: Vec::new(),
         }
     }
 }
