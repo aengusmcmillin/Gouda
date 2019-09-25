@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#![allow(unused_parens)]
 
 use anymap::AnyMap;
 use std::fmt::Debug;
@@ -83,7 +84,7 @@ impl<T> GenIndexArray<T> {
         while index.index >= self.0.len() {
             self.0.push(None);
         }
-        let mut entry = self.0.get_mut(index.index).unwrap();
+        let entry = self.0.get_mut(index.index).unwrap();
         *entry = Some(ArrayEntry {value, generation: index.generation})
     }
 
@@ -91,7 +92,7 @@ impl<T> GenIndexArray<T> {
         if index.index >= self.0.len() {
             return;
         }
-        let mut entry = self.0.get_mut(index.index).unwrap();
+        let entry = self.0.get_mut(index.index).unwrap();
         *entry = None;
     }
 
@@ -144,7 +145,8 @@ pub trait Mutation {
 }
 
 pub type Mutations = Vec<Box<dyn Mutation>>;
-pub type System = Fn(&ECS) -> Mutations;
+pub type System = dyn Fn(&ECS) -> Mutations;
+
 
 pub struct ECS {
     entity_allocator: GenIndexAllocator,
@@ -244,7 +246,7 @@ macro_rules! impl_get {
 struct MissingComponentError;
 
 impl From<&str> for MissingComponentError {
-    fn from(s: &str) -> MissingComponentError {
+    fn from(_: &str) -> MissingComponentError {
         return MissingComponentError;
     }
 }
