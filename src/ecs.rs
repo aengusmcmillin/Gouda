@@ -142,6 +142,94 @@ pub struct ECS {
     components: AnyMap,
 }
 
+#[macro_use]
+macro_rules! impl_read {
+        ( $fn_name:ident, [$($r:ident),*] ) => {
+            pub fn $fn_name<$($r: 'static),*>(&self) -> Vec<($(&$r),*, Entity)> {
+
+            let mut minlen = 1000;
+        $(
+            let $r = self.components.get::<EntityMap<$r>>().unwrap();
+            minlen = std::cmp::min(minlen, $r.0.len());
+        )*
+
+            let mut res = Vec::new();
+            let num_iter = minlen;
+            for i in 0..num_iter {
+                $(
+                    let $r = $r.0.get(i);
+                )*
+                match ($($r),*) {
+                    ($(Some($r)),*) => {
+                        match ($($r),*) {
+                            ($(Some($r)),*) => {
+                                let mut generation = 0;
+                                $(
+                                    if generation == 0 {
+                                        generation = $r.generation;
+                                    }
+                                    if generation != $r.generation {
+                                        continue;
+                                    }
+                                )*
+                                let e = Entity {index: i, generation: generation };
+                                res.push(($(&$r.value),*, e));
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            return res;
+        }
+    }
+}
+
+#[macro_use]
+macro_rules! impl_get {
+        ( $fn_name:ident, [$($r:ident),*] ) => {
+            pub fn $fn_name<$($r: 'static),*>(&self) -> Vec<Entity> {
+
+            let mut minlen = 1000;
+        $(
+            let $r = self.components.get::<EntityMap<$r>>().unwrap();
+            minlen = std::cmp::min(minlen, $r.0.len());
+        )*
+
+            let mut res = Vec::new();
+            let num_iter = minlen;
+            for i in 0..num_iter {
+                $(
+                    let $r = $r.0.get(i);
+                )*
+                match ($($r),*) {
+                    ($(Some($r)),*) => {
+                        match ($($r),*) {
+                            ($(Some($r)),*) => {
+                                let mut generation = 0;
+                                $(
+                                    if generation == 0 {
+                                        generation = $r.generation;
+                                    }
+                                    if generation != $r.generation {
+                                        continue;
+                                    }
+                                )*
+                                let e = Entity {index: i, generation: generation };
+                                res.push(e);
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            return res;
+        }
+    }
+}
+
 struct MissingComponentError;
 
 impl From<&str> for MissingComponentError {
@@ -227,6 +315,18 @@ impl ECS {
         }
         return None;
     }
+
+    impl_read!(read1, [T1]);
+    impl_read!(read2, [T1, T2]);
+    impl_read!(read3, [T1, T2, T3]);
+    impl_read!(read4, [T1, T2, T3, T4]);
+    impl_read!(read5, [T1, T2, T3, T4, T5]);
+
+    impl_get!(get1, [T1]);
+    impl_get!(get2, [T1, T2]);
+    impl_get!(get3, [T1, T2, T3]);
+    impl_get!(get4, [T1, T2, T3, T4]);
+    impl_get!(get5, [T1, T2, T3, T4, T5]);
 
     pub fn new() -> ECS  {
         ECS {
