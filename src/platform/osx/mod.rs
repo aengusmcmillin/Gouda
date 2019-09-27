@@ -10,9 +10,9 @@ use cocoa::appkit::{NSApplicationActivationPolicy::NSApplicationActivationPolicy
 use objc::runtime::YES;
 use crate::platform::metal::MetalRenderer;
 use crate::rendering::Renderer;
-use crate::platform::osx::cocoa_window::OsxWindow;
+use crate::platform::osx::osx_window::OsxWindow;
 
-pub mod cocoa_window;
+pub mod osx_window;
 pub mod osx_input;
 
 pub struct OSXPlatformLayer {

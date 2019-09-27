@@ -2,7 +2,7 @@ use metal::*;
 use crate::rendering::{Renderer, PlatformRendererImpl};
 use core_graphics::geometry::CGSize;
 use crate::window::{GameWindow, GameWindowImpl};
-use crate::platform::osx::cocoa_window::OsxWindow;
+use crate::platform::osx::osx_window::OsxWindow;
 
 pub struct MetalRenderer {
     device: Device,
@@ -70,7 +70,7 @@ impl MetalRenderer {
             prepare_render_pass_descriptor(&render_pass_descriptor, drawable.texture());
 
             let command_buffer = self.command_queue.new_command_buffer();
-            
+
             let encoder = command_buffer.new_render_command_encoder(render_pass_descriptor);
             encoder.end_encoding();
 

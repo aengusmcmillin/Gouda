@@ -1,5 +1,5 @@
 use crate::input::GameInput;
-use crate::platform::osx::cocoa_window::OsxWindow;
+use crate::platform::osx::osx_window::OsxWindow;
 
 pub struct GameWindow {
     game_window_impl: Box<dyn GameWindowImpl>,
