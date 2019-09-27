@@ -23,6 +23,8 @@ use objc::runtime::{Class, Object, Sel, YES};
 use crate::input::GameInput;
 use cocoa::appkit::NSView;
 use crate::platform::osx::osx_input::{osx_process_key, osx_process_keyboard_message};
+use std::mem;
+use crate::platform::metal::MetalRenderer;
 
 pub struct OsxWindow {
     cocoa_window: CocoaWindow,
@@ -52,6 +54,10 @@ impl OsxWindow {
             props,
             input,
         }
+    }
+
+    pub fn attach_renderer(&self, renderer: &MetalRenderer) {
+        self.cocoa_window.attach_renderer(renderer);
     }
 }
 
@@ -152,6 +158,12 @@ impl CocoaWindow {
         unsafe {
             let loc = self.window.mouseLocationOutsideOfEventStream();
             return loc;
+        }
+    }
+
+    pub fn attach_renderer(&self, renderer: &MetalRenderer) {
+        unsafe {
+            self.view.unwrap().setLayer(mem::transmute(renderer.get_layer()));
         }
     }
 }

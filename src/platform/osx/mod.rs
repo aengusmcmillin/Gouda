@@ -8,16 +8,21 @@ use cocoa::appkit::{NSApp, NSApplication};
 use cocoa::appkit::{NSApplicationActivationPolicy::NSApplicationActivationPolicyRegular,
                     NSApplicationPresentationOptions};
 use objc::runtime::YES;
+use crate::platform::metal::MetalRenderer;
+use crate::rendering::Renderer;
+use crate::platform::osx::cocoa_window::OsxWindow;
 
 pub mod cocoa_window;
 pub mod osx_input;
 
 pub struct OSXPlatformLayer {
     pool: id,
+    window: GameWindow,
+    renderer: Renderer,
 }
 
 impl OSXPlatformLayer {
-    pub fn new() -> Self {
+    pub fn new(props: WindowProps) -> Self {
         let pool = unsafe {NSAutoreleasePool::new(nil)};
         unsafe {
             let application = NSApp();
@@ -30,14 +35,25 @@ impl OSXPlatformLayer {
             NSApp().activateIgnoringOtherApps_(YES);
         }
 
+        let mut window = OsxWindow::new(props);
+        let renderer = MetalRenderer::new(&mut window);
+        window.attach_renderer(&renderer);
+
         OSXPlatformLayer {
             pool,
+            window: GameWindow::new(Box::new(window)),
+            renderer: Renderer::new(Box::new(renderer)),
         }
     }
 }
+
 impl PlatformLayerImpl for OSXPlatformLayer {
-    fn create_window(&self, props: WindowProps) -> GameWindow {
-        GameWindow::new(props)
+    fn get_window(&mut self) -> &mut GameWindow {
+        return &mut self.window;
+    }
+
+    fn get_renderer(&mut self) -> &mut Renderer {
+        return &mut self.renderer;
     }
 }
 

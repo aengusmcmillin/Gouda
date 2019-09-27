@@ -7,14 +7,22 @@ pub struct GameWindow {
 
 
 impl GameWindow {
-    pub fn new(props: WindowProps) -> Self {
+    pub fn new(platform_impl: Box<dyn GameWindowImpl>) -> Self {
         Self {
-            game_window_impl: Box::new(OsxWindow::new(props)),
+            game_window_impl: platform_impl,
         }
     }
 
     pub fn capture_input(&mut self) -> GameInput {
         self.game_window_impl.capture_input()
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.game_window_impl.get_width()
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.game_window_impl.get_height()
     }
 }
 

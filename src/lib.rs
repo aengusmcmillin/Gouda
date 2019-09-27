@@ -17,6 +17,7 @@ pub mod ecs;
 mod input;
 mod platform;
 mod window;
+mod rendering;
 
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);
@@ -64,13 +65,17 @@ impl<T: GameLogic> Gouda<T> {
             title: "Gouda Test".to_string(),
             target_ms_per_frame: 30.,
         };
-        let platform = PlatformLayer::new();
-        let mut window = platform.create_window(props);
+        let mut platform = PlatformLayer::new(props);
 
         let mut now = Instant::now();
         loop {
+            let mut window = platform.get_window();
             let input = window.capture_input();
             self.update(input);
+
+            let renderer = platform.get_renderer();
+            renderer.render();
+
 
             let next = Instant::now();
             let delta = next - now;
