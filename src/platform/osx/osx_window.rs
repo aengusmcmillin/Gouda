@@ -104,8 +104,9 @@ fn show_window(title: &String, width: f64, height: f64) -> CocoaWindow {
         let superclass = Class::get("NSObject").unwrap();
         let mut decl = ClassDecl::new("WindowDelegate", superclass).unwrap();
         extern "C" fn window_will_close(_: &Object, _: Sel, _: id) {
-            unsafe {
-            }
+//            unsafe {
+//                // Will be closing window here when I have events
+//            }
         }
 
         decl.add_method(
@@ -154,7 +155,7 @@ impl CocoaWindow {
         }
     }
 
-    pub fn mouseLocationOutsideOfEventStream(&self) -> NSPoint {
+    pub fn mouse_location_outside_of_event_stream(&self) -> NSPoint {
         unsafe {
             let loc = self.window.mouseLocationOutsideOfEventStream();
             return loc;
@@ -209,7 +210,7 @@ impl GameWindowImpl for OsxWindow {
                         );
                     }
                     NSEventType::NSMouseMoved => {
-                        let location = self.cocoa_window.mouseLocationOutsideOfEventStream();
+                        let location = self.cocoa_window.mouse_location_outside_of_event_stream();
                         self.input.mouse.x = location.x as i32;
                         self.input.mouse.y = self.props.height as i32 - location.y as i32;
                         NSApp().sendEvent_(event);

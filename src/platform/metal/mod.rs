@@ -1,14 +1,13 @@
 use metal::*;
-use crate::rendering::{Renderer, PlatformRendererImpl};
+use crate::rendering::{PlatformRendererImpl};
 use core_graphics::geometry::CGSize;
-use crate::window::{GameWindow, GameWindowImpl};
+use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
 
 pub struct MetalRenderer {
     device: Device,
     layer: CoreAnimationLayer,
     command_queue: CommandQueue,
-    region: MTLRegion,
     width: usize,
     height: usize,
 }
@@ -45,20 +44,10 @@ impl MetalRenderer {
 
         let command_queue = device.new_command_queue();
 
-        let region = MTLRegion {
-            origin: MTLOrigin { x: 0, y: 0, z: 0 },
-            size: MTLSize {
-                width: width as u64,
-                height: height as u64,
-                depth: 1,
-            },
-        };
-
         MetalRenderer {
             device,
             layer,
             command_queue,
-            region,
             width,
             height,
         }

@@ -69,7 +69,7 @@ impl<T: GameLogic> Gouda<T> {
 
         let mut now = Instant::now();
         loop {
-            let mut window = platform.get_window();
+            let window = platform.get_window();
             let input = window.capture_input();
             self.update(input);
 

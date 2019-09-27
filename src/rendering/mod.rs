@@ -1,6 +1,3 @@
-use crate::platform::metal::MetalRenderer;
-use crate::window::GameWindow;
-
 pub struct Renderer {
     renderer_impl: Box<dyn PlatformRendererImpl>,
 }
