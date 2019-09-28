@@ -60,7 +60,7 @@ impl<T: GameLogic> Gouda<T> {
         self.setup_game();
 
         let props = WindowProps {
-            width: 500.,
+            width: 600.,
             height: 600.,
             title: "Gouda Test".to_string(),
             target_ms_per_frame: 30.,
