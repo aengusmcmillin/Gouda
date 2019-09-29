@@ -5,6 +5,7 @@ use crate::window::WindowProps;
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
+use crate::platform::metal::{SquareDrawable, TriangleDrawable, Drawable};
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -18,6 +19,7 @@ mod input;
 mod platform;
 mod window;
 mod rendering;
+mod math;
 
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);
@@ -68,14 +70,36 @@ impl<T: GameLogic> Gouda<T> {
         let mut platform = PlatformLayer::new(props);
 
         let mut now = Instant::now();
+
+        let renderer = platform.get_renderer();
+        let mut square = SquareDrawable::new(renderer, [0.1, 0.2, 0.], 0.5, [0., 0.3, 0.]);
+        let mut square2 = SquareDrawable::new(renderer, [0., 0.5, 0.], 0.2, [-0.5, 0.0, 0.]);
+        let mut square3 = SquareDrawable::new(renderer, [0., 0., 0.5], 0.9, [0.5, -0.3, 0.]);
+        let mut tri = TriangleDrawable::new(renderer);
+
         loop {
             let window = platform.get_window();
             let input = window.capture_input();
             self.update(input);
 
             let renderer = platform.get_renderer();
-            renderer.render();
+            if let Some(scene) = renderer.begin_scene() {
+                square.update();
+                square.bind(&scene);
+                square.draw(&scene);
 
+                square2.update();
+                square2.bind(&scene);
+                square2.draw(&scene);
+
+                square3.update();
+                square3.bind(&scene);
+                square3.draw(&scene);
+
+//                tri.bind(&scene);
+//                tri.draw(&scene);
+                renderer.end_scene(scene);
+            }
 
             let next = Instant::now();
             let delta = next - now;

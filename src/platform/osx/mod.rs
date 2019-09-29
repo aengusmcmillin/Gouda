@@ -8,7 +8,6 @@ use cocoa::appkit::{NSApp, NSApplication};
 use cocoa::appkit::{NSApplicationActivationPolicy::NSApplicationActivationPolicyRegular,
                     NSApplicationPresentationOptions};
 use objc::runtime::YES;
-use crate::platform::metal::MetalRenderer;
 use crate::rendering::Renderer;
 use crate::platform::osx::osx_window::OsxWindow;
 
@@ -36,13 +35,13 @@ impl OSXPlatformLayer {
         }
 
         let mut window = OsxWindow::new(props);
-        let renderer = MetalRenderer::new(&mut window);
+        let renderer = Renderer::new(&mut window);
         window.attach_renderer(&renderer);
 
         OSXPlatformLayer {
             pool,
             window: GameWindow::new(Box::new(window)),
-            renderer: Renderer::new(Box::new(renderer)),
+            renderer,
         }
     }
 }

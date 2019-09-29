@@ -24,7 +24,7 @@ use crate::input::GameInput;
 use cocoa::appkit::NSView;
 use crate::platform::osx::osx_input::{osx_process_key, osx_process_keyboard_message};
 use std::mem;
-use crate::platform::metal::MetalRenderer;
+use crate::rendering::Renderer;
 
 pub struct OsxWindow {
     cocoa_window: CocoaWindow,
@@ -56,7 +56,7 @@ impl OsxWindow {
         }
     }
 
-    pub fn attach_renderer(&self, renderer: &MetalRenderer) {
+    pub fn attach_renderer(&self, renderer: &Renderer) {
         self.cocoa_window.attach_renderer(renderer);
     }
 }
@@ -162,7 +162,7 @@ impl CocoaWindow {
         }
     }
 
-    pub fn attach_renderer(&self, renderer: &MetalRenderer) {
+    pub fn attach_renderer(&self, renderer: &Renderer) {
         unsafe {
             self.view.unwrap().setLayer(mem::transmute(renderer.get_layer()));
         }
