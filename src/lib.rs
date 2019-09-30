@@ -72,9 +72,9 @@ impl<T: GameLogic> Gouda<T> {
         let mut now = Instant::now();
 
         let renderer = platform.get_renderer();
-        let mut square = SquareDrawable::new(renderer, [0.1, 0.2, 0.], 0.3, [0., 0.3, 1.]);
-        let mut square2 = SquareDrawable::new(renderer, [0., 0.5, 0.], 0.2, [-0.5, 0.0, 0.]);
-        let mut square3 = SquareDrawable::new(renderer, [0., 0., 0.5], 0.4, [0.5, -0.3, 0.]);
+        let mut square = SquareDrawable::new(renderer, [0.1, 0.2, 0.], 0.3, [0., 0.3, -3.]);
+        let mut square2 = SquareDrawable::new(renderer, [0., 0.5, 0.], 0.2, [-0.5, 0.0, -3.]);
+        let mut square3 = SquareDrawable::new(renderer, [0., 0., 0.5], 0.4, [0.5, -0.3, -3.]);
         let mut tri = TriangleDrawable::new(renderer);
 
         loop {

@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use metal::MTLPrimitiveType::Triangle;
 use std::convert::TryInto;
 use std::f32;
-use crate::math::{Mat4x4, create_transformation_matrix};
+use crate::math::{Mat4x4, create_transformation_matrix, create_projection_matrix, create_view_matrix};
 use std::os::raw::c_void;
 use crate::input::{GameInput, LetterKeys};
 
@@ -74,6 +74,8 @@ pub struct SquareDrawable {
     vertex_buffer: VertexBuffer,
     color_buffer: VertexBuffer,
     transform_buffer: VertexBuffer,
+    projection_buffer: VertexBuffer,
+    view_buffer: VertexBuffer,
     index_buffer: IndexBuffer,
     scale: f32,
     translate: [f32; 3],
@@ -89,7 +91,7 @@ impl SquareDrawable {
 using namespace metal;
 
 struct VertexUniforms {
-    float4x4 transformation;
+    float4x4 mat;
 };
 
 struct ColoredVertex
@@ -100,11 +102,13 @@ struct ColoredVertex
 
 vertex ColoredVertex vertex_main(constant float4 *position [[buffer(0)]],
                                  constant float4 &color [[buffer(1)]],
-                                 constant VertexUniforms &uniforms [[buffer(2)]],
+                                 constant VertexUniforms &transformation [[buffer(2)]],
+                                 constant VertexUniforms &projection [[buffer(3)]],
+                                 constant VertexUniforms &view [[buffer(4)]],
                                  uint vid [[vertex_id]])
 {
     ColoredVertex vert;
-    vert.position = position[vid] * uniforms.transformation;
+    vert.position = position[vid] * transformation.mat * view.mat * projection.mat;
     vert.color = color;
     return vert;
 }
@@ -135,6 +139,13 @@ fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
 
         let transform_buffer = renderer.create_vertex_buffer(2, transform_mat.raw_data().to_vec());
 
+
+        let projection_mat = create_projection_matrix(1., 85., 100., 0.1);
+        let projection_buffer = renderer.create_vertex_buffer(3, projection_mat.raw_data().to_vec());
+
+        let view_mat = create_view_matrix(0., 0., [0., 0., 0.]);
+        let view_buffer = renderer.create_vertex_buffer(4, view_mat.raw_data().to_vec());
+
         let indices = vec![
             0,1,   1, 3,   3, 2,   2, 0,
             0,4,   1, 5,   3, 7,   2, 6,
@@ -147,6 +158,8 @@ fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
             vertex_buffer,
             color_buffer,
             transform_buffer,
+            projection_buffer,
+            view_buffer,
             index_buffer,
             scale,
             translate,
@@ -187,6 +200,8 @@ impl Drawable for SquareDrawable {
         self.vertex_buffer.bind(scene);
         self.color_buffer.bind(scene);
         self.transform_buffer.bind(scene);
+        self.projection_buffer.bind(scene);
+        self.view_buffer.bind(scene);
     }
 
     fn draw(&self, scene: &Scene) {
