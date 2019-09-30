@@ -13,6 +13,7 @@ use std::convert::TryInto;
 use std::f32;
 use crate::math::{Mat4x4, create_transformation_matrix};
 use std::os::raw::c_void;
+use crate::input::{GameInput, LetterKeys};
 
 pub mod drawable;
 
@@ -41,6 +42,10 @@ impl Shader {
     }
 }
 
+struct IndexBuffer {
+    data: Buffer,
+}
+
 struct VertexBuffer {
     data: Buffer,
     offset: u64,
@@ -59,7 +64,7 @@ impl VertexBuffer {
 }
 
 pub trait Drawable {
-    fn update(&mut self);
+    fn update(&mut self, input: &GameInput);
     fn bind(&self, scene: &Scene);
     fn draw(&self, scene: &Scene);
 }
@@ -69,9 +74,13 @@ pub struct SquareDrawable {
     vertex_buffer: VertexBuffer,
     color_buffer: VertexBuffer,
     transform_buffer: VertexBuffer,
-    test: f32,
+    index_buffer: IndexBuffer,
     scale: f32,
     translate: [f32; 3],
+
+    xrot: f32,
+    yrot: f32,
+    zrot: f32,
 }
 
 impl SquareDrawable {
@@ -106,10 +115,14 @@ fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
 }
 ";
         let position_data = vec![
-            -0.5f32, -0.5, 0., 1.,
-            0.5, -0.5, 0., 1.,
-            -0.5, 0.5, 0., 1.,
-            0.5, 0.5, 0., 1.
+            -1., -1., -1., 1.,
+            1., -1., -1., 1.,
+            -1., 1., -1., 1.,
+            1., 1., -1., 1.,
+            -1., -1., 1., 1.,
+            1., -1., 1., 1.,
+            -1., 1., 1., 1.,
+            1., 1., 1., 1.,
         ];
         let shader = renderer.create_shader(source, "vertex_main", "fragment_main");
         let vertex_buffer = renderer.create_vertex_buffer(0, position_data);
@@ -118,26 +131,54 @@ fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
         ];
         let color_buffer = renderer.create_vertex_buffer(1, color_data);
 
-        let transform_mat = create_transformation_matrix([0.9, 0., 0.], 0., 0., 0., 1.2);
+        let transform_mat = create_transformation_matrix([0., 0., 0.], 0., 0., 0., 1.);
 
         let transform_buffer = renderer.create_vertex_buffer(2, transform_mat.raw_data().to_vec());
+
+        let indices = vec![
+            0,1,   1, 3,   3, 2,   2, 0,
+            0,4,   1, 5,   3, 7,   2, 6,
+            4,5,   5, 7,   7, 6,   6, 4,
+        ];
+        let index_buffer = renderer.create_index_buffer(indices);
 
         return SquareDrawable {
             shader,
             vertex_buffer,
             color_buffer,
             transform_buffer,
-            test: 0.,
+            index_buffer,
             scale,
             translate,
+            xrot: 0.,
+            yrot: 0.,
+            zrot: 0.,
         };
     }
 }
 
 impl Drawable for SquareDrawable {
-    fn update(&mut self) {
-        self.test += 1.;
-        let transform_mat = create_transformation_matrix(self.translate, 0., 0. + self.test, 0., self.scale);
+    fn update(&mut self, input: &GameInput) {
+        let dt = input.seconds_to_advance_over_update;
+        if input.keyboard.letter_down(LetterKeys::W) {
+           self.xrot += 100. * dt;
+        }
+        if input.keyboard.letter_down(LetterKeys::S) {
+            self.xrot -= 100. * dt;
+        }
+        if input.keyboard.letter_down(LetterKeys::A) {
+            self.yrot += 100. * dt;
+        }
+        if input.keyboard.letter_down(LetterKeys::D) {
+            self.yrot -= 100. * dt;
+        }
+        if input.keyboard.letter_down(LetterKeys::Q) {
+            self.zrot += 100. * dt;
+        }
+        if input.keyboard.letter_down(LetterKeys::E) {
+            self.zrot -= 100. * dt;
+        }
+        let transform_mat = create_transformation_matrix(self.translate, self.xrot, self.yrot, self.zrot, self.scale);
         self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
@@ -149,11 +190,12 @@ impl Drawable for SquareDrawable {
     }
 
     fn draw(&self, scene: &Scene) {
-
-        scene.encoder.draw_primitives(
-            MTLPrimitiveType::TriangleStrip,
-            0,
-            4,
+        scene.encoder.draw_indexed_primitives(
+            MTLPrimitiveType::Line,
+            24,
+            MTLIndexType::UInt16,
+            &self.index_buffer.data,
+            0
         );
     }
 }
@@ -207,7 +249,7 @@ fragment float4 fragment_main(ColoredVertex vert [[stage_in]])
 }
 
 impl Drawable for TriangleDrawable {
-    fn update(&mut self) {}
+    fn update(&mut self, input: &GameInput) {}
 
     fn bind(&self, scene: &Scene) {
         self.shader.bind(&scene);
@@ -257,6 +299,17 @@ impl Renderer {
         return Shader {
             pipeline_state,
         }
+    }
+
+    fn create_index_buffer(&mut self, indices: Vec<i16>) -> IndexBuffer {
+        let data = self.device.new_buffer_with_data(
+            unsafe { mem::transmute(indices.as_ptr()) },
+            (indices.len() * mem::size_of::<i16>()) as u64,
+            MTLResourceOptions::CPUCacheModeDefaultCache,
+        );
+        return IndexBuffer {
+            data
+        };
     }
 
     fn create_vertex_buffer(&mut self, offset: u64, position_data: Vec<f32>) -> VertexBuffer {
