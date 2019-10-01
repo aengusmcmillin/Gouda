@@ -5,7 +5,7 @@ use crate::window::WindowProps;
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
-use crate::platform::metal::{SquareDrawable, TriangleDrawable, Drawable};
+use crate::platform::metal::drawable::{SquareDrawable, TriangleDrawable, Drawable};
 
 #[cfg(target_os = "macos")]
 #[macro_use]
