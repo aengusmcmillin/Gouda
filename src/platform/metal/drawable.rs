@@ -2,12 +2,75 @@ use crate::platform::metal::shader::Shader;
 use crate::platform::metal::buffers::{VertexBuffer, IndexBuffer};
 use crate::platform::metal::{Scene, Renderer};
 use crate::input::{GameInput, LetterKeys};
-use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix};
+use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix, Mat4x4};
 
 pub trait Drawable {
     fn update(&mut self, input: &GameInput);
     fn bind(&self, scene: &Scene);
     fn draw(&self, scene: &Scene);
+}
+
+pub struct QuadDrawable {
+    pub vertex_buffer: VertexBuffer,
+    pub index_buffer: IndexBuffer,
+    pub transform_buffer: VertexBuffer,
+    pub projection_buffer: VertexBuffer,
+    pub shader: Shader,
+}
+
+impl QuadDrawable {
+    pub fn new(renderer: &mut Renderer, position: [f32; 3], scale: f32) -> Self {
+        let vb = VertexBuffer::new(
+            renderer,
+            0,
+            vec![
+                -0.5, -0.5, 0., 1.,
+                0.5, -0.5, 0., 1.,
+                0.5, 0.5, 0., 1.,
+                -0.5, 0.5, 0., 1.,
+            ]);
+
+        let ib = IndexBuffer::new(
+            renderer,
+            vec![
+                0, 1, 2, 2, 3, 0
+            ]);
+
+        let shader =
+            Shader::new(
+                renderer,
+                "shaders/blueVertexShader.txt",
+                "shaders/blueFragmentShader.txt");
+
+        let transform_mat = create_transformation_matrix(position, 0., 0., 0., scale);
+        let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
+
+        let projection_matrix = Mat4x4::identity();
+        let projection_buffer = VertexBuffer::new(renderer, 1, projection_matrix.to_vec());
+
+        return Self {
+            vertex_buffer: vb,
+            index_buffer: ib,
+            transform_buffer,
+            projection_buffer,
+            shader
+        }
+    }
+
+    pub fn draw(&self, scene: &Scene, camera_pos: [f32; 3]) {
+        self.shader.bind(scene);
+        self.vertex_buffer.bind(scene);
+        self.transform_buffer.bind(scene);
+
+        let projection_matrix = create_projection_matrix(1., 75., 100., 0.1);
+        let view_matrix = create_view_matrix(0., 0., camera_pos);
+        let projection_matrix = projection_matrix * view_matrix;
+        self.projection_buffer.update_data(projection_matrix.to_vec());
+        self.projection_buffer.bind(&scene);
+
+
+        scene.draw_indexed(6, &self.index_buffer);
+    }
 }
 
 pub struct SquareDrawable {
@@ -71,7 +134,7 @@ impl SquareDrawable {
         let transform_mat = create_transformation_matrix([0., 0., 0.], 0., 0., 0., 1.);
         let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
 
-        let projection_mat = create_projection_matrix(1., 75., 10., 0.1);
+        let projection_mat = create_projection_matrix(1., 75., 100., 0.1);
         let projection_buffer = VertexBuffer::new(renderer, 3, projection_mat.raw_data().to_vec());
 
         let view_mat = create_view_matrix(0., 0., [0., 0., 0.]);

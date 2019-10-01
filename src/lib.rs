@@ -1,11 +1,11 @@
 use crate::ecs::ECS;
-use crate::input::GameInput;
+use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
 use crate::window::WindowProps;
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
-use crate::platform::metal::drawable::{SquareDrawable, TriangleDrawable, Drawable};
+use crate::platform::metal::drawable::{SquareDrawable, TriangleDrawable, Drawable, QuadDrawable};
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -77,10 +77,29 @@ impl<T: GameLogic> Gouda<T> {
         let mut square3 = SquareDrawable::new(renderer, [0., 0., 0.5], 0.4, [0.5, -0.3, -3.]);
         let mut tri = TriangleDrawable::new(renderer);
 
+        let mut quads = vec![];
+        for x in 0..5 {
+            for y in 0..5 {
+                quads.push(QuadDrawable::new(renderer, [x as f32 * 0.11, y as f32 * 0.11, 0.], 0.1));
+            }
+        }
+
+        let mut camera_x = 0.;
+        let mut camera_y = 0.;
         loop {
             let window = platform.get_window();
             let input = window.capture_input();
             self.update(input.clone());
+            if input.keyboard.letter_down(LetterKeys::J) {
+                camera_x += 0.1 * input.seconds_to_advance_over_update;
+            } else if input.keyboard.letter_down(LetterKeys::K) {
+                camera_x -= 0.1 * input.seconds_to_advance_over_update;
+            }
+            if input.keyboard.letter_down(LetterKeys::U) {
+                camera_y += 0.1 * input.seconds_to_advance_over_update;
+            } else if input.keyboard.letter_down(LetterKeys::I) {
+                camera_y -= 0.1 * input.seconds_to_advance_over_update;
+            }
 
             let renderer = platform.get_renderer();
             if let Some(scene) = renderer.begin_scene() {
@@ -95,6 +114,10 @@ impl<T: GameLogic> Gouda<T> {
                 square3.update(&input);
                 square3.bind(&scene);
                 square3.draw(&scene);
+
+                for quad in quads.iter() {
+                    quad.draw(&scene, [camera_x, camera_y, 1.]);
+                }
 
 //                tri.bind(&scene);
 //                tri.draw(&scene);
