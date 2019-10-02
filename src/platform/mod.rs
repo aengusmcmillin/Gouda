@@ -1,6 +1,7 @@
 use crate::platform::osx::OSXPlatformLayer;
 use crate::window::{GameWindow, WindowProps};
 use crate::rendering::Renderer;
+use std::rc::Rc;
 
 #[cfg(target_os = "macos")]
 pub mod osx;
@@ -23,13 +24,13 @@ impl PlatformLayer {
         self.platform_impl.get_window()
     }
 
-    pub fn get_renderer(&mut self) -> &Renderer {
+    pub fn get_renderer(&mut self) -> &Rc<Renderer> {
         self.platform_impl.get_renderer()
     }
 }
 
 pub trait PlatformLayerImpl {
     fn get_window(&mut self) -> &mut GameWindow;
-    fn get_renderer(&mut self) -> &mut Renderer;
+    fn get_renderer(&mut self) -> &Rc<Renderer>;
 }
 

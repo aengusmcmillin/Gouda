@@ -10,6 +10,7 @@ use cocoa::appkit::{NSApplicationActivationPolicy::NSApplicationActivationPolicy
 use objc::runtime::YES;
 use crate::rendering::Renderer;
 use crate::platform::osx::osx_window::OsxWindow;
+use std::rc::Rc;
 
 pub mod osx_window;
 pub mod osx_input;
@@ -17,7 +18,7 @@ pub mod osx_input;
 pub struct OSXPlatformLayer {
     pool: id,
     window: GameWindow,
-    renderer: Renderer,
+    renderer: Rc<Renderer>,
 }
 
 impl OSXPlatformLayer {
@@ -41,7 +42,7 @@ impl OSXPlatformLayer {
         OSXPlatformLayer {
             pool,
             window: GameWindow::new(Box::new(window)),
-            renderer,
+            renderer: Rc::new(renderer),
         }
     }
 }
@@ -51,8 +52,8 @@ impl PlatformLayerImpl for OSXPlatformLayer {
         return &mut self.window;
     }
 
-    fn get_renderer(&mut self) -> &mut Renderer {
-        return &mut self.renderer;
+    fn get_renderer(&mut self) -> &Rc<Renderer> {
+        return &self.renderer;
     }
 }
 

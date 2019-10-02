@@ -16,7 +16,7 @@ extern crate objc;
 extern crate enum_map;
 
 pub mod ecs;
-mod input;
+pub mod input;
 mod platform;
 mod window;
 pub mod rendering;
@@ -25,7 +25,7 @@ mod math;
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);
     fn register_systems(&self, ecs: &mut ECS);
-    fn setup(&self, ecs: &mut ECS);
+    fn setup(&mut self, ecs: &mut ECS);
     fn draw_scene(&self, ecs: &ECS, scene: &Scene);
 }
 
@@ -74,54 +74,18 @@ impl<T: GameLogic> Gouda<T> {
 
         let renderer = platform.get_renderer();
 
+        self.ecs.add_res(renderer.clone());
+
         self.setup_game();
 
-        let mut quads = vec![];
-        for x in 0..11 {
-            for y in 0..9 {
-                let color = if x == 5 && y == 4 {
-                    [0.5, 0.2, 0.2]
-                } else if x == 0 || x == 10 || y == 0 || y == 8 {
-                    [0.5, 0.5, 0.5]
-                } else {
-                    [0.2, 0.4, 0.3]
-                };
-                quads.push(QuadDrawable::new(renderer, color, [-0.91 + x as f32 * 0.182, -0.52 + y as f32 * 0.179, 0.], [0.08, 0.08, 1.]));
-            }
-        }
-        let bottom = QuadDrawable::new(renderer, [0.1, 0.1, 0.1], [-0., -0.80, 0.], [0.99, 0.19, 1.]);
-        let player = QuadDrawable::new(renderer, [0.7, 0.7, 0.7], [-0.364, -0.165, 0.], [0.05, 0.05, 1.]);
-
-        let mut player_x = -0.364;
-        let mut player_y = -0.165;
         loop {
             let window = platform.get_window();
             let input = window.capture_input();
             self.update(input.clone());
-            if input.keyboard.letter_pressed(LetterKeys::A) {
-                player_x -= 0.182;
-                player.translate([player_x, player_y, 0.], [0.05, 0.05, 1.]);
-            } else if input.keyboard.letter_pressed(LetterKeys::D) {
-                player_x += 0.182;
-                player.translate([player_x, player_y, 0.], [0.05, 0.05, 1.]);
-            }
-            if input.keyboard.letter_pressed(LetterKeys::W) {
-                player_y += 0.179;
-                player.translate([player_x, player_y, 0.], [0.05, 0.05, 1.]);
-            } else if input.keyboard.letter_pressed(LetterKeys::S) {
-                player_y -= 0.179;
-                player.translate([player_x, player_y, 0.], [0.05, 0.05, 1.]);
-            }
 
             let renderer = platform.get_renderer();
             if let Some(scene) = renderer.begin_scene() {
                 self.game_logic.draw_scene(&self.ecs, &scene);
-                for quad in quads.iter() {
-                    quad.draw(&scene);
-                }
-                bottom.draw(&scene);
-                player.draw(&scene);
-
                 renderer.end_scene(scene);
             }
 
