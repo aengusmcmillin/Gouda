@@ -152,7 +152,7 @@ pub fn create_projection_matrix(aspect: f32, fov: f32, zfar: f32, znear: f32) ->
     };
 }
 
-pub fn create_transformation_matrix(translate: [f32; 3], x: f32, y: f32, z: f32, scale: f32) -> Mat4x4 {
+pub fn create_transformation_matrix(translate: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Mat4x4 {
     let transform_mat = Mat4x4 {
         data: [
             [1., 0., 0., translate[0]],
@@ -162,15 +162,15 @@ pub fn create_transformation_matrix(translate: [f32; 3], x: f32, y: f32, z: f32,
         ]
     };
 
-    let xrot = Mat4x4::x_rot_matrix(x);
-    let yrot = Mat4x4::y_rot_matrix(y);
-    let zrot = Mat4x4::z_rot_matrix(z);
+    let xrot = Mat4x4::x_rot_matrix(rot[0]);
+    let yrot = Mat4x4::y_rot_matrix(rot[1]);
+    let zrot = Mat4x4::z_rot_matrix(rot[2]);
 
     let scale_mat = Mat4x4 {
         data: [
-            [scale, 0., 0., 0.],
-            [0., scale, 0., 0.],
-            [0., 0., scale, 0.],
+            [scale[0], 0., 0., 0.],
+            [0., scale[1], 0., 0.],
+            [0., 0., scale[2], 0.],
             [0., 0., 0., 1.],
         ]
     };

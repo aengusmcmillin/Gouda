@@ -3,6 +3,7 @@ use metal::*;
 use std::env;
 use std::fs;
 
+#[derive(Debug)]
 pub struct Shader {
     pipeline_state: RenderPipelineState,
 }

@@ -1,5 +1,5 @@
 use crate::platform::metal::shader::Shader;
-use crate::platform::metal::buffers::{VertexBuffer, IndexBuffer};
+use crate::platform::metal::buffers::{VertexBuffer, IndexBuffer, FragmentBuffer};
 use crate::platform::metal::{Scene, Renderer};
 use crate::input::{GameInput, LetterKeys};
 use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix, Mat4x4};
@@ -10,24 +10,25 @@ pub trait Drawable {
     fn draw(&self, scene: &Scene);
 }
 
+#[derive(Debug)]
 pub struct QuadDrawable {
     pub vertex_buffer: VertexBuffer,
     pub index_buffer: IndexBuffer,
     pub transform_buffer: VertexBuffer,
-    pub projection_buffer: VertexBuffer,
     pub shader: Shader,
+    pub color_buffer: FragmentBuffer,
 }
 
 impl QuadDrawable {
-    pub fn new(renderer: &mut Renderer, position: [f32; 3], scale: f32) -> Self {
+    pub fn new(renderer: &Renderer, color: [f32; 3], position: [f32; 3], scale: [f32; 3]) -> Self {
         let vb = VertexBuffer::new(
             renderer,
             0,
             vec![
-                -0.5, -0.5, 0., 1.,
-                0.5, -0.5, 0., 1.,
-                0.5, 0.5, 0., 1.,
-                -0.5, 0.5, 0., 1.,
+                -1., -1., 0., 1.,
+                1., -1., 0., 1.,
+                1., 1., 0., 1.,
+                -1., 1., 0., 1.,
             ]);
 
         let ib = IndexBuffer::new(
@@ -39,41 +40,40 @@ impl QuadDrawable {
         let shader =
             Shader::new(
                 renderer,
-                "shaders/blueVertexShader.txt",
-                "shaders/blueFragmentShader.txt");
+                "shaders/quadVertexShader.txt",
+                "shaders/quadFragmentShader.txt");
 
-        let transform_mat = create_transformation_matrix(position, 0., 0., 0., scale);
-        let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
+        let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
+        let transform_buffer = VertexBuffer::new(renderer,1, transform_mat.raw_data().to_vec());
 
-        let projection_matrix = Mat4x4::identity();
-        let projection_buffer = VertexBuffer::new(renderer, 1, projection_matrix.to_vec());
+        let color_buffer = FragmentBuffer::new(renderer, 0, vec![color[0], color[1], color[2]]);
 
         return Self {
             vertex_buffer: vb,
             index_buffer: ib,
             transform_buffer,
-            projection_buffer,
+            color_buffer,
             shader
         }
     }
 
-    pub fn draw(&self, scene: &Scene, camera_pos: [f32; 3]) {
+    pub fn translate(&self, position: [f32; 3], scale: [f32; 3]) {
+        let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
+        self.transform_buffer.update_data(transform_mat.to_vec());
+    }
+
+    pub fn draw(&self, scene: &Scene) {
         self.shader.bind(scene);
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
 
-        let projection_matrix = create_projection_matrix(1., 75., 100., 0.1);
-        let view_matrix = create_view_matrix(0., 0., camera_pos);
-        let projection_matrix = projection_matrix * view_matrix;
-        self.projection_buffer.update_data(projection_matrix.to_vec());
-        self.projection_buffer.bind(&scene);
-
+        self.color_buffer.bind(&scene);
 
         scene.draw_indexed(6, &self.index_buffer);
     }
 }
 
-pub struct SquareDrawable {
+pub struct CubeDrawable {
     shader: Shader,
     vertex_buffer: VertexBuffer,
     color_buffer: VertexBuffer,
@@ -89,8 +89,8 @@ pub struct SquareDrawable {
     zrot: f32,
 }
 
-impl SquareDrawable {
-    pub fn new(renderer: &mut Renderer, color: [f32; 3], scale: f32, translate: [f32; 3]) -> SquareDrawable {
+impl CubeDrawable {
+    pub fn new(renderer: &Renderer, color: [f32; 3], scale: f32, translate: [f32; 3]) -> CubeDrawable {
         let shader = Shader::new(&renderer, "shaders/vertexShader.txt", "shaders/fragmentShader.txt");
 
         let position_data = vec![
@@ -131,7 +131,7 @@ impl SquareDrawable {
         ];
         let color_buffer = VertexBuffer::new(renderer, 1, color_data);
 
-        let transform_mat = create_transformation_matrix([0., 0., 0.], 0., 0., 0., 1.);
+        let transform_mat = create_transformation_matrix([0., 0., 0.], [0., 0., 0.], [1., 1., 1.]);
         let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
 
         let projection_mat = create_projection_matrix(1., 75., 100., 0.1);
@@ -156,7 +156,7 @@ impl SquareDrawable {
         ];
         let index_buffer = IndexBuffer::new(renderer, indices);
 
-        return SquareDrawable {
+        return CubeDrawable {
             shader,
             vertex_buffer,
             color_buffer,
@@ -173,7 +173,7 @@ impl SquareDrawable {
     }
 }
 
-impl Drawable for SquareDrawable {
+impl Drawable for CubeDrawable {
     fn update(&mut self, input: &GameInput) {
         let dt = input.seconds_to_advance_over_update;
         if input.keyboard.letter_down(LetterKeys::W) {
@@ -198,7 +198,7 @@ impl Drawable for SquareDrawable {
         self.xrot = self.xrot % 360.;
         self.yrot = self.yrot % 360.;
         self.zrot = self.zrot % 360.;
-        let transform_mat = create_transformation_matrix(self.translate, self.xrot, self.yrot, self.zrot, self.scale);
+        let transform_mat = create_transformation_matrix(self.translate, [self.xrot, self.yrot, self.zrot], [self.scale, self.scale, self.scale]);
         self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
@@ -224,7 +224,7 @@ pub struct TriangleDrawable {
 impl TriangleDrawable {
     fn update(&mut self) { }
 
-    pub fn new(renderer: &mut Renderer) -> TriangleDrawable {
+    pub fn new(renderer: &Renderer) -> TriangleDrawable {
         let position_data = vec![0.0f32, 0.5, 0., 1., -0.5, -0.5, 0., 1., 0.5, -0.5, 0., 1.];
         let color_data = vec![1.0f32, 0., 0., 1., 0., 1., 0., 1., 0., 0., 1., 1.];
         let shader = Shader::new(&renderer, "shaders/vertexShader.txt", "shaders/fragmentShader.txt");

@@ -1,5 +1,6 @@
 use gouda::{Gouda, GameLogic};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity};
+use gouda::rendering::{Scene, QuadDrawable};
 
 #[derive(Debug)]
 struct TestComponent {
@@ -27,6 +28,20 @@ fn test_system(ecs: &ECS) -> Mutations {
     return mutations;
 }
 
+#[derive(Debug)]
+struct Tile {
+    drawable: QuadDrawable,
+}
+
+impl Tile {
+}
+
+struct Player {
+    drawable: QuadDrawable,
+}
+
+
+
 struct Game;
 
 impl GameLogic for Game {
@@ -40,6 +55,9 @@ impl GameLogic for Game {
 
     fn setup(&self, ecs: &mut ECS) {
         ecs.build_entity().add(TestComponent{processed: false});
+    }
+
+    fn draw_scene(&self, ecs: &ECS, scene: &Scene) {
     }
 }
 

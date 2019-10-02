@@ -1,0 +1,12 @@
+using namespace metal;
+
+struct VertexUniforms {
+    float4x4 mat;
+};
+
+vertex float4 vertex_main(constant float4 *position [[buffer(0)]],
+                                 constant VertexUniforms &transformation [[buffer(1)]],
+                                 uint vid [[vertex_id]])
+{
+    return position[vid] * transformation.mat;
+}

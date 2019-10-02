@@ -23,7 +23,7 @@ impl PlatformLayer {
         self.platform_impl.get_window()
     }
 
-    pub fn get_renderer(&mut self) -> &mut Renderer {
+    pub fn get_renderer(&mut self) -> &Renderer {
         self.platform_impl.get_renderer()
     }
 }
