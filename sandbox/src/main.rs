@@ -45,6 +45,18 @@ impl Camera {
         self.update_projection_matrix();
     }
 
+    fn screen_space_to_world_space(&self, screen_x: f32, screen_y: f32) -> [f32; 2] {
+        let height = self.width * self.aspect;
+        let right = self.center[0] + self.width/2.;
+        let left = self.center[0] - self.width/2.;
+        let top = self.center[1] + height/2.;
+        let bottom = self.center[1] - height/2.;
+
+        let world_x = (screen_x + (right + left)/(right - left))  * (right - left) / 2.;
+        let world_y = (screen_y + (top + bottom)/(top - bottom))  * (top - bottom) / 2.;
+        return [world_x, world_y];
+    }
+
     fn update_projection_matrix(&mut self) {
         let height = self.width * self.aspect;
 
@@ -61,6 +73,7 @@ impl Camera {
                 [0., 0., 0., 1.],
             ]
         );
+
 
         self.projection_buffer.update_data(projection.to_vec());
         self.projection_matrix = projection;
@@ -187,17 +200,13 @@ fn player_move_system(ecs: &ECS) -> Mutations {
 }
 
 struct ClickMutation {
-    pub x: i32,
-    pub y: i32,
+    pub x: f32,
+    pub y: f32,
 }
 
 impl Mutation for ClickMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let start_x = (self.x as f32 / 450.) - 1.;
-        let start_y = -1. * ((self.y as f32 / 450.) - 1.);
-        let player_drawable = QuadDrawable::new(false, renderer, [0.7, 0.7, 0.7], [start_x, start_y, 0.], [0.05, 0.05, 1.]);
-        ecs.build_entity().add(Player {drawable: player_drawable, x: start_x, y: start_y});
+        Monster::create(ecs, self.x, self.y);
     }
 }
 
@@ -205,7 +214,15 @@ fn mouse_cursor_system(ecs: &ECS) -> Mutations {
     let input = ecs.read_res::<GameInput>();
     let mut mutations: Mutations = Vec::new();
     if input.mouse.buttons[0].ended_down && input.mouse.buttons[0].half_transition_count == 1 {
-        mutations.push(Box::new(ClickMutation {x: input.mouse.x, y: input.mouse.y}));
+        for (camera, entity) in ecs.read1::<Camera>() {
+            let screen_x = input.mouse.x as f32 / 450. - 1.;
+            let screen_y = input.mouse.y as f32 / 450. - 1.;
+            let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
+            mutations.push(Box::new(ClickMutation {
+                x: pos[0],
+                y: pos[1],
+            }))
+        }
     }
     return mutations;
 }
