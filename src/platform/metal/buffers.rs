@@ -73,6 +73,10 @@ impl VertexBuffer {
         }
     }
 
+    pub fn bind_to_offset(&self, scene: &Scene, offset: u64) {
+        scene.encoder.set_vertex_buffer(offset, Some(&self.data), 0);
+    }
+
     pub fn bind(&self, scene: &Scene) {
         scene.encoder.set_vertex_buffer(self.offset, Some(&self.data), 0);
     }

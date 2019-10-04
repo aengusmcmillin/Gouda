@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 gouda = { path = "../" }
+rand = "0.7.2"

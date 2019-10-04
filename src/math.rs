@@ -8,6 +8,7 @@ pub struct Vec4 {
     pub v4: f32
 }
 
+#[derive(Debug)]
 pub struct Mat4x4 {
     pub data: [[f32; 4]; 4]
 }

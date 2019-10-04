@@ -20,7 +20,7 @@ pub mod input;
 mod platform;
 mod window;
 pub mod rendering;
-mod math;
+pub mod math;
 
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);

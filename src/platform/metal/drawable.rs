@@ -17,10 +17,11 @@ pub struct QuadDrawable {
     pub transform_buffer: VertexBuffer,
     pub shader: Shader,
     pub color_buffer: FragmentBuffer,
+    pub identity_buffer: VertexBuffer,
 }
 
 impl QuadDrawable {
-    pub fn new(renderer: &Renderer, color: [f32; 3], position: [f32; 3], scale: [f32; 3]) -> Self {
+    pub fn new(is_gui: bool, renderer: &Renderer, color: [f32; 3], position: [f32; 3], scale: [f32; 3]) -> Self {
         let vb = VertexBuffer::new(
             renderer,
             0,
@@ -37,23 +38,31 @@ impl QuadDrawable {
                 0, 1, 2, 2, 3, 0
             ]);
 
-        let shader =
+        let shader = if is_gui {
+            Shader::new(
+                renderer,
+                "shaders/guiVertexShader.txt",
+                "shaders/guiFragmentShader.txt")
+        } else {
             Shader::new(
                 renderer,
                 "shaders/quadVertexShader.txt",
-                "shaders/quadFragmentShader.txt");
+                "shaders/quadFragmentShader.txt")
+        };
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         let transform_buffer = VertexBuffer::new(renderer,1, transform_mat.raw_data().to_vec());
 
         let color_buffer = FragmentBuffer::new(renderer, 0, vec![color[0], color[1], color[2]]);
 
+        let identity_buffer = VertexBuffer::new(renderer, 2, Mat4x4::identity().to_vec());
         return Self {
             vertex_buffer: vb,
             index_buffer: ib,
             transform_buffer,
             color_buffer,
-            shader
+            shader,
+            identity_buffer,
         }
     }
 
@@ -62,7 +71,17 @@ impl QuadDrawable {
         self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
+    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexBuffer) {
+        camera_projection.bind_to_offset(scene, 2);
+        self.draw_impl(scene);
+    }
+
     pub fn draw(&self, scene: &Scene) {
+        self.identity_buffer.bind(scene);
+        self.draw_impl(scene);
+    }
+
+    fn draw_impl(&self, scene: &Scene) {
         self.shader.bind(scene);
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);

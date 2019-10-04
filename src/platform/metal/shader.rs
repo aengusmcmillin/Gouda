@@ -27,11 +27,22 @@ impl Shader {
         let pipeline_state_descriptor = RenderPipelineDescriptor::new();
         pipeline_state_descriptor.set_vertex_function(Some(&vert));
         pipeline_state_descriptor.set_fragment_function(Some(&frag));
-        pipeline_state_descriptor
+
+
+        let render_buffer_attachment = pipeline_state_descriptor
             .color_attachments()
             .object_at(0)
-            .unwrap()
-            .set_pixel_format(MTLPixelFormat::BGRA8Unorm);
+            .unwrap();
+        render_buffer_attachment.set_pixel_format(MTLPixelFormat::BGRA8Unorm);
+
+        render_buffer_attachment.set_blending_enabled(true);
+        render_buffer_attachment.set_rgb_blend_operation(MTLBlendOperation::Add);
+        render_buffer_attachment.set_alpha_blend_operation(MTLBlendOperation::Add);
+        render_buffer_attachment.set_source_rgb_blend_factor(MTLBlendFactor::SourceAlpha);
+        render_buffer_attachment.set_source_alpha_blend_factor(MTLBlendFactor::SourceAlpha);
+        render_buffer_attachment.set_destination_rgb_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
+        render_buffer_attachment.set_destination_alpha_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
+
         let pipeline_state = gfx.device
             .new_render_pipeline_state(&pipeline_state_descriptor)
             .unwrap();
