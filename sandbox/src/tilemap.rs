@@ -1,7 +1,7 @@
 use gouda::rendering::{QuadDrawable, Renderer, Scene};
 use gouda::ecs::{ECS, Entity, GenIndex};
 use std::rc::Rc;
-use crate::Camera;
+use crate::camera::Camera;
 
 const GRASS_COLOR: [f32; 3] = [0.2, 0.4, 0.3];
 const HEARTH_COLOR: [f32; 3] = [0.5, 0.2, 0.2];
