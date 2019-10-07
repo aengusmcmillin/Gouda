@@ -8,7 +8,9 @@ use gouda::math::Mat4x4;
 
 extern crate rand;
 use rand::Rng;
+use crate::tilemap::{Tile, Tilemap};
 
+mod tilemap;
 
 #[derive(Debug)]
 struct Camera {
@@ -81,11 +83,6 @@ impl Camera {
 }
 
 #[derive(Debug)]
-struct Tile {
-    drawable: QuadDrawable,
-}
-
-#[derive(Debug)]
 struct Hearth {
     drawable: QuadDrawable,
 }
@@ -140,6 +137,10 @@ struct Spawner {
 
 #[derive(Debug)]
 struct GuiElement {
+    drawable: QuadDrawable,
+}
+
+struct Cursor {
     drawable: QuadDrawable,
 }
 
@@ -219,8 +220,8 @@ fn mouse_cursor_system(ecs: &ECS) -> Mutations {
             let screen_y = input.mouse.y as f32 / 450. - 1.;
             let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
             mutations.push(Box::new(ClickMutation {
-                x: pos[0],
-                y: pos[1],
+                x: (pos[0] + 0.5).floor(),
+                y: (pos[1] + 0.5).floor(),
             }))
         }
     }
@@ -294,23 +295,14 @@ impl GameLogic for Game {
     }
 
     fn setup(&mut self, ecs: &mut ECS) {
-        for x in 0..11 {
-            for y in 0..9 {
-                let color = if x == 5 && y == 4 {
-                    [0.5, 0.2, 0.2]
-                } else if x == 0 || x == 10 || y == 0 || y == 8 {
-                    [0.5, 0.5, 0.5]
-                } else {
-                    [0.2, 0.4, 0.3]
-                };
-                let renderer = ecs.read_res::<Rc<Renderer>>();
-                let quad = QuadDrawable::new(false, renderer, color, [-5. + x as f32 * 1., -3. + y as f32 * 1., 0.], [0.45, 0.45, 1.]);
-                let tile = Tile {
-                    drawable: quad,
-                };
-                ecs.build_entity().add(tile);
-            }
-        }
+        let tilemap = Tilemap::create(ecs);
+        ecs.add_res(tilemap);
+
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let cursor = Cursor {
+            drawable: QuadDrawable::new(false, renderer, [0., 0., 0.8], [0., 0., 0.], [0.4, 0.4, 0.4]),
+        };
+        ecs.add_res(cursor);
 
         Player::create(ecs);
         Camera::create(ecs);
@@ -324,9 +316,20 @@ impl GameLogic for Game {
     }
 
     fn draw_scene(&self, ecs: &ECS, scene: &Scene) {
+        let input = ecs.read_res::<GameInput>();
+        let screen_x = input.mouse.x as f32 / 450. - 1.;
+        let screen_y = input.mouse.y as f32 / 450. - 1.;
+        let cursor = ecs.read_res::<Cursor>();
+
         for (camera, entity) in ecs.read1::<Camera>() {
+            let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
+            let pos = [(pos[0] + 0.5).floor(), (pos[1] + 0.5).floor()];
             for (tile, e) in ecs.read1::<Tile>() {
-                tile.drawable.draw_with_projection(&scene, &camera.projection_buffer);
+                tile.draw(&scene, &camera);
+                if tile.x == pos[0] as i32 && tile.y == pos[1] as i32 {
+                    cursor.drawable.translate([pos[0], pos[1], 0.], [0.4, 0.4, 0.4]);
+                    cursor.drawable.draw_with_projection(&scene, &camera.projection_buffer);
+                }
             }
 
             for (monster, e) in ecs.read1::<Monster>() {
