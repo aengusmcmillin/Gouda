@@ -1,12 +1,13 @@
-use gouda::rendering::{QuadDrawable, Renderer, Scene};
+use gouda::rendering::{QuadDrawable, Renderer, Scene, TextureDrawable, RenderableTexture};
 use std::rc::Rc;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};
 use crate::camera::Camera;
+use gouda::bmp::{Bitmap, debug_load_bmp};
 
 #[derive(Debug)]
 pub struct Player {
-    drawable: QuadDrawable,
+    drawable: TextureDrawable,
     x: f32,
     y: f32,
 }
@@ -14,7 +15,9 @@ pub struct Player {
 impl Player {
     pub fn create(ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let player_drawable = QuadDrawable::new(false, renderer, [0.7, 0.7, 0.7], [-4., -1., 0.], [0.3, 0.3, 1.]);
+        let bmp = debug_load_bmp("bitmap/test_bmp.bmp");
+        let texture = RenderableTexture::new(renderer, bmp.unwrap());
+        let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.]);
         ecs.build_entity().add(Player {drawable: player_drawable, x: -4., y: -1.});
     }
 

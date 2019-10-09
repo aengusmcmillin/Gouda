@@ -3,11 +3,98 @@ use crate::platform::metal::buffers::{VertexBuffer, IndexBuffer, FragmentBuffer}
 use crate::platform::metal::{Scene, Renderer};
 use crate::input::{GameInput, LetterKeys};
 use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix, Mat4x4};
+use crate::platform::metal::texture::RenderableTexture;
 
 pub trait Drawable {
     fn update(&mut self, input: &GameInput);
     fn bind(&self, scene: &Scene);
     fn draw(&self, scene: &Scene);
+}
+
+#[derive(Debug)]
+pub struct TextureDrawable {
+    pub vertex_buffer: VertexBuffer,
+    pub texture_buffer: VertexBuffer,
+    pub index_buffer: IndexBuffer,
+    pub transform_buffer: VertexBuffer,
+    pub shader: Shader,
+    pub identity_buffer: VertexBuffer,
+    pub texture: RenderableTexture,
+}
+
+impl TextureDrawable {
+    pub fn new(is_gui: bool, renderer: &Renderer, texture: RenderableTexture, position: [f32; 3], scale: [f32; 3]) -> Self {
+        let vb = VertexBuffer::new(
+            renderer,
+            0,
+            vec![
+                -1., 1., 0., 1.,
+                -1., -1., 0., 1.,
+                1., -1., 0., 1.,
+                1., 1., 0., 1.,
+            ]);
+
+        let tb = VertexBuffer::new(
+            renderer,
+            1,
+            vec![
+                0., 0.,
+                0., 1.,
+                1., 1.,
+                1., 0.,
+            ]);
+
+        let ib = IndexBuffer::new(
+            renderer,
+            vec![
+                0, 1, 3,
+                3, 1, 2,
+            ]);
+
+        let shader = Shader::new(
+            renderer,
+            "shaders/textureShader.txt",
+            "shaders/textureShader.txt");
+
+        let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
+        let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
+        let identity_buffer = VertexBuffer::new(renderer, 3,Mat4x4::identity().to_vec());
+
+        return Self {
+            vertex_buffer: vb,
+            texture_buffer: tb,
+            index_buffer: ib,
+            transform_buffer,
+            shader,
+            identity_buffer,
+            texture
+        }
+    }
+
+    pub fn translate(&self, position: [f32; 3], scale: [f32; 3]) {
+        let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
+        self.transform_buffer.update_data(transform_mat.to_vec());
+    }
+
+    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexBuffer) {
+        camera_projection.bind_to_offset(scene, 3);
+        self.draw_impl(scene);
+    }
+
+    pub fn draw(&self, scene: &Scene) {
+        self.identity_buffer.bind(scene);
+        self.draw_impl(scene);
+    }
+
+    fn draw_impl(&self, scene: &Scene) {
+        self.shader.bind(scene);
+        self.vertex_buffer.bind(scene);
+        self.texture_buffer.bind(scene);
+        self.transform_buffer.bind(scene);
+        self.texture.bind(scene);
+
+        scene.draw_indexed(6, &self.index_buffer);
+    }
 }
 
 #[derive(Debug)]

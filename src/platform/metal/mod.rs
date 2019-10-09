@@ -21,6 +21,7 @@ use metal::MTLFunctionType::Vertex;
 pub mod drawable;
 pub mod shader;
 pub mod buffers;
+pub mod texture;
 
 pub struct Scene<'a> {
     encoder: &'a RenderCommandEncoderRef,
