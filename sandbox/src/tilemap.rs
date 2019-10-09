@@ -1,7 +1,8 @@
-use gouda::rendering::{QuadDrawable, Renderer, Scene};
+use gouda::rendering::{QuadDrawable, Renderer, Scene, TextureDrawable, RenderableTexture};
 use gouda::ecs::{ECS, Entity, GenIndex};
 use std::rc::Rc;
 use crate::camera::Camera;
+use gouda::bmp::{Bitmap, debug_load_bmp};
 
 const GRASS_COLOR: [f32; 3] = [0.2, 0.4, 0.3];
 const HEARTH_COLOR: [f32; 3] = [0.5, 0.2, 0.2];
@@ -11,27 +12,44 @@ const BORDER_COLOR: [f32; 3] = [0.5, 0.5, 0.5];
 pub struct Tile {
     pub x: i32,
     pub y: i32,
-    drawable: QuadDrawable,
+    color_drawable: Option<QuadDrawable>,
+    texture_drawable: Option<TextureDrawable>,
 }
 
 impl Tile {
     pub fn create_grass(ecs: &mut ECS, x: usize, y: usize) -> Entity {
-        Self::create_tile(ecs, GRASS_COLOR, x, y)
+        let grass = debug_load_bmp("bitmap/grass.bmp");
+        Self::create_texture_tile(ecs, grass.unwrap(), x, y)
     }
 
     pub fn create_border(ecs: &mut ECS, x: usize, y: usize) -> Entity {
-        Self::create_tile(ecs, BORDER_COLOR, x, y)
+        let grass = debug_load_bmp("bitmap/grass2.bmp");
+        Self::create_texture_tile(ecs, grass.unwrap(), x, y)
     }
 
     pub fn create_hearth(ecs: &mut ECS, x: usize, y: usize) -> Entity {
-        Self::create_tile(ecs, HEARTH_COLOR, x, y)
+        let hearth = debug_load_bmp("bitmap/hearth.bmp");
+        Self::create_texture_tile(ecs, hearth.unwrap(), x, y)
+    }
+
+    fn create_texture_tile(ecs: &mut ECS, bmp: Bitmap, x: usize, y: usize) -> Entity {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let drawable = TextureDrawable::new(false, renderer, RenderableTexture::new(renderer, bmp), [-5. + x as f32, -3. + y as f32, 0.], [0.52, 0.52, 1.]);
+        let tile = Tile {
+            color_drawable: None,
+            texture_drawable: Some(drawable),
+            x: x as i32 - 5,
+            y: y as i32 - 3,
+        };
+        ecs.build_entity().add(tile).entity()
     }
 
     fn create_tile(ecs: &mut ECS, color: [f32; 3], x: usize, y: usize) -> Entity {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let quad = QuadDrawable::new(false, renderer, color, [-5. + x as f32 * 1., -3. + y as f32 * 1., 0.], [0.45, 0.45, 1.]);
+        let quad = QuadDrawable::new(false, renderer, color, [-5. + x as f32 * 1., -3. + y as f32 * 1., 0.], [0.5, 0.5, 1.]);
         let tile = Tile {
-            drawable: quad,
+            color_drawable: Some(quad),
+            texture_drawable: None,
             x: x as i32 - 5,
             y: y as i32 - 3,
         };
@@ -39,7 +57,11 @@ impl Tile {
     }
 
     pub fn draw(&self, scene: &Scene, camera: &Camera) {
-        self.drawable.draw_with_projection(&scene, &camera.projection_buffer);
+        if let Some(drawable) = &self.color_drawable {
+            drawable.draw_with_projection(&scene, &camera.projection_buffer);
+        } else if let Some(drawable) = &self.texture_drawable {
+            drawable.draw_with_projection(&scene, &camera.projection_buffer);
+        }
     }
 }
 
