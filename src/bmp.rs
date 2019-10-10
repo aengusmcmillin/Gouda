@@ -89,20 +89,26 @@ pub fn debug_load_bmp<'c>(path: &str) -> Option<Bitmap> {
 
         let offset = header.bmp_offset as usize;
 
-        println!("offset {} size {}", offset, header.size_of_bmp);
         let mut res = Vec::new();
-        for i in (0..header.size_of_bmp - 3).filter(|&x| x % 3 == 0) {
+        for i in (0..header.size_of_bmp - 2).filter(|&x| x % 3 == 0) {
             res.push(Color {
                 r: c[offset + i as usize + 2],
                 g: c[offset + i as usize + 1],
                 b: c[offset + i as usize + 0],
-                a: 1,// c[offset + i as usize + 3],
+                a: 255,
             });
+        }
+
+        let mut flipped = Vec::new();
+        for y in (0..header.height).rev() {
+            for x in 0..header.width {
+                flipped.push(res[(y * header.width + x) as usize]);
+            }
         }
 
         return Some(Bitmap {
             header,
-            contents: res,
+            contents: flipped,
         });
     }
     return None;

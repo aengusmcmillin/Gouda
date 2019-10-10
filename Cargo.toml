@@ -16,6 +16,7 @@ coreaudio-sys = "0.2"
 core-graphics = "0.17.3"
 enum-map = "*"
 enum-map-derive = "*"
+compress = "0.1.2"
 
 [lib]
 name = "gouda"

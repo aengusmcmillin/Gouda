@@ -23,6 +23,7 @@ pub mod rendering;
 pub mod math;
 mod utils;
 pub mod bmp;
+pub mod png;
 
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);

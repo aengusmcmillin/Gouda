@@ -27,5 +27,5 @@ fragment float4 fragment_main(VertexOut interpolated [[stage_in]],
     constexpr sampler textureSampler (mag_filter::linear,
                                       min_filter::linear);
     float4 col = tex2D.sample(textureSampler, interpolated.texCoord);
-    return float4(col[0], col[1], col[2], 1.0);
+    return float4(col[0], col[1], col[2], col[3]);
 }

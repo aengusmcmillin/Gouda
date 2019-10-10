@@ -38,10 +38,10 @@ impl TextureDrawable {
             renderer,
             1,
             vec![
-                0., 1.,
                 0., 0.,
-                1., 0.,
+                0., 1.,
                 1., 1.,
+                1., 0.,
             ]);
 
         let ib = IndexBuffer::new(
