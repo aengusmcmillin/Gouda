@@ -12,6 +12,7 @@ use crate::tilemap::{Tile, Tilemap};
 use crate::player::{Player, player_move_system};
 use crate::cursor::Cursor;
 use crate::camera::Camera;
+use gouda::font::{Font, TextDrawable};
 
 mod tilemap;
 mod player;
@@ -50,6 +51,11 @@ impl Monster {
 struct Spawner {
     max_time: f32,
     current_time: f32,
+}
+
+#[derive(Debug)]
+struct TextElement {
+    drawable: TextDrawable,
 }
 
 #[derive(Debug)]
@@ -160,6 +166,7 @@ impl GameLogic for Game {
         ecs.register_component_type::<Player>();
         ecs.register_component_type::<Monster>();
         ecs.register_component_type::<GuiElement>();
+        ecs.register_component_type::<TextElement>();
         ecs.register_component_type::<Spawner>();
     }
 
@@ -176,6 +183,8 @@ impl GameLogic for Game {
     }
 
     fn setup(&mut self, ecs: &mut ECS) {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+
         let tilemap = Tilemap::create(ecs);
         ecs.add_res(tilemap);
 
@@ -187,11 +196,20 @@ impl GameLogic for Game {
         Camera::create(ecs);
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let bottom = QuadDrawable::new(true, renderer, [0.1, 0.1, 0.1], [0., -0.815, 0.], [1., 0.18, 1.]);
-        ecs.build_entity().add(GuiElement {drawable: bottom});
+        let quad = QuadDrawable::new(true, renderer, [1., 1., 1.], [-1., -0.825, 0.], [2., 0.175, 0.]);
+        ecs.build_entity().add(GuiElement { drawable: quad, });
+
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let font = Font::new(renderer, "bitmap/segoe.fnt", "bitmap/segoe.png");
+        let text = TextDrawable::new(renderer, [-0.95, -0.68], Rc::new(font), "Test String #1: Segoe".to_string(), 14.);
+        ecs.build_entity().add(TextElement { drawable: text, });
+
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let font = Font::new(renderer, "bitmap/arial.fnt", "bitmap/arial.png");
+        let text = TextDrawable::new(renderer, [-0.95, -0.75], Rc::new(font), "Test String #2: Arial".to_string(), 14.);
+        ecs.build_entity().add(TextElement { drawable: text, });
 
         ecs.build_entity().add(Spawner {max_time: 5., current_time: 5.});
-
     }
 
     fn draw_scene(&self, ecs: &ECS, scene: &Scene) {
@@ -220,6 +238,10 @@ impl GameLogic for Game {
 
         for (gui, e) in ecs.read1::<GuiElement>() {
             gui.drawable.draw(&scene);
+        }
+
+        for (text, e) in ecs.read1::<TextElement>() {
+            text.drawable.draw(&scene);
         }
     }
 }

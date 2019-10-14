@@ -38,6 +38,14 @@ impl Scene<'_> {
         );
     }
 
+    pub fn draw_triangles(&self, num_verts: u64) {
+        self.encoder.draw_primitives(
+            MTLPrimitiveType::Triangle,
+            0,
+            num_verts,
+        );
+    }
+
     pub fn draw_indexed(&self, index_count: u64, index_buffer: &IndexBuffer) {
         self.encoder.draw_indexed_primitives(
             MTLPrimitiveType::TriangleStrip,
