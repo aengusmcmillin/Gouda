@@ -1,6 +1,7 @@
 use gouda::{Gouda, GameLogic};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity};
-use gouda::rendering::{Scene, QuadDrawable, Renderer, VertexBuffer};
+use gouda::rendering::{
+    Scene, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
 use std::rc::Rc;
 use std::ops::Deref;
 use gouda::input::{LetterKeys, GameInput};

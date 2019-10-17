@@ -1,4 +1,8 @@
-use gouda::rendering::{QuadDrawable, Renderer, Scene};
+use gouda::rendering::{
+    drawable::{QuadDrawable, TextureDrawable},
+    Renderer,
+    Scene,
+    texture::RenderableTexture};
 use std::rc::Rc;
 use crate::camera::Camera;
 

@@ -5,8 +5,8 @@ use crate::window::WindowProps;
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
-use crate::platform::metal::drawable::{CubeDrawable, TriangleDrawable, Drawable, QuadDrawable};
-use crate::platform::metal::Scene;
+use crate::rendering::drawable::{CubeDrawable, TriangleDrawable, Drawable, QuadDrawable};
+use crate::rendering::Scene;
 
 #[cfg(target_os = "macos")]
 #[macro_use]

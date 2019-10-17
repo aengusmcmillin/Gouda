@@ -1,4 +1,8 @@
-use gouda::rendering::{QuadDrawable, Renderer, Scene, TextureDrawable, RenderableTexture};
+use gouda::rendering::{
+    drawable::{QuadDrawable, TextureDrawable},
+    Renderer,
+    Scene,
+    texture::RenderableTexture};
 use std::rc::Rc;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};

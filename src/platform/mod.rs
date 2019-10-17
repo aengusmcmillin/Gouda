@@ -1,4 +1,3 @@
-use crate::platform::osx::OSXPlatformLayer;
 use crate::window::{GameWindow, WindowProps};
 use crate::rendering::Renderer;
 use std::rc::Rc;
@@ -7,27 +6,19 @@ use std::rc::Rc;
 pub mod osx;
 
 #[cfg(target_os = "macos")]
+pub use osx::OSXPlatformLayer as PlatformLayer;
+
+#[cfg(target_os = "macos")]
 pub mod metal;
 
-pub struct PlatformLayer {
-    platform_impl: Box<dyn PlatformLayerImpl>,
-}
+#[cfg(target_os = "windows")]
+pub mod win32;
 
-impl PlatformLayer {
-    pub fn new(window_props: WindowProps) -> Self {
-        PlatformLayer {
-            platform_impl: Box::new(OSXPlatformLayer::new(window_props)),
-        }
-    }
+#[cfg(target_os = "windows")]
+pub mod d3d;
 
-    pub fn get_window(&mut self) -> &mut GameWindow {
-        self.platform_impl.get_window()
-    }
-
-    pub fn get_renderer(&mut self) -> &Rc<Renderer> {
-        self.platform_impl.get_renderer()
-    }
-}
+#[cfg(target_os = "windows")]
+pub use win32::Win32PlatformLayer as PlatformLayer;
 
 pub trait PlatformLayerImpl {
     fn get_window(&mut self) -> &mut GameWindow;

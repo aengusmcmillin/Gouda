@@ -1,14 +1,13 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
-use crate::platform::metal::buffers::{VertexBuffer, FragmentBuffer};
+use crate::rendering::buffers::{VertexBuffer, FragmentBuffer};
 use std::rc::Rc;
-use crate::platform::metal::texture::RenderableTexture;
-use crate::platform::metal::Scene;
+use crate::rendering::texture::RenderableTexture;
+use crate::rendering::Scene;
 use crate::png::PNG;
 use crate::rendering::Renderer;
-use metal::MTLFunctionType::{Vertex, Fragment};
-use crate::platform::metal::shader::Shader;
+use crate::rendering::shader::Shader;
 
 
 pub struct TextMeshCreator {

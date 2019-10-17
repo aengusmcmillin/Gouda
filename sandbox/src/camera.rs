@@ -1,5 +1,5 @@
 use gouda::math::Mat4x4;
-use gouda::rendering::{VertexBuffer, Renderer};
+use gouda::rendering::{buffers::VertexBuffer, Renderer};
 use std::rc::Rc;
 use gouda::ecs::ECS;
 
