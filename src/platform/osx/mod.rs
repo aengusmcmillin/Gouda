@@ -1,6 +1,5 @@
 #![cfg(target_os = "macos")]
 
-use crate::platform::PlatformLayerImpl;
 use crate::window::{GameWindow, WindowProps};
 use cocoa::foundation::NSAutoreleasePool;
 use cocoa::base::{nil, id};
@@ -45,14 +44,11 @@ impl OSXPlatformLayer {
             renderer: Rc::new(renderer),
         }
     }
-}
-
-impl PlatformLayerImpl for OSXPlatformLayer {
-    fn get_window(&mut self) -> &mut GameWindow {
+    pub fn get_window(&mut self) -> &mut GameWindow {
         return &mut self.window;
     }
 
-    fn get_renderer(&mut self) -> &Rc<Renderer> {
+    pub fn get_renderer(&mut self) -> &Rc<Renderer> {
         return &self.renderer;
     }
 }

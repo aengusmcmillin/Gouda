@@ -19,9 +19,3 @@ pub mod d3d;
 
 #[cfg(target_os = "windows")]
 pub use win32::Win32PlatformLayer as PlatformLayer;
-
-pub trait PlatformLayerImpl {
-    fn get_window(&mut self) -> &mut GameWindow;
-    fn get_renderer(&mut self) -> &Rc<Renderer>;
-}
-
