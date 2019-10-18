@@ -14,9 +14,13 @@ pub struct Win32PlatformLayer {
 
 impl Win32PlatformLayer {
     pub fn new(props: WindowProps) -> Self {
+        let window = Window::new(props);
+        println!("building renderer");
+        let renderer = Renderer::new(window.hwnd.clone());
+        println!("renderer built");
         Self {
-            window: GameWindow::new(Box::new(Window::new(props))),
-            renderer: Rc::new(Renderer{}),
+            window: GameWindow::new(Box::new(window)),
+            renderer: Rc::new(renderer.unwrap()),
         }
     }
 

@@ -19,7 +19,7 @@ coreaudio-sys = "0.2"
 core-graphics = "0.17.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winapi = { version = "0.3.8", features = ["std", "winuser", "libloaderapi", "winstring", "memoryapi", "dsound", "fileapi", "winbase", "xinput", "errhandlingapi", "ntdef", "handleapi", "windowsx"] }
+winapi = { version = "0.3.8", features = ["dxgi", "d3d11", "std", "winuser", "libloaderapi", "winstring", "memoryapi", "dsound", "fileapi", "winbase", "xinput", "errhandlingapi", "ntdef", "handleapi", "windowsx"] }
 
 [lib]
 name = "gouda"

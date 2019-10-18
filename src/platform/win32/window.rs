@@ -4,7 +4,7 @@ use crate::window::{GameWindowImpl, WindowProps};
 use crate::input::GameInput;
 use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::_core::ptr::null_mut;
-use winapi::um::winuser::{WNDCLASSW, CS_HREDRAW, CS_VREDRAW, CS_OWNDC, MessageBoxA, RegisterClassW, CW_USEDEFAULT, WS_OVERLAPPEDWINDOW, WS_VISIBLE, CreateWindowExW};
+use winapi::um::winuser::{WNDCLASSW, WNDCLASSEXA, CS_HREDRAW, CS_VREDRAW, CS_OWNDC, MessageBoxA, RegisterClassW, CW_USEDEFAULT, WS_OVERLAPPEDWINDOW, WS_VISIBLE, CreateWindowExW};
 use winapi::shared::minwindef::{UINT};
 use winapi::shared::windef::{HWND};
 use winapi::um::xinput::{XINPUT_VIBRATION, XINPUT_STATE};
@@ -12,28 +12,78 @@ use std::ffi::{OsStr, CString};
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use winapi::shared::minwindef::{LRESULT, LPARAM, WPARAM};
+use winapi::shared::windef::{POINT};
 use self::winapi::um::libloaderapi::{LoadLibraryW, GetProcAddress};
 use self::winapi::shared::minwindef::{__some_function, DWORD};
 use std::mem::transmute;
-use self::winapi::um::winuser::DefWindowProcW;
+use self::winapi::um::winuser::{MSG, DefWindowProcW, WS_SYSMENU, WS_MINIMIZEBOX, WS_CAPTION, ShowWindow, SW_SHOW, PeekMessageW, PM_REMOVE, TranslateMessage, DispatchMessageW, WM_CLOSE, WM_KEYDOWN, WM_KEYUP, WM_CHAR, WM_LBUTTONDOWN, AdjustWindowRect};
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::shared::dxgi::CreateDXGIFactory;
+
+trait Empty {
+    fn empty() -> Self;
+}
+
+impl Empty for MSG {
+    fn empty() -> MSG {
+        MSG {
+            hwnd: null_mut(),
+            message: 0,
+            wParam: 0,
+            lParam: 0,
+            time: 0,
+            pt: POINT::empty(),
+        }
+    }
+}
+
+impl Empty for POINT {
+    fn empty() -> POINT {
+        POINT { x: 0, y: 0 }
+    }
+}
 
 pub struct Window {
-    hwnd: HWND,
+    pub hwnd: HWND,
     props: WindowProps,
 }
 
 impl Window {
     pub fn new(props: WindowProps) -> Window {
-        win32_load_xinput();
-        let window = create_window("GoudaWindowClass", props.title.as_str());
+        let window = create_window("GoudaWindowClass", props.title.as_str(), props.width as u32, props.height as u32).unwrap();
+        unsafe {ShowWindow(window, SW_SHOW)};
         Self {
-            hwnd: window.unwrap(),
+            hwnd: window,
             props,
         }
     }
 }
 impl GameWindowImpl for Window {
     fn capture_input(&mut self) -> GameInput {
+        let mut msg = MSG::empty();
+        while unsafe {PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) != 0} {
+            match msg.message {
+                WM_KEYDOWN => {
+                    println!("Keydown {}", msg.wParam as u8 as char);
+                }
+                WM_KEYUP => {
+
+                }
+                WM_CHAR => {
+
+                }
+                WM_LBUTTONDOWN => {
+
+                }
+                _ => {
+
+                }
+            }
+            unsafe {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+        }
         return GameInput::new();
     }
 
@@ -53,7 +103,12 @@ unsafe extern "system" fn win32_handle_proc(
     lparam: LPARAM,
 ) -> LRESULT {
     match message {
-        _ => (DefWindowProcW(window, message, wparam, lparam)),
+        WM_CLOSE => {
+            0
+        }
+        _ => {
+            return DefWindowProcW(window, message, wparam, lparam);
+        },
     }
 }
 fn win32_string(value: &str) -> Vec<u16> {
@@ -95,7 +150,8 @@ fn win32_load_xinput() {
         }
     }
 }
-fn create_window(class_name: &str, title: &str) -> Option<HWND> {
+
+fn create_window(class_name: &str, title: &str, width: u32, height: u32) -> Option<HWND> {
     let class_name = win32_string(class_name);
     let title = win32_string(title);
 
@@ -130,11 +186,11 @@ fn create_window(class_name: &str, title: &str) -> Option<HWND> {
                     0,
                     window_class.lpszClassName,
                     title.as_ptr(),
-                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                    CW_USEDEFAULT,
-                    CW_USEDEFAULT,
-                    CW_USEDEFAULT,
-                    CW_USEDEFAULT,
+                    WS_SYSMENU | WS_MINIMIZEBOX | WS_CAPTION,
+                    200,
+                    200,
+                    width as i32,
+                    height as i32,
                     null_mut(),
                     null_mut(),
                     handle_instance,
