@@ -11,6 +11,7 @@ use winapi::shared::minwindef::UINT;
 use winapi::shared::windef::{HWND};
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
+use winapi::um::d3d11::D3D11_BUFFER_DESC;
 
 pub struct Renderer {
     swap_chain: Box<IDXGISwapChain>,
@@ -105,7 +106,6 @@ impl Renderer {
             let device = Box::from_raw(device_ptr);
             let device_context = Box::from_raw(device_context_ptr);
 
-
             let mut back_buffer: Box<ID3D11Resource> = Box::new(mem::zeroed());
             let mut back_buffer_ptr: *mut ID3D11Resource = Box::into_raw(back_buffer);
             (*swap_chain).GetBuffer(0, &ID3D11Resource::uuidof(), mem::transmute(&mut back_buffer_ptr));
@@ -140,14 +140,8 @@ impl Renderer {
         return Some(scene);
     }
 
-    pub fn clear(&self) {
-        unsafe {
-        }
-    }
-
     pub fn end_scene(&self, scene: Scene) {
         unsafe {
-
             self.swap_chain.Present(1, 0);
         }
     }
@@ -161,7 +155,6 @@ pub struct Scene {
 
 impl Scene {
     pub fn draw_indexed(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
-
     }
 
     pub fn draw_tri_strip(&self, num_verts: u64) {
@@ -175,6 +168,10 @@ impl Scene {
 
 pub mod buffers {
     pub use crate::platform::d3d::{Renderer, Scene};
+    use winapi::um::d3d11::*;
+    use std::mem;
+    use std::ptr::null_mut;
+
     #[derive(Debug)]
     pub struct VertexBuffer {
 
@@ -182,6 +179,20 @@ pub mod buffers {
 
     impl VertexBuffer {
         pub fn new(renderer: &Renderer, offset: u32, data: Vec<f32>) -> VertexBuffer {
+
+            unsafe {
+                let vertex_buffer_desc = D3D11_BUFFER_DESC {
+                    ByteWidth: 3 * data.len() as u32,
+                    Usage: D3D11_USAGE_DEFAULT,
+                    BindFlags: D3D11_BIND_VERTEX_BUFFER,
+                    CPUAccessFlags: 0,
+                    MiscFlags: 0,
+                    StructureByteStride: 0
+                };
+                let mut buffer: ID3D11Buffer = mem::zeroed();
+                let mut buffer_ptr: *mut ID3D11Buffer = &mut buffer;
+                (*renderer.device).CreateBuffer(&vertex_buffer_desc, null_mut(), &mut buffer_ptr);
+            }
             VertexBuffer {}
         }
 
