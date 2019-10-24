@@ -14,45 +14,40 @@ use crate::player::{Player, player_move_system};
 use crate::cursor::Cursor;
 use crate::camera::Camera;
 use gouda::font::{Font, TextDrawable};
+use crate::spawners::{WaveSpawner, wave_spawner_system, WaveSpec, MonsterSpec, MonsterType};
+use crate::monster::{Monster, monster_move_system, monster_spawn_system, Spawner};
+use gouda::gui::{GuiComponent, GuiConstraints, Constraint, ActiveGui};
+use gouda::types::Color;
+use gouda::gui::Constraint::RelativeConstraint;
+use gouda::input::AnyKey::Letter;
 
 mod tilemap;
 mod player;
-mod turret;
+mod building;
 mod cursor;
 mod camera;
+mod game_stage;
+mod spawners;
+mod monster;
+mod pathfinding;
+mod villager;
 
+struct MenuScreen {
+    entity: Entity,
+    active: bool,
+}
+
+#[derive(Debug)]
+struct Pos {
+    pub x: f32,
+    pub y: f32,
+}
 
 #[derive(Debug)]
 struct Hearth {
     drawable: QuadDrawable,
 }
 
-#[derive(Debug)]
-struct Monster {
-    drawable: QuadDrawable,
-    x: f32,
-    y: f32,
-}
-
-impl Monster {
-    pub fn create(ecs: &mut ECS, x_pos: f32, y_pos: f32) {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let monster_drawable = QuadDrawable::new(false, renderer, [0.7, 0.2, 0.2], [x_pos, y_pos, 0.], [0.4, 0.4, 1.]);
-        ecs.build_entity().add(Monster {drawable: monster_drawable, x: x_pos, y: y_pos});
-    }
-
-    pub fn set_pos(&mut self, new_x: f32, new_y: f32) {
-        self.x = new_x;
-        self.y = new_y;
-        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
-    }
-}
-
-#[derive(Debug)]
-struct Spawner {
-    max_time: f32,
-    current_time: f32,
-}
 
 #[derive(Debug)]
 struct TextElement {
@@ -112,46 +107,30 @@ fn mouse_click_system(ecs: &ECS) -> Mutations {
     return mutations;
 }
 
-struct SpawnMutation {
+struct ShowMenuMutation {
 
 }
 
-impl Mutation for SpawnMutation {
+impl Mutation for ShowMenuMutation {
     fn apply(&self, ecs: &mut ECS) {
-
-        let mut rng = rand::thread_rng();
-        let x = rng.gen_range(-5, 5) as f32;
-        let y = rng.gen_range(-5, 5) as f32;
-
-        Monster::create(ecs, x, y);
-    }
-}
-
-struct SpawnTimerMutation {
-    spawner: Entity,
-    new_time: f32,
-}
-
-impl Mutation for SpawnTimerMutation {
-    fn apply(&self, ecs: &mut ECS) {
-        let mut spawner = ecs.write::<Spawner>(&self.spawner).unwrap();
-        spawner.current_time = self.new_time;
-    }
-}
-
-fn monster_spawn_system(ecs: &ECS) -> Mutations {
-    let input = ecs.read_res::<GameInput>();
-    let dt = input.seconds_to_advance_over_update;
-    let mut mutations: Mutations = Vec::new();
-    for (spawner, spawner_entity) in ecs.read1::<Spawner>() {
-        if spawner.current_time - dt <= 0. {
-            mutations.push(Box::new(SpawnMutation {}));
-            mutations.push(Box::new(SpawnTimerMutation {spawner: spawner_entity, new_time: spawner.max_time - (dt - spawner.current_time)}));
+        let menu = ecs.write_res::<MenuScreen>();
+        let was_active = menu.active;
+        let e = menu.entity.clone();
+        menu.active = !menu.active;
+        if was_active {
+            ecs.remove_component::<ActiveGui>(&e);
         } else {
-            mutations.push(Box::new(SpawnTimerMutation {spawner: spawner_entity, new_time: spawner.current_time - dt}));
+            ecs.add_component(&e, ActiveGui {});
         }
     }
+}
 
+fn menu_show_system(ecs: &ECS) -> Mutations {
+    let input = ecs.read_res::<GameInput>();
+    let mut mutations: Mutations = Vec::new();
+    if input.keyboard.letter_pressed(LetterKeys::B) {
+        mutations.push(Box::new(ShowMenuMutation {}));
+    }
     return mutations;
 }
 
@@ -169,12 +148,19 @@ impl GameLogic for Game {
         ecs.register_component_type::<GuiElement>();
         ecs.register_component_type::<TextElement>();
         ecs.register_component_type::<Spawner>();
+        ecs.register_component_type::<WaveSpawner>();
+        ecs.register_component_type::<Pos>();
+        ecs.register_component_type::<GuiComponent>();
+        ecs.register_component_type::<ActiveGui>();
     }
 
     fn register_systems(&self, ecs: &mut ECS) {
         ecs.add_system(Box::new(player_move_system));
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(monster_spawn_system));
+        ecs.add_system(Box::new(wave_spawner_system));
+        ecs.add_system(Box::new(monster_move_system));
+        ecs.add_system(Box::new(menu_show_system));
 
         // Spawn waves of monsters
         // Handle pathfinding
@@ -201,6 +187,49 @@ impl GameLogic for Game {
         ecs.build_entity().add(GuiElement { drawable: quad, });
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
+        let mut component = GuiComponent::new(
+            renderer,
+            None,
+            GuiConstraints::new(
+                Constraint::CenterConstraint,
+                Constraint::RelativeConstraint { size: 0.0 },
+                Constraint::RelativeConstraint {size: 1.},
+                Constraint::PixelConstraint {size: 160}
+            ),
+            0.,
+            Color {r: 1., g: 0., b: 0., a: 1.});
+        let sub_component = GuiComponent::new(
+            renderer,
+            Some(&component),
+            GuiConstraints::new(
+                Constraint::CenterConstraint,
+                Constraint::CenterConstraint,
+                Constraint::PixelConstraint {size: -15},
+                Constraint::PixelConstraint {size: -15},
+        ),
+            0.,
+            Color {r: 0., g: 1., b: 1., a: 1.});
+        component.add_child(sub_component);
+        ecs.build_entity().add(component).add(ActiveGui{});
+
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let menu_screen = GuiComponent::new(
+            renderer,
+            None,
+            GuiConstraints::new(
+                Constraint::CenterConstraint,
+                Constraint::CenterConstraint,
+                Constraint::RelativeConstraint {size: 1.},
+                Constraint::RelativeConstraint {size: 1.},
+            ),
+            0.,
+            Color::new(0.2, 0.2, 0.2, 1.0)
+        );
+        let menu = ecs.build_entity().add(menu_screen).entity();
+        ecs.add_res(MenuScreen {entity: menu, active: false});
+
+
+        let renderer = ecs.read_res::<Rc<Renderer>>();
         let font = Font::new(renderer, "bitmap/segoe.fnt", "bitmap/segoe.png");
         let text = TextDrawable::new(renderer, [-0.95, -0.68], Rc::new(font), "Test String #1: Segoe".to_string(), 14.);
         ecs.build_entity().add(TextElement { drawable: text, });
@@ -211,6 +240,13 @@ impl GameLogic for Game {
         ecs.build_entity().add(TextElement { drawable: text, });
 
         ecs.build_entity().add(Spawner {max_time: 5., current_time: 5.});
+
+        ecs.build_entity()
+            .add(WaveSpawner::new(
+                WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: MonsterType::Wolf }; 20],
+                }, 1.))
+            .add(Pos {x: 3., y: 3.});
     }
 
     fn draw_scene(&self, ecs: &ECS, scene: &Scene) {
@@ -230,7 +266,7 @@ impl GameLogic for Game {
         }
 
         for (monster, e) in ecs.read1::<Monster>() {
-            monster.drawable.draw_with_projection(&scene, &camera.projection_buffer);
+            monster.draw(&scene, &camera);
         }
 
         for (player, e) in ecs.read1::<Player>() {
@@ -239,6 +275,10 @@ impl GameLogic for Game {
 
         for (gui, e) in ecs.read1::<GuiElement>() {
             gui.drawable.draw(&scene);
+        }
+
+        for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
+            gui.render(&scene);
         }
 
         for (text, e) in ecs.read1::<TextElement>() {

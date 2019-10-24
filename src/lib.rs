@@ -25,6 +25,8 @@ mod utils;
 pub mod bmp;
 pub mod png;
 pub mod font;
+pub mod types;
+pub mod gui;
 
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);

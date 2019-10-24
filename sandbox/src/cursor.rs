@@ -5,6 +5,7 @@ use gouda::rendering::{
     texture::RenderableTexture};
 use std::rc::Rc;
 use crate::camera::Camera;
+use crate::tilemap::Tile;
 
 pub struct Cursor {
     top_drawable: QuadDrawable,
@@ -33,6 +34,10 @@ impl Cursor {
         self.left_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         self.bottom_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         self.right_drawable.draw_with_projection(&scene, &camera.projection_buffer);
+    }
+
+    pub fn handle_click(&self, tile: &Tile) {
+
     }
 }
 
