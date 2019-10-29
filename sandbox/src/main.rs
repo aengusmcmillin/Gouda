@@ -1,7 +1,7 @@
 use gouda::{Gouda, GameLogic};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity};
 use gouda::rendering::{
-    Scene, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
+    Scene, drawable::TestDrawable, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
 use std::rc::Rc;
 use std::ops::Deref;
 use gouda::input::{LetterKeys, GameInput};
@@ -65,7 +65,8 @@ struct ZoomMutation {
 
 impl Mutation for ZoomMutation {
     fn apply(&self, ecs: &mut ECS) {
-        ecs.write_res::<Camera>().change_width(self.dw);
+        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
+        ecs.write_res::<Camera>().change_width(&renderer, self.dw);
     }
 }
 
@@ -134,10 +135,12 @@ fn menu_show_system(ecs: &ECS) -> Mutations {
     return mutations;
 }
 
-struct Game {}
+struct Game {
+    test: Option<TestDrawable>,
+}
 
 impl Game {
-    pub fn new() -> Self { Game {} }
+    pub fn new() -> Self { Game {test: None} }
 }
 
 impl GameLogic for Game {
@@ -171,6 +174,7 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
+        self.test = Some(TestDrawable::new(renderer));
 
         let tilemap = Tilemap::create(ecs);
         ecs.add_res(tilemap);
@@ -261,10 +265,10 @@ impl GameLogic for Game {
         for (tile, e) in ecs.read1::<Tile>() {
             tile.draw(&scene, &camera);
             if tile.x == pos[0] as i32 && tile.y == pos[1] as i32 {
-                cursor.draw_at_pos(&scene, &camera, [pos[0], pos[1], 0.]);
+                let renderer = ecs.read_res::<Rc<Renderer>>();
+                cursor.draw_at_pos(&renderer, &scene, &camera, [pos[0], pos[1], 0.]);
             }
         }
-
         for (monster, e) in ecs.read1::<Monster>() {
             monster.draw(&scene, &camera);
         }

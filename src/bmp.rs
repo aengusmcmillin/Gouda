@@ -14,7 +14,7 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn raw(self) -> u32 {
+    pub fn raw(&self) -> u32 {
         u32_from_bytes([self.a, self.r, self.g, self.b])
     }
 }
@@ -55,6 +55,14 @@ pub struct Bitmap {
 impl Bitmap {
     pub fn get_pixel(&self, x: u32, y: u32) -> Color {
         self.contents[(self.header.width * y + x) as usize]
+    }
+
+    pub fn raw_contents(&self) -> Vec<u32> {
+        let mut res = vec![];
+        for color in &self.contents {
+            res.push(color.raw());
+        }
+        return res;
     }
 }
 

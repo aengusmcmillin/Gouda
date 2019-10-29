@@ -1,12 +1,12 @@
 use gouda::math::Mat4x4;
-use gouda::rendering::{buffers::VertexBuffer, Renderer};
+use gouda::rendering::{buffers::VertexBuffer, buffers::VertexConstantBuffer, Renderer};
 use std::rc::Rc;
 use gouda::ecs::ECS;
 
 #[derive(Debug)]
 pub struct Camera {
     pub projection_matrix: Mat4x4,
-    pub projection_buffer: VertexBuffer,
+    pub projection_buffer: VertexConstantBuffer<f32>,
     center: [f32; 2],
     width: f32,
     aspect: f32,
@@ -17,25 +17,25 @@ impl Camera {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let mut camera = Camera {
             projection_matrix: Mat4x4::identity(),
-            projection_buffer: VertexBuffer::new(renderer, 0, Mat4x4::identity().to_vec()),
+            projection_buffer: VertexConstantBuffer::new(renderer, 0, Mat4x4::identity().to_vec()),
             center: [0., 0.],
             width: 11.,
             aspect: 1.,
         };
-        camera.update_projection_matrix();
+        camera.update_projection_matrix(renderer);
         ecs.add_res(camera);
     }
 
-    pub fn change_width(&mut self, dw: f32) {
+    pub fn change_width(&mut self, renderer: &Renderer, dw: f32) {
         self.width += dw;
-        self.update_projection_matrix();
+        self.update_projection_matrix(renderer);
     }
 
-    pub fn change_pos(&mut self, dx: f32, dy: f32) {
+    pub fn change_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
         self.center[0] += dx;
         self.center[1] += dy;
 
-        self.update_projection_matrix();
+        self.update_projection_matrix(renderer);
     }
 
     pub fn screen_space_to_world_space(&self, screen_x: f32, screen_y: f32) -> [f32; 2] {
@@ -50,7 +50,7 @@ impl Camera {
         return [world_x, world_y];
     }
 
-    fn update_projection_matrix(&mut self) {
+    fn update_projection_matrix(&mut self, renderer: &Renderer) {
         let height = self.width * self.aspect;
 
         let right = self.center[0] + self.width/2.;
@@ -67,8 +67,7 @@ impl Camera {
             ]
         );
 
-
-        self.projection_buffer.update_data(projection.to_vec());
+        self.projection_buffer.update_data(renderer, projection.to_vec());
         self.projection_matrix = projection;
     }
 }

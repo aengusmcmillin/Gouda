@@ -13,6 +13,18 @@ use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
 use winapi::um::d3d11::D3D11_BUFFER_DESC;
 
+pub struct Vertex {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
+
+impl Vertex {
+    pub fn new(x: f32, y: f32, z: f32) -> Vertex {
+        Vertex { x, y, z }
+    }
+}
+
 pub struct Renderer {
     swap_chain: Box<IDXGISwapChain>,
     device: *mut ID3D11Device,
@@ -55,8 +67,8 @@ impl Renderer {
             let mut numerator = 0;
             let mut denominator = 0;
             for i in 0..(num_modes) as usize {
-                if modes[i].Width == 640 {
-                    if modes[i].Height == 480 {
+                if modes[i].Width == 900 {
+                    if modes[i].Height == 900 {
                         numerator = modes[i].RefreshRate.Numerator;
                         denominator = modes[i].RefreshRate.Denominator;
                     }
@@ -75,9 +87,9 @@ impl Renderer {
             
             let swap_chain_desc = DXGI_SWAP_CHAIN_DESC {
                 BufferDesc: DXGI_MODE_DESC {
-                    Width: 640,
-                    Height: 480,
-                    RefreshRate: DXGI_RATIONAL { Numerator: numerator, Denominator: denominator },
+                    Width: 0,
+                    Height: 0,
+                    RefreshRate: DXGI_RATIONAL { Numerator: 0, Denominator: 0 },
                     Format: DXGI_FORMAT_B8G8R8A8_UNORM,
                     ScanlineOrdering: DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
                     Scaling: DXGI_MODE_SCALING_UNSPECIFIED
@@ -98,8 +110,7 @@ impl Renderer {
             let mut device_context: Box<ID3D11DeviceContext> = Box::new(mem::zeroed());
             let mut device_context_ptr: *mut ID3D11DeviceContext = Box::into_raw(device_context);
 
-            let feature_level = D3D_FEATURE_LEVEL_11_0;
-            D3D11CreateDeviceAndSwapChain(null_mut(), D3D_DRIVER_TYPE_HARDWARE, null_mut(), 0, &feature_level, 1,
+            D3D11CreateDeviceAndSwapChain(null_mut(), D3D_DRIVER_TYPE_HARDWARE, null_mut(), D3D11_CREATE_DEVICE_DEBUG, null_mut(), 0,
             D3D11_SDK_VERSION, &swap_chain_desc, &mut swap_chain_ptr, &mut device_ptr, null_mut(), &mut device_context_ptr);
 
             let swap_chain = Box::from_raw(swap_chain_ptr);
@@ -135,14 +146,27 @@ impl Renderer {
         };
 
         unsafe {
-            (*scene.device_context).ClearRenderTargetView(scene.render_target, &[0.3, 0.5, 0., 1.]);
+            (*scene.device_context).ClearRenderTargetView(scene.render_target, &[0.0, 0.0, 0., 1.]);
+            (*scene.device_context).OMSetRenderTargets(1, &self.render_target, null_mut());
+            let viewport = D3D11_VIEWPORT {
+                TopLeftX: 0.0,
+                TopLeftY: 0.0,
+                Width: 900.0,
+                Height: 900.0,
+                MinDepth: 0.0,
+                MaxDepth: 1.0
+            };
+            (*scene.device_context).RSSetViewports(1, &viewport);
         }
         return Some(scene);
     }
 
     pub fn end_scene(&self, scene: Scene) {
         unsafe {
-            self.swap_chain.Present(1, 0);
+            let result = self.swap_chain.Present(1, 0);
+            if FAILED(result) {
+                panic!("Failed to present swap chain {:x}", result);
+            }
         }
     }
 }
@@ -155,131 +179,189 @@ pub struct Scene {
 
 impl Scene {
     pub fn draw_indexed(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
+        unsafe {
+            (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            (*self.device_context).DrawIndexed(num_indices as u32, 0, 0);
+        }
     }
 
     pub fn draw_tri_strip(&self, num_verts: u64) {
-
+        unsafe {
+            (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            (*self.device_context).Draw(num_verts as u32, 0);
+        }
     }
 
     pub fn draw_triangles(&self, num_verts: u64) {
-
-    }
-}
-
-pub mod buffers {
-    pub use crate::platform::d3d::{Renderer, Scene};
-    use winapi::um::d3d11::*;
-    use std::mem;
-    use std::ptr::null_mut;
-
-    #[derive(Debug)]
-    pub struct VertexBuffer {
-
-    }
-
-    impl VertexBuffer {
-        pub fn new(renderer: &Renderer, offset: u32, data: Vec<f32>) -> VertexBuffer {
-
-            unsafe {
-                let vertex_buffer_desc = D3D11_BUFFER_DESC {
-                    ByteWidth: 3 * data.len() as u32,
-                    Usage: D3D11_USAGE_DEFAULT,
-                    BindFlags: D3D11_BIND_VERTEX_BUFFER,
-                    CPUAccessFlags: 0,
-                    MiscFlags: 0,
-                    StructureByteStride: 0
-                };
-                let mut buffer: ID3D11Buffer = mem::zeroed();
-                let mut buffer_ptr: *mut ID3D11Buffer = &mut buffer;
-                (*renderer.device).CreateBuffer(&vertex_buffer_desc, null_mut(), &mut buffer_ptr);
-            }
-            VertexBuffer {}
-        }
-
-        pub fn update_data(&self, data: Vec<f32>) {
-
-        }
-
-        pub fn bind(&self, scene: &Scene) {
-
-        }
-
-        pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
-
-        }
-    }
-
-    #[derive(Debug)]
-    pub struct FragmentBuffer {
-
-    }
-
-    impl FragmentBuffer {
-        pub fn new(renderer: &Renderer, offset: u32, data: Vec<f32>) -> FragmentBuffer {
-            FragmentBuffer {}
-        }
-
-        pub fn update_data(&mut self, data: Vec<f32>) {
-
-        }
-
-        pub fn bind(&self, scene: &Scene) {
-
-        }
-    }
-
-    #[derive(Debug)]
-    pub struct IndexBuffer {
-
-    }
-
-    impl IndexBuffer {
-        pub fn new(renderer: &Renderer, data: Vec<i32>) -> IndexBuffer {
-            IndexBuffer {}
+        unsafe {
+            (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            (*self.device_context).Draw(num_verts as u32, 0);
         }
     }
 }
 
-pub mod shader {
-    pub use crate::platform::d3d::{Renderer, Scene};
+pub mod buffers;
 
-    #[derive(Debug)]
-    pub struct Shader {
-
-    }
-
-    impl Shader {
-        pub fn new(renderer: &Renderer, vertex_file: &str, fragment_file: &str) -> Shader {
-            Shader {}
-        }
-
-        pub fn bind(&self, scene: &Scene) {
-
-        }
-    }
-}
+pub mod shader;
 
 pub mod texture {
     pub use crate::platform::d3d::{Renderer, Scene};
     pub use crate::png::PNG;
     pub use crate::bmp::Bitmap;
+    use winapi::um::d3d11::{ID3D11VertexShader, ID3D11PixelShader, D3D11_INPUT_ELEMENT_DESC, D3D11_INPUT_PER_VERTEX_DATA, ID3D11InputLayout, D3D11_TEXTURE2D_DESC};
+    use winapi::shared::dxgi::*;
+    use winapi::shared::dxgiformat::*;
+    use winapi::shared::dxgitype::*;
+    use winapi::um::d3d11::*;
+    use std::mem;
+    use winapi::_core::ptr::null_mut;
+    use winapi::shared::winerror::FAILED;
+    use winapi::um::d3dcommon::{D3D11_SRV_DIMENSION_BUFFER, D3D11_SRV_DIMENSION_TEXTURE2D};
 
     #[derive(Debug)]
     pub struct RenderableTexture {
-
+        texture: *mut ID3D11ShaderResourceView,
+        sampler: *mut ID3D11SamplerState,
     }
 
     impl RenderableTexture {
         pub fn new(renderer: &Renderer, bmp: Bitmap) -> RenderableTexture {
-            RenderableTexture {}
+            let texture_desc = D3D11_TEXTURE2D_DESC {
+                Width: bmp.header.width,
+                Height: bmp.header.height,
+                MipLevels: 1,
+                ArraySize: 1,
+                Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                SampleDesc: DXGI_SAMPLE_DESC {
+                    Count: 1,
+                    Quality: 0
+                },
+                Usage: D3D11_USAGE_DEFAULT,
+                BindFlags: D3D11_BIND_SHADER_RESOURCE,
+                CPUAccessFlags: 0,
+                MiscFlags: 0
+            };
+            unsafe {
+                let contents = Box::new(bmp.raw_contents());
+                let subresource_data = D3D11_SUBRESOURCE_DATA {
+                    pSysMem: mem::transmute(contents.as_ptr()),
+                    SysMemPitch: bmp.header.width * 4,
+                    SysMemSlicePitch: 0
+                };
+
+                let mut texture: Box<ID3D11Texture2D> = Box::new(mem::zeroed());
+                let mut texture_ptr: *mut ID3D11Texture2D = Box::into_raw(texture);
+                let result = (*renderer.device).CreateTexture2D(&texture_desc, &subresource_data, &mut texture_ptr);
+                if FAILED(result) {
+                    panic!("Failed to create texture {:x}", result);
+                }
+
+                let mut resource_view: Box<ID3D11ShaderResourceView> = Box::new(mem::zeroed());
+                let mut resource_view_ptr: *mut ID3D11ShaderResourceView = Box::into_raw(resource_view);
+                let mut shader_desc: D3D11_SHADER_RESOURCE_VIEW_DESC_u = mem::zeroed();
+                shader_desc.Texture2D_mut().MipLevels = 1;
+                let mut resource_view_desc = D3D11_SHADER_RESOURCE_VIEW_DESC {
+                    Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                    ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
+                    u: shader_desc,
+                };
+                let result = (*renderer.device).CreateShaderResourceView(mem::transmute(texture_ptr), &resource_view_desc, &mut resource_view_ptr);
+                if FAILED(result) {
+                    panic!("Failed to create shader resource view {:x}", result);
+                }
+
+                let mut sampler_desc = D3D11_SAMPLER_DESC {
+                    Filter: D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+                    AddressU: D3D11_TEXTURE_ADDRESS_WRAP,
+                    AddressV: D3D11_TEXTURE_ADDRESS_WRAP,
+                    AddressW: D3D11_TEXTURE_ADDRESS_WRAP,
+                    MipLODBias: 0.0,
+                    MaxAnisotropy: 0,
+                    ComparisonFunc: 0,
+                    BorderColor: [0., 0., 0., 0.],
+                    MinLOD: 0.0,
+                    MaxLOD: 0.0
+                };
+                let mut sampler: Box<ID3D11SamplerState> = Box::new(mem::zeroed());
+                let mut sampler_ptr: *mut ID3D11SamplerState = Box::into_raw(sampler);
+                let result = (*renderer.device).CreateSamplerState(&sampler_desc, &mut sampler_ptr);
+
+                RenderableTexture {texture: resource_view_ptr, sampler: sampler_ptr}
+            }
         }
 
         pub fn new_from_png(renderer: &Renderer, png: PNG) -> RenderableTexture {
-            RenderableTexture {}
+            let texture_desc = D3D11_TEXTURE2D_DESC {
+                Width: png.header_chunk.width,
+                Height: png.header_chunk.height,
+                MipLevels: 1,
+                ArraySize: 1,
+                Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                SampleDesc: DXGI_SAMPLE_DESC {
+                    Count: 1,
+                    Quality: 0
+                },
+                Usage: D3D11_USAGE_DEFAULT,
+                BindFlags: D3D11_BIND_SHADER_RESOURCE,
+                CPUAccessFlags: 0,
+                MiscFlags: 0
+            };
+            unsafe {
+                let subresource_data = D3D11_SUBRESOURCE_DATA {
+                    pSysMem: mem::transmute(png.data.as_ptr()),
+                    SysMemPitch: png.header_chunk.width * 4,
+                    SysMemSlicePitch: 0
+                };
+
+                let mut texture: Box<ID3D11Texture2D> = Box::new(mem::zeroed());
+                let mut texture_ptr: *mut ID3D11Texture2D = Box::into_raw(texture);
+                let result = (*renderer.device).CreateTexture2D(&texture_desc, &subresource_data, &mut texture_ptr);
+                if FAILED(result) {
+                    panic!("Failed to create texture");
+                }
+
+                let mut resource_view: Box<ID3D11ShaderResourceView> = Box::new(mem::zeroed());
+                let mut resource_view_ptr: *mut ID3D11ShaderResourceView = Box::into_raw(resource_view);
+                let mut shader_desc: D3D11_SHADER_RESOURCE_VIEW_DESC_u = mem::zeroed();
+                shader_desc.Texture2D_mut().MipLevels = 1;
+                let mut resource_view_desc = D3D11_SHADER_RESOURCE_VIEW_DESC {
+                    Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                    ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
+                    u: shader_desc,
+                };
+                let result = (*renderer.device).CreateShaderResourceView(mem::transmute(texture_ptr), &resource_view_desc, &mut resource_view_ptr);
+                if FAILED(result) {
+                    panic!("Failed to create shader resource view {:x}", result);
+                }
+
+                let mut sampler_desc = D3D11_SAMPLER_DESC {
+                    Filter: D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+                    AddressU: D3D11_TEXTURE_ADDRESS_WRAP,
+                    AddressV: D3D11_TEXTURE_ADDRESS_WRAP,
+                    AddressW: D3D11_TEXTURE_ADDRESS_WRAP,
+                    MipLODBias: 0.0,
+                    MaxAnisotropy: 0,
+                    ComparisonFunc: 0,
+                    BorderColor: [0., 0., 0., 0.],
+                    MinLOD: 0.0,
+                    MaxLOD: 0.0
+                };
+                let mut sampler: Box<ID3D11SamplerState> = Box::new(mem::zeroed());
+                let mut sampler_ptr: *mut ID3D11SamplerState = Box::into_raw(sampler);
+                let result = (*renderer.device).CreateSamplerState(&sampler_desc, &mut sampler_ptr);
+                if FAILED(result) {
+                    panic!("Failed to create sampler state");
+                }
+
+                RenderableTexture {texture: resource_view_ptr, sampler: sampler_ptr}
+            }
         }
 
         pub fn bind(&self, scene: &Scene) {
-
+            unsafe {
+                (*scene.device_context).PSSetShaderResources(0, 1, &self.texture);
+                (*scene.device_context).PSSetSamplers(0, 1, &self.sampler);
+            }
         }
     }
 }

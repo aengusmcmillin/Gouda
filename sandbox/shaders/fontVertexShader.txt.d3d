@@ -1,0 +1,12 @@
+struct VSOut {
+    float2 texCoord : TEXCOORD;
+    float4 position : SV_POSITION;
+};
+
+VSOut main(float4 position : Position, float2 tex : TexCoord)
+{
+    VSOut vso;
+    vso.position = float4(position.x, position.y, 0.0f, 1.0f);
+    vso.texCoord = tex;
+    return vso;
+}
