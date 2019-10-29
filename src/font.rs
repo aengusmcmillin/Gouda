@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
-use crate::rendering::buffers::{VertexBuffer, FragmentBuffer};
+use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
 use std::rc::Rc;
 use crate::rendering::texture::RenderableTexture;
 use crate::rendering::Scene;
@@ -15,8 +15,8 @@ pub struct TextMeshCreator {
 }
 
 pub struct TextMeshData {
-    pub positions: VertexBuffer,
-    pub texture_coords: VertexBuffer,
+    pub positions: VertexBuffer<f32>,
+    pub texture_coords: VertexBuffer<f32>,
 }
 
 #[derive(Debug)]
@@ -24,16 +24,14 @@ pub struct TextDrawable {
     pub text: String,
     pub font_size: u32,
     pub font: Rc<Font>,
-    pub positions: VertexBuffer,
-    pub texture_coords: VertexBuffer,
+    pub vertices: VertexBuffer<[f32; 6]>,
     pub shader: Shader,
-    pub color: FragmentBuffer,
+    pub color: FragmentConstantBuffer<[f32; 4]>,
 }
 
 impl TextDrawable {
     pub fn new(renderer: &Renderer, position: [f32; 2], font: Rc<Font>, text: String, font_size: f32) -> Self {
-        let mut positions = vec![];
-        let mut texture_coords = vec![];
+        let mut vertices = vec![];
 
         let mut cursor = 0.;
         let mut base = position[1];
@@ -51,35 +49,12 @@ impl TextDrawable {
             let left = start + cursor + character.x_offset as f32 * scaling;
             let right = start + cursor + character.x_offset as f32 * scaling + character.width as f32 * scaling;
 
-            positions.push(left);
-            positions.push(top);
-            texture_coords.push(character.x);
-            texture_coords.push(character.y);
-
-            positions.push(right);
-            positions.push(top);
-            texture_coords.push(character.x + character.width);
-            texture_coords.push(character.y);
-
-            positions.push(left);
-            positions.push(bottom);
-            texture_coords.push(character.x);
-            texture_coords.push(character.y + character.height);
-
-            positions.push(left);
-            positions.push(bottom);
-            texture_coords.push(character.x);
-            texture_coords.push(character.y + character.height);
-
-            positions.push(right);
-            positions.push(top);
-            texture_coords.push(character.x + character.width);
-            texture_coords.push(character.y);
-
-            positions.push(right);
-            positions.push(bottom);
-            texture_coords.push(character.x + character.width);
-            texture_coords.push(character.y + character.height);
+            vertices.push([left, top, character.x as f32, character.y as f32]);
+            vertices.push([right, top, (character.x + character.width) as f32, character.y as f32]);
+            vertices.push([left, bottom, character.x as f32, (character.y + character.height) as f32]);
+            vertices.push([left, bottom, character.x as f32, (character.y + character.height) as f32]);
+            vertices.push([right, top, (character.x + character.width) as f32, character.y as f32]);
+            vertices.push([right, bottom, (character.x + character.width) as f32, (character.y + character.height) as f32]);
 
             cursor += character.xadvance as f32 * scaling;
 
@@ -89,25 +64,23 @@ impl TextDrawable {
             }
         }
 
-        let mut adjusted_tex_coords = vec![];
-        for tex_coord in texture_coords {
-            adjusted_tex_coords.push(tex_coord as f32 / 512.);
+        let mut adjusted_vertices = vec![];
+        for [x, y, u, v] in vertices {
+            println!("{} {}", u / 512., v / 512.);
+            adjusted_vertices.push([x, y, 0.0, 1.0, u / 512., v / 512.]);
         }
 
-        let positions = VertexBuffer::new(renderer, 0, positions);
-        let texture_coords = VertexBuffer::new(renderer, 1, adjusted_tex_coords);
+        let vertices = VertexBuffer::new(renderer, 0, adjusted_vertices);
 
+        let shader = Shader::new(renderer, true, "shaders/fontVertexShader.txt", "shaders/fontFragmentShader.txt");
 
-        let shader = Shader::new(renderer, "shaders/fontShader.txt", "shaders/fontShader.txt");
-
-        let color = FragmentBuffer::new(renderer, 0, vec![0.0, 0.0, 0.0]);
+        let color = FragmentConstantBuffer::new(renderer, 0, vec!([1.0, 1.0, 1.0, 0.0]));
 
         return TextDrawable {
             text,
             font_size: font_size as u32,
             font,
-            positions,
-            texture_coords,
+            vertices,
             shader,
             color,
         }
@@ -115,8 +88,7 @@ impl TextDrawable {
 
     pub fn draw(&self, scene: &Scene) {
         self.shader.bind(scene);
-        self.positions.bind(scene);
-        self.texture_coords.bind(scene);
+        self.vertices.bind(scene);
         self.font.texture.bind(scene);
         self.color.bind(scene);
         scene.draw_triangles((self.text.len() * 6) as u64);

@@ -22,7 +22,7 @@ impl IndexBuffer {
 }
 
 #[derive(Debug)]
-pub struct FragmentBuffer {
+pub struct FragmentConstantBuffer {
     data: Buffer,
     offset: u64,
 }
@@ -42,9 +42,9 @@ fn update_buffer(buffer: &Buffer, mut data: Vec<f32>) {
     };
 }
 
-impl FragmentBuffer {
-    pub fn new(renderer: &Renderer, offset: u64, data: Vec<f32>) -> FragmentBuffer {
-        return FragmentBuffer {
+impl FragmentConstantBuffer {
+    pub fn new(renderer: &Renderer, offset: u64, data: Vec<f32>) -> FragmentConstantBuffer {
+        return FragmentConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
         }

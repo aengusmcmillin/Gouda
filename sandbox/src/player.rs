@@ -32,7 +32,7 @@ impl Player {
     pub fn set_pos(&mut self, new_x: f32, new_y: f32) {
         self.x = new_x;
         self.y = new_y;
-        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
+//        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
     }
 
     pub fn move_pos(&mut self, dx: f32, dy: f32) {

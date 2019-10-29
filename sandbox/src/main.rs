@@ -1,7 +1,7 @@
 use gouda::{Gouda, GameLogic};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity};
 use gouda::rendering::{
-    Scene, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
+    Scene, drawable::TestDrawable, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
 use std::rc::Rc;
 use std::ops::Deref;
 use gouda::input::{LetterKeys, GameInput};
@@ -41,10 +41,10 @@ impl Monster {
         ecs.build_entity().add(Monster {drawable: monster_drawable, x: x_pos, y: y_pos});
     }
 
-    pub fn set_pos(&mut self, new_x: f32, new_y: f32) {
+    pub fn set_pos(&mut self, renderer: &Renderer, new_x: f32, new_y: f32) {
         self.x = new_x;
         self.y = new_y;
-        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
+        self.drawable.translate(renderer, [self.x, self.y, 0.], [0.3, 0.3, 1.]);
     }
 }
 
@@ -70,7 +70,8 @@ struct ZoomMutation {
 
 impl Mutation for ZoomMutation {
     fn apply(&self, ecs: &mut ECS) {
-        ecs.write_res::<Camera>().change_width(self.dw);
+        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
+        ecs.write_res::<Camera>().change_width(&renderer, self.dw);
     }
 }
 
@@ -155,10 +156,12 @@ fn monster_spawn_system(ecs: &ECS) -> Mutations {
     return mutations;
 }
 
-struct Game {}
+struct Game {
+    test: Option<TestDrawable>,
+}
 
 impl Game {
-    pub fn new() -> Self { Game {} }
+    pub fn new() -> Self { Game {test: None} }
 }
 
 impl GameLogic for Game {
@@ -175,6 +178,7 @@ impl GameLogic for Game {
         ecs.add_system(Box::new(player_move_system));
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(monster_spawn_system));
+        ecs.add_system(Box::new(camera_scroll_system));
 
         // Spawn waves of monsters
         // Handle pathfinding
@@ -185,6 +189,7 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
+        self.test = Some(TestDrawable::new(renderer));
 
         let tilemap = Tilemap::create(ecs);
         ecs.add_res(tilemap);
@@ -225,10 +230,10 @@ impl GameLogic for Game {
         for (tile, e) in ecs.read1::<Tile>() {
             tile.draw(&scene, &camera);
             if tile.x == pos[0] as i32 && tile.y == pos[1] as i32 {
-                cursor.draw_at_pos(&scene, &camera, [pos[0], pos[1], 0.]);
+                let renderer = ecs.read_res::<Rc<Renderer>>();
+                cursor.draw_at_pos(&renderer, &scene, &camera, [pos[0], pos[1], 0.]);
             }
         }
-
         for (monster, e) in ecs.read1::<Monster>() {
             monster.drawable.draw_with_projection(&scene, &camera.projection_buffer);
         }

@@ -1,0 +1,16 @@
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 texCoord;
+};
+
+fragment float4 fragment_main(VertexOut interpolated [[stage_in]],
+                                constant float3 *color [[buffer(0)]],
+                                texture2d<float> tex2D [[ texture(0) ]])
+{
+    constexpr sampler textureSampler (filter::linear,
+                                      mip_filter::linear);
+    float alpha = tex2D.sample(textureSampler, interpolated.texCoord)[2];
+    return float4(color[0][0], color[0][1], color[0][2], alpha);
+}

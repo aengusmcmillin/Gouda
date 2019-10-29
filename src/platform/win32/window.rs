@@ -1,7 +1,7 @@
 extern crate winapi;
 
 use crate::window::{GameWindowImpl, WindowProps};
-use crate::input::GameInput;
+use crate::input::{GameInput, GameButtonState, SpecialKeys};
 use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::_core::ptr::null_mut;
 use winapi::um::winuser::{WNDCLASSW, WNDCLASSEXA, CS_HREDRAW, CS_VREDRAW, CS_OWNDC, MessageBoxA, RegisterClassW, CW_USEDEFAULT, WS_OVERLAPPEDWINDOW, WS_VISIBLE, CreateWindowExW};
@@ -16,9 +16,10 @@ use winapi::shared::windef::{POINT};
 use self::winapi::um::libloaderapi::{LoadLibraryW, GetProcAddress};
 use self::winapi::shared::minwindef::{__some_function, DWORD};
 use std::mem::transmute;
-use self::winapi::um::winuser::{MSG, DefWindowProcW, WS_SYSMENU, WS_MINIMIZEBOX, WS_CAPTION, ShowWindow, SW_SHOW, PeekMessageW, PM_REMOVE, TranslateMessage, DispatchMessageW, WM_CLOSE, WM_KEYDOWN, WM_KEYUP, WM_CHAR, WM_LBUTTONDOWN, AdjustWindowRect};
+use self::winapi::um::winuser::*;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 use winapi::shared::dxgi::CreateDXGIFactory;
+use crate::platform::win32::win32_input::{win32_process_keyboard, win32_process_keyboard_message};
 
 trait Empty {
     fn empty() -> Self;
@@ -43,48 +44,77 @@ impl Empty for POINT {
     }
 }
 
+
 pub struct Window {
     pub hwnd: HWND,
     props: WindowProps,
+    input: GameInput,
 }
 
 impl Window {
     pub fn new(props: WindowProps) -> Window {
         let window = create_window("GoudaWindowClass", props.title.as_str(), props.width as u32, props.height as u32).unwrap();
+
+        let mut input = GameInput::default();
+        input.seconds_to_advance_over_update = props.target_ms_per_frame / 1000.;
+
         unsafe {ShowWindow(window, SW_SHOW)};
         Self {
             hwnd: window,
             props,
+            input,
         }
     }
 }
+
 impl GameWindowImpl for Window {
     fn capture_input(&mut self) -> GameInput {
+        self.input = GameInput::from(&self.input);
         let mut msg = MSG::empty();
         while unsafe {PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) != 0} {
             match msg.message {
-                WM_KEYDOWN => {
-                    println!("Keydown {}", msg.wParam as u8 as char);
+                WM_MOUSEMOVE => {
+                    let x = GET_X_LPARAM(msg.lParam);
+                    let y = GET_Y_LPARAM(msg.lParam);
+                    self.input.mouse.x = x;
+                    self.input.mouse.y = y;
                 }
-                WM_KEYUP => {
-
+                WM_LBUTTONDOWN | WM_LBUTTONUP => {
+                    let is_down = msg.message == WM_LBUTTONDOWN;
+                    win32_process_keyboard_message(&mut self.input.mouse.buttons[0], is_down);
                 }
-                WM_CHAR => {
-
+                WM_MBUTTONDOWN | WM_MBUTTONUP => {
+                    let is_down = msg.message == WM_MBUTTONDOWN;
+                    win32_process_keyboard_message(&mut self.input.mouse.buttons[1], is_down);
                 }
-                WM_LBUTTONDOWN => {
-
+                WM_RBUTTONDOWN | WM_RBUTTONUP => {
+                    let is_down = msg.message == WM_RBUTTONDOWN;
+                    win32_process_keyboard_message(&mut self.input.mouse.buttons[2], is_down);
+                }
+                WM_XBUTTONDOWN | WM_XBUTTONUP => {
+                    let is_down = msg.message == WM_XBUTTONDOWN;
+                    let button = GET_XBUTTON_WPARAM(msg.wParam);
+                    if button == XBUTTON1 {
+                        win32_process_keyboard_message(&mut self.input.mouse.buttons[3], is_down);
+                    } else if button == XBUTTON2 {
+                        win32_process_keyboard_message(&mut self.input.mouse.buttons[4], is_down);
+                    }
+                }
+                WM_SYSKEYDOWN | WM_SYSKEYUP | WM_KEYDOWN | WM_KEYUP => {
+                    let vkcode = msg.wParam as i32;
+                    let was_down = (msg.lParam & (1 << 30)) != 0;
+                    let is_down = (msg.lParam & (1 << 31)) == 0;
+                    win32_process_keyboard(&mut self.input.keyboard, vkcode, was_down, is_down);
                 }
                 _ => {
-
+                    unsafe {
+                        TranslateMessage(&msg);
+                        DispatchMessageW(&msg);
+                    }
                 }
             }
-            unsafe {
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-            }
         }
-        return GameInput::new();
+        return self.input.clone();
     }
 
     fn get_width(&self) -> usize {

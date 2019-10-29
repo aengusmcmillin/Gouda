@@ -1,6 +1,7 @@
 #![cfg(target_os = "windows")]
 
 pub mod window;
+pub mod win32_input;
 
 use crate::window::{GameWindow, WindowProps};
 use crate::platform::d3d::Renderer;

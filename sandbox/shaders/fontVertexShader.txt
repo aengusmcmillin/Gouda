@@ -14,13 +14,3 @@ vertex VertexOut vertex_main(constant float2 *position [[buffer(0)]],
     VertexOut.texCoord = texCoords[vid];
     return VertexOut;
 }
-
-fragment float4 fragment_main(VertexOut interpolated [[stage_in]],
-                                constant float3 *color [[buffer(0)]],
-                                texture2d<float> tex2D [[ texture(0) ]])
-{
-    constexpr sampler textureSampler (filter::linear,
-                                      mip_filter::linear);
-    float alpha = tex2D.sample(textureSampler, interpolated.texCoord)[2];
-    return float4(color[0][0], color[0][1], color[0][2], alpha);
-}
