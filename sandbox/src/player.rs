@@ -29,14 +29,14 @@ impl Player {
         self.drawable.draw_with_projection(&scene, &camera.projection_buffer)
     }
 
-    pub fn set_pos(&mut self, new_x: f32, new_y: f32) {
+    pub fn set_pos(&mut self, renderer: &Renderer, new_x: f32, new_y: f32) {
         self.x = new_x;
         self.y = new_y;
-//        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
+        self.drawable.translate(renderer, [self.x, self.y, 0.], [0.3, 0.3, 1.]);
     }
 
-    pub fn move_pos(&mut self, dx: f32, dy: f32) {
-        self.set_pos(self.x + dx, self.y + dy);
+    pub fn move_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
+        self.set_pos(renderer, self.x + dx, self.y + dy);
     }
 }
 
@@ -48,8 +48,9 @@ struct MoveMutation {
 
 impl Mutation for MoveMutation {
     fn apply(&self, ecs: &mut ECS) {
+        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
         let player = ecs.write::<Player>(&self.entity).unwrap();
-        player.move_pos(self.dx, self.dy);
+        player.move_pos(&renderer, self.dx, self.dy);
     }
 }
 
