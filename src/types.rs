@@ -18,8 +18,6 @@ pub struct Bounds {
     pub y: i32,
     pub w: i32,
     pub h: i32,
-    pub pos: WorldPosition,
-    pub size: Size,
 }
 
 #[derive(Debug, Clone, Copy)]

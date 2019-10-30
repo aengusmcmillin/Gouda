@@ -6,7 +6,7 @@ struct VertexOut {
 };
 
 fragment float4 fragment_main(VertexOut interpolated [[stage_in]],
-                                constant float3 *color [[buffer(0)]],
+                                constant float4 *color [[buffer(0)]],
                                 texture2d<float> tex2D [[ texture(0) ]])
 {
     constexpr sampler textureSampler (filter::linear,
