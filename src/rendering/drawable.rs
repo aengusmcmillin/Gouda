@@ -1,24 +1,23 @@
 use crate::rendering::shader::Shader;
-use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentBuffer};
+use crate::rendering::buffers::{VertexBuffer, IndexBuffer, VertexConstantBuffer, FragmentConstantBuffer};
 use crate::rendering::{Scene, Renderer};
 use crate::input::{GameInput, LetterKeys};
 use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix, Mat4x4};
 use crate::rendering::texture::RenderableTexture;
 
 pub trait Drawable {
-    fn update(&mut self, input: &GameInput);
+    fn update(&mut self, renderer: &Renderer, input: &GameInput);
     fn bind(&self, scene: &Scene);
     fn draw(&self, scene: &Scene);
 }
 
 #[derive(Debug)]
 pub struct TextureDrawable {
-    pub vertex_buffer: VertexBuffer,
-    pub texture_buffer: VertexBuffer,
+    pub vertex_buffer: VertexBuffer<[f32; 6]>,
     pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexBuffer,
+    pub transform_buffer: VertexConstantBuffer<f32>,
     pub shader: Shader,
-    pub identity_buffer: VertexBuffer,
+    pub identity_buffer: VertexConstantBuffer<f32>,
     pub texture: RenderableTexture,
 }
 
@@ -28,41 +27,31 @@ impl TextureDrawable {
             renderer,
             0,
             vec![
-                -1., 1., 0., 1.,
-                -1., -1., 0., 1.,
-                1., -1., 0., 1.,
-                1., 1., 0., 1.,
-            ]);
-
-        let tb = VertexBuffer::new(
-            renderer,
-            1,
-            vec![
-                0., 0.,
-                0., 1.,
-                1., 1.,
-                1., 0.,
+                [-1., -1., 0., 1., 0., 1.], // bottom left
+                [1., -1., 0., 1., 1., 1.], // bottom right
+                [1., 1., 0., 1., 1., 0.], // top right
+                [-1., 1., 0., 1., 0., 0.], // top left
             ]);
 
         let ib = IndexBuffer::new(
             renderer,
             vec![
-                0, 1, 3,
-                3, 1, 2,
+                0, 3, 2,
+                0, 1, 2,
             ]);
 
         let shader = Shader::new(
             renderer,
-            "shaders/textureShader.txt",
-            "shaders/textureShader.txt");
+            true,
+            "shaders/textureVertexShader.txt",
+            "shaders/textureFragmentShader.txt");
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
-        let identity_buffer = VertexBuffer::new(renderer, 3,Mat4x4::identity().to_vec());
+        let transform_buffer = VertexConstantBuffer::new(renderer, 0, transform_mat.raw_data().to_vec());
+        let identity_buffer = VertexConstantBuffer::new(renderer, 1,Mat4x4::identity().to_vec());
 
         return Self {
             vertex_buffer: vb,
-            texture_buffer: tb,
             index_buffer: ib,
             transform_buffer,
             shader,
@@ -71,13 +60,13 @@ impl TextureDrawable {
         }
     }
 
-    pub fn translate(&self, position: [f32; 3], scale: [f32; 3]) {
+    pub fn translate(&self, renderer: &Renderer, position: [f32; 3], scale: [f32; 3]) {
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
+        self.transform_buffer.update_data(renderer, transform_mat.to_vec());
     }
 
-    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexBuffer) {
-        camera_projection.bind_to_offset(scene, 3);
+    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer<f32>) {
+        camera_projection.bind_to_offset(scene, 1);
         self.draw_impl(scene);
     }
 
@@ -89,22 +78,87 @@ impl TextureDrawable {
     fn draw_impl(&self, scene: &Scene) {
         self.shader.bind(scene);
         self.vertex_buffer.bind(scene);
-        self.texture_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.texture.bind(scene);
+        self.index_buffer.bind(scene);
 
         scene.draw_indexed(6, &self.index_buffer);
     }
 }
 
+pub struct TestDrawable {
+    pub vertex_buffer: VertexBuffer<[f32; 4]>,
+    pub transform_buffer: VertexConstantBuffer<f32>,
+    pub transform_buffer2: VertexConstantBuffer<f32>,
+    pub color_buffer: FragmentConstantBuffer<f32>,
+    pub index_buffer: IndexBuffer,
+    pub shader: Shader,
+}
+
+impl TestDrawable {
+    pub fn new(renderer: &Renderer) -> Self {
+        let vb = VertexBuffer::new(
+            renderer,
+            0,
+            vec![
+                [-0.5, -0.5, 0., 1.],
+                [0.5, -0.5, 0., 1.],
+                [0.5, 0.5, 0., 1.],
+                [-0.5, 0.5, 0., 1.],
+            ]);
+
+        let shader = Shader::new(
+            renderer,
+            false,
+            "shaders/testVertexShader.txt",
+            "shaders/testFragmentShader.txt");
+
+        let ib = IndexBuffer::new(
+            renderer,
+            vec![
+                0, 1, 2, 2, 3, 0
+            ]);
+
+        let transform_mat = create_transformation_matrix([0.5, 0., 0.], [0., 0., 0.], [1., 1., 1.]);
+        let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
+
+        let transform_mat2 = create_transformation_matrix([0.0, 0.5, 0.], [0., 0., 0.], [1., 1., 1.]);
+        let transform_buffer2 = VertexConstantBuffer::new(renderer,1, transform_mat2.raw_data().to_vec());
+
+        let data = [1.0, 0.0, 1.0, 1.0];
+        let color_buffer = FragmentConstantBuffer::new(renderer, 0, data.to_vec());
+
+        return Self {
+            vertex_buffer: vb,
+            transform_buffer,
+            transform_buffer2,
+            color_buffer,
+            index_buffer: ib,
+            shader,
+        }
+    }
+
+    pub fn draw(&self, scene: &Scene) {
+        self.shader.bind(scene);
+        self.vertex_buffer.bind(scene);
+        self.transform_buffer.bind(scene);
+        self.transform_buffer2.bind(scene);
+        self.index_buffer.bind(scene);
+        self.color_buffer.bind(scene);
+
+        scene.draw_indexed(6, &self.index_buffer);
+    }
+}
+
+
 #[derive(Debug)]
 pub struct QuadDrawable {
-    pub vertex_buffer: VertexBuffer,
+    pub vertex_buffer: VertexBuffer<[f32; 4]>,
     pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexBuffer,
+    pub transform_buffer: VertexConstantBuffer<f32>,
     pub shader: Shader,
-    pub color_buffer: FragmentBuffer,
-    pub identity_buffer: VertexBuffer,
+    pub color_buffer: FragmentConstantBuffer<f32>,
+    pub identity_buffer: VertexConstantBuffer<f32>,
 }
 
 impl QuadDrawable {
@@ -113,36 +167,40 @@ impl QuadDrawable {
             renderer,
             0,
             vec![
-                -1., -1., 0., 1.,
-                1., -1., 0., 1.,
-                1., 1., 0., 1.,
-                -1., 1., 0., 1.,
+                [-1., -1., 0., 1.], // bottom left
+                [1., -1., 0., 1.], // bottom right
+                [1., 1., 0., 1.], // top right
+                [-1., 1., 0., 1.], // top left
             ]);
 
         let ib = IndexBuffer::new(
             renderer,
             vec![
-                0, 1, 2, 2, 3, 0
+                0, 3, 2,
+                0, 1, 2,
             ]);
 
         let shader = if is_gui {
             Shader::new(
                 renderer,
+                false,
                 "shaders/guiVertexShader.txt",
                 "shaders/guiFragmentShader.txt")
         } else {
             Shader::new(
                 renderer,
+                false,
                 "shaders/quadVertexShader.txt",
                 "shaders/quadFragmentShader.txt")
         };
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        let transform_buffer = VertexBuffer::new(renderer,1, transform_mat.raw_data().to_vec());
+        let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
 
-        let color_buffer = FragmentBuffer::new(renderer, 0, vec![color[0], color[1], color[2]]);
+        let data = [color[0], color[1], color[2], 1.0];
+        let color_buffer = FragmentConstantBuffer::new(renderer, 0, data.to_vec());
 
-        let identity_buffer = VertexBuffer::new(renderer, 2, Mat4x4::identity().to_vec());
+        let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
         return Self {
             vertex_buffer: vb,
             index_buffer: ib,
@@ -153,13 +211,13 @@ impl QuadDrawable {
         }
     }
 
-    pub fn translate(&self, position: [f32; 3], scale: [f32; 3]) {
+    pub fn translate(&self, renderer: &Renderer, position: [f32; 3], scale: [f32; 3]) {
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
+        self.transform_buffer.update_data(renderer, transform_mat.to_vec());
     }
 
-    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexBuffer) {
-        camera_projection.bind_to_offset(scene, 2);
+    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer<f32>) {
+        camera_projection.bind_to_offset(scene, 1);
         self.draw_impl(scene);
     }
 
@@ -172,159 +230,17 @@ impl QuadDrawable {
         self.shader.bind(scene);
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
-
+        self.index_buffer.bind(scene);
         self.color_buffer.bind(&scene);
 
         scene.draw_indexed(6, &self.index_buffer);
     }
 }
 
-pub struct CubeDrawable {
-    shader: Shader,
-    vertex_buffer: VertexBuffer,
-    color_buffer: VertexBuffer,
-    transform_buffer: VertexBuffer,
-    projection_buffer: VertexBuffer,
-    view_buffer: VertexBuffer,
-    index_buffer: IndexBuffer,
-    scale: f32,
-    translate: [f32; 3],
-
-    xrot: f32,
-    yrot: f32,
-    zrot: f32,
-}
-
-impl CubeDrawable {
-    pub fn new(renderer: &Renderer, color: [f32; 3], scale: f32, translate: [f32; 3]) -> CubeDrawable {
-        let shader = Shader::new(&renderer, "shaders/vertexShader.txt", "shaders/fragmentShader.txt");
-
-        let position_data = vec![
-            -0.5, 0.5, -0.5, 1.,
-            -0.5, -0.5, -0.5, 1.,
-            0.5, -0.5, -0.5, 1.,
-            0.5, 0.5, -0.5, 1.,
-
-            -0.5, 0.5, 0.5, 1.,
-            -0.5, -0.5, 0.5, 1.,
-            0.5, -0.5, 0.5, 1.,
-            0.5, 0.5, 0.5, 1.,
-
-            0.5, 0.5, -0.5, 1.,
-            0.5, -0.5, -0.5, 1.,
-            0.5, -0.5, 0.5, 1.,
-            0.5, 0.5, 0.5, 1.,
-
-            -0.5, 0.5, -0.5, 1.,
-            -0.5, -0.5, -0.5, 1.,
-            -0.5, -0.5, 0.5, 1.,
-            -0.5, 0.5, 0.5, 1.,
-
-            -0.5, 0.5, 0.5, 1.,
-            -0.5, 0.5, -0.5, 1.,
-            0.5, 0.5, -0.5, 1.,
-            0.5, 0.5, 0.5, 1.,
-
-            -0.5, -0.5, 0.5, 1.,
-            -0.5, -0.5, -0.5, 1.,
-            0.5, -0.5, -0.5, 1.,
-            0.5, -0.5, 0.5, 1.,
-        ];
-        let vertex_buffer = VertexBuffer::new(renderer, 0, position_data);
-
-        let color_data = vec![
-            color[0], color[1], color[2], 1.,
-        ];
-        let color_buffer = VertexBuffer::new(renderer, 1, color_data);
-
-        let transform_mat = create_transformation_matrix([0., 0., 0.], [0., 0., 0.], [1., 1., 1.]);
-        let transform_buffer = VertexBuffer::new(renderer,2, transform_mat.raw_data().to_vec());
-
-        let projection_mat = create_projection_matrix(1., 75., 100., 0.1);
-        let projection_buffer = VertexBuffer::new(renderer, 3, projection_mat.raw_data().to_vec());
-
-        let view_mat = create_view_matrix(0., 0., [0., 0., 0.]);
-        let view_buffer = VertexBuffer::new(renderer, 4, view_mat.raw_data().to_vec());
-
-        let indices = vec![
-            0,1,3,
-            3,1,2,
-            4,5,7,
-            7,5,6,
-            8,9,11,
-            11,9,10,
-            12,13,15,
-            15,13,14,
-            16,17,19,
-            19,17,18,
-            20,21,23,
-            23,21,22,
-        ];
-        let index_buffer = IndexBuffer::new(renderer, indices);
-
-        return CubeDrawable {
-            shader,
-            vertex_buffer,
-            color_buffer,
-            transform_buffer,
-            projection_buffer,
-            view_buffer,
-            index_buffer,
-            scale,
-            translate,
-            xrot: 0.,
-            yrot: 0.,
-            zrot: 0.,
-        };
-    }
-}
-
-impl Drawable for CubeDrawable {
-    fn update(&mut self, input: &GameInput) {
-        let dt = input.seconds_to_advance_over_update;
-        if input.keyboard.letter_down(LetterKeys::W) {
-            self.xrot += 100. * dt;
-        }
-        if input.keyboard.letter_down(LetterKeys::S) {
-            self.xrot -= 100. * dt;
-        }
-        if input.keyboard.letter_down(LetterKeys::A) {
-            self.yrot += 100. * dt;
-        }
-        if input.keyboard.letter_down(LetterKeys::D) {
-            self.yrot -= 100. * dt;
-        }
-        if input.keyboard.letter_down(LetterKeys::Q) {
-            self.zrot += 100. * dt;
-        }
-        if input.keyboard.letter_down(LetterKeys::E) {
-            self.zrot -= 100. * dt;
-        }
-
-        self.xrot = self.xrot % 360.;
-        self.yrot = self.yrot % 360.;
-        self.zrot = self.zrot % 360.;
-        let transform_mat = create_transformation_matrix(self.translate, [self.xrot, self.yrot, self.zrot], [self.scale, self.scale, self.scale]);
-        self.transform_buffer.update_data(transform_mat.to_vec());
-    }
-
-    fn bind(&self, scene: &Scene) {
-        self.shader.bind(&scene);
-        self.vertex_buffer.bind(scene);
-        self.color_buffer.bind(scene);
-        self.transform_buffer.bind(scene);
-        self.projection_buffer.bind(scene);
-        self.view_buffer.bind(scene);
-    }
-
-    fn draw(&self, scene: &Scene) {
-        scene.draw_indexed(36, &self.index_buffer);
-    }
-}
 
 pub struct TriangleDrawable {
     shader: Shader,
-    vertex_buffers: Vec<VertexBuffer>,
+    vertex_buffers: Vec<VertexBuffer<f32>>,
 }
 
 impl TriangleDrawable {
@@ -333,7 +249,7 @@ impl TriangleDrawable {
     pub fn new(renderer: &Renderer) -> TriangleDrawable {
         let position_data = vec![0.0f32, 0.5, 0., 1., -0.5, -0.5, 0., 1., 0.5, -0.5, 0., 1.];
         let color_data = vec![1.0f32, 0., 0., 1., 0., 1., 0., 1., 0., 0., 1., 1.];
-        let shader = Shader::new(&renderer, "shaders/vertexShader.txt", "shaders/fragmentShader.txt");
+        let shader = Shader::new(&renderer, false, "shaders/vertexShader.txt", "shaders/fragmentShader.txt");
         let vbuf = VertexBuffer::new(renderer, 0, position_data);
         let cbuf = VertexBuffer::new(renderer, 1, color_data);
 
@@ -345,7 +261,7 @@ impl TriangleDrawable {
 }
 
 impl Drawable for TriangleDrawable {
-    fn update(&mut self, input: &GameInput) {}
+    fn update(&mut self, renderer: &Renderer, input: &GameInput) {}
 
     fn bind(&self, scene: &Scene) {
         self.shader.bind(&scene);
