@@ -31,6 +31,7 @@ pub struct TextDrawable {
 
 impl TextDrawable {
     pub fn new(renderer: &Renderer, position: [f32; 2], font: Rc<Font>, text: String, font_size: f32) -> Self {
+        println!("{}", text);
         let mut vertices = vec![];
 
         let mut cursor = 0.;

@@ -4,10 +4,14 @@ struct VertexUniforms {
     float4x4 mat;
 };
 
-vertex float4 vertex_main(constant float4 *position [[buffer(0)]],
+struct VertexIn {
+    float4 xy   [[attribute(0)]];
+};
+
+vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
                                  constant VertexUniforms &transformation [[buffer(1)]],
                                  constant VertexUniforms &projection [[buffer(2)]],
                                  uint vid [[vertex_id]])
 {
-    return position[vid] * transformation.mat * projection.mat;
+    return float4(in[vid].xy) * transformation.mat * projection.mat;
 }

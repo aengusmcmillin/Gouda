@@ -1,16 +1,19 @@
 using namespace metal;
 
+struct VertexIn {
+    float4 position   [[attribute(0)]];
+    float2 texCoord   [[attribute(1)]];
+};
+
 struct VertexOut {
     float4 position [[position]];
     float2 texCoord;
 };
 
-vertex VertexOut vertex_main(constant float2 *position [[buffer(0)]],
-                                 constant float2 *texCoords [[buffer(1)]],
-                                 uint vid [[vertex_id]])
+vertex VertexOut vertex_main(VertexIn in [[stage_in]])
 {
     VertexOut VertexOut;
-    VertexOut.position = float4(position[vid][0], position[vid][1], 0.0, 1.0);
-    VertexOut.texCoord = texCoords[vid];
+    VertexOut.position = float4(in.position[0], in.position[1], 0.0, 1.0);
+    VertexOut.texCoord = in.texCoord;
     return VertexOut;
 }

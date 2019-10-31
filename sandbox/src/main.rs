@@ -1,7 +1,7 @@
 use gouda::{Gouda, GameLogic};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity};
 use gouda::rendering::{
-    Scene, drawable::TestDrawable, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
+    Scene, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
 use std::rc::Rc;
 use std::ops::Deref;
 use gouda::input::{LetterKeys, GameInput};
@@ -136,11 +136,10 @@ fn menu_show_system(ecs: &ECS) -> Mutations {
 }
 
 struct Game {
-    test: Option<TestDrawable>,
 }
 
 impl Game {
-    pub fn new() -> Self { Game {test: None} }
+    pub fn new() -> Self { Game {} }
 }
 
 impl GameLogic for Game {
@@ -174,7 +173,6 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        self.test = Some(TestDrawable::new(renderer));
 
         let tilemap = Tilemap::create(ecs);
         ecs.add_res(tilemap);

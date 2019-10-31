@@ -5,11 +5,11 @@ use gouda::rendering::{Renderer, Scene};
 use std::rc::Rc;
 use crate::camera::Camera;
 use gouda::types::WorldPosition;
+use gouda::rendering::texture::RenderableTexture;
 
 #[derive(Debug)]
 pub struct Villager {
     drawable: TextureDrawable,
-    position: WorldPosition,
     x: f32,
     y: f32,
 }
@@ -27,13 +27,13 @@ impl Villager {
         self.drawable.draw_with_projection(&scene, &camera.projection_buffer)
     }
 
-    pub fn set_pos(&mut self, new_x: f32, new_y: f32) {
+    pub fn set_pos(&mut self, renderer: &Renderer, new_x: f32, new_y: f32) {
         self.x = new_x;
         self.y = new_y;
-        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
+        self.drawable.translate(renderer, [self.x, self.y, 0.], [0.3, 0.3, 1.]);
     }
 
-    pub fn move_pos(&mut self, dx: f32, dy: f32) {
-        self.set_pos(self.x + dx, self.y + dy);
+    pub fn move_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
+        self.set_pos(renderer, self.x + dx, self.y + dy);
     }
 }

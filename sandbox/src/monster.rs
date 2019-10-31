@@ -24,14 +24,14 @@ impl Monster {
         self.drawable.draw_with_projection(&scene, &camera.projection_buffer);
     }
 
-    pub fn move_pos(&mut self, dx: f32, dy: f32) {
-        self.set_pos(self.x + dx, self.y + dy);
+    pub fn move_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
+        self.set_pos(renderer, self.x + dx, self.y + dy);
     }
 
-    pub fn set_pos(&mut self, new_x: f32, new_y: f32) {
+    pub fn set_pos(&mut self, renderer: &Renderer, new_x: f32, new_y: f32) {
         self.x = new_x;
         self.y = new_y;
-        self.drawable.translate([self.x, self.y, 0.], [0.3, 0.3, 1.]);
+        self.drawable.translate(renderer, [self.x, self.y, 0.], [0.3, 0.3, 1.]);
     }
 }
 
@@ -41,15 +41,16 @@ pub struct MonsterMoveMutation {
 
 impl Mutation for MonsterMoveMutation {
     fn apply(&self, ecs: &mut ECS) {
+        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
         let monster = ecs.write::<Monster>(&self.monster).unwrap();
         if monster.x > 0.03 {
-            monster.move_pos(-0.06, 0.);
+            monster.move_pos(&renderer, -0.06, 0.);
         } else if monster.x < -0.03 {
-            monster.move_pos(0.06, 0.);
+            monster.move_pos(&renderer, 0.06, 0.);
         } else if monster.y > 1.1 {
-            monster.move_pos(0.0, -0.06);
+            monster.move_pos(&renderer, 0.0, -0.06);
         } else if monster.y < 0.9 {
-            monster.move_pos(0.0, 0.06);
+            monster.move_pos(&renderer, 0.0, 0.06);
         } else {
             println!("Deleting");
             ecs.remove_component::<Monster>(&self.monster);

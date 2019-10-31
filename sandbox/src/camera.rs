@@ -17,7 +17,7 @@ impl Camera {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let mut camera = Camera {
             projection_matrix: Mat4x4::identity(),
-            projection_buffer: VertexConstantBuffer::new(renderer, 0, Mat4x4::identity().to_vec()),
+            projection_buffer: VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec()),
             center: [0., 0.],
             width: 11.,
             aspect: 1.,

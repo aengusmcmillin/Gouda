@@ -1,7 +1,7 @@
 use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
 use crate::platform::metal::buffers::VertexBuffer;
-use crate::platform::metal::buffers::{IndexBuffer, FragmentBuffer};
+use crate::platform::metal::buffers::{IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::platform::metal::shader::Shader;
 use crate::math::{Mat4x4, create_transformation_matrix};
 
@@ -54,12 +54,12 @@ impl GuiComponent {
 
 #[derive(Debug)]
 pub struct GuiDrawable {
-    pub vertex_buffer: VertexBuffer,
+    pub vertex_buffer: VertexBuffer<f32>,
     pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexBuffer,
+    pub transform_buffer: VertexConstantBuffer<f32>,
     pub shader: Shader,
-    pub color_buffer: FragmentBuffer,
-    pub identity_buffer: VertexBuffer,
+    pub color_buffer: FragmentConstantBuffer<f32>,
+    pub identity_buffer: VertexConstantBuffer<f32>,
 }
 
 impl GuiDrawable {
@@ -82,15 +82,16 @@ impl GuiDrawable {
 
         let shader = Shader::new(
             renderer,
+            false,
             "shaders/guiVertexShader.txt",
             "shaders/guiFragmentShader.txt");
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        let transform_buffer = VertexBuffer::new(renderer,1, transform_mat.raw_data().to_vec());
+        let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
 
-        let color_buffer = FragmentBuffer::new(renderer, 0, vec![color[0], color[1], color[2]]);
+        let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2]]);
 
-        let identity_buffer = VertexBuffer::new(renderer, 2, Mat4x4::identity().to_vec());
+        let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
         return Self {
             vertex_buffer: vb,
             index_buffer: ib,

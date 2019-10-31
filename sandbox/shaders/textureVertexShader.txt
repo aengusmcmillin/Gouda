@@ -9,14 +9,18 @@ struct VertexOut {
     float2 texCoord;
 };
 
-vertex VertexOut vertex_main(constant float4 *position [[buffer(0)]],
-                                 constant float2 *texCoords [[buffer(1)]],
-                                 constant VertexUniforms &transformation [[buffer(2)]],
-                                 constant VertexUniforms &projection [[buffer(3)]],
+struct VertexIn {
+    float4 position   [[attribute(0)]];
+    float2 texCoord   [[attribute(1)]];
+};
+
+vertex VertexOut vertex_main(VertexIn in [[stage_in]],
+                                 constant VertexUniforms &transformation [[buffer(1)]],
+                                 constant VertexUniforms &projection [[buffer(2)]],
                                  uint vid [[vertex_id]])
 {
     VertexOut VertexOut;
-    VertexOut.position = position[vid] * transformation.mat * projection.mat;
-    VertexOut.texCoord = texCoords[vid];
+    VertexOut.position = in.position * transformation.mat * projection.mat;
+    VertexOut.texCoord = in.texCoord;
     return VertexOut;
 }

@@ -48,7 +48,7 @@ impl TextureDrawable {
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         let transform_buffer = VertexConstantBuffer::new(renderer, 0, transform_mat.raw_data().to_vec());
-        let identity_buffer = VertexConstantBuffer::new(renderer, 1,Mat4x4::identity().to_vec());
+        let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
 
         return Self {
             vertex_buffer: vb,
