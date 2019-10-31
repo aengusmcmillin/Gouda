@@ -14,8 +14,8 @@ use winapi::um::errhandlingapi::GetLastError;
 use winapi::_core::fmt::{Formatter, Error};
 
 pub struct VertexShader {
-    vertex_shader: Box<ID3D11VertexShader>,
-    input_layout: Box<ID3D11InputLayout>,
+    vertex_shader: *mut ID3D11VertexShader,
+    input_layout: *mut ID3D11InputLayout,
 }
 
 impl VertexShader {
@@ -46,7 +46,6 @@ impl VertexShader {
             if FAILED(result) {
                 panic!("Failed to create vertex shader {:x}", result);
             }
-            let vertex_shader = Box::from_raw(vertex_shader_ptr);
 
             let input_layout = if has_textures {
                 let input_desc = [
@@ -75,7 +74,7 @@ impl VertexShader {
                 if FAILED(result) {
                     panic!("Failed to create input layout {:x} {}", result, GetLastError());
                 }
-                Box::from_raw(input_layout_ptr)
+                input_layout_ptr
             } else {
                 let input_desc = [D3D11_INPUT_ELEMENT_DESC {
                     SemanticName: win32_string_short("Position").as_ptr() as *const i8,
@@ -92,10 +91,10 @@ impl VertexShader {
                 if FAILED(result) {
                     panic!("Failed to create input layout {:x} {}", result, GetLastError());
                 }
-                Box::from_raw(input_layout_ptr)
+                input_layout_ptr
             };
             return VertexShader {
-                vertex_shader,
+                vertex_shader: vertex_shader_ptr,
                 input_layout,
             }
         }
@@ -110,7 +109,7 @@ impl VertexShader {
 }
 
 pub struct FragmentShader {
-    fragment_shader: Box<ID3D11PixelShader>,
+    fragment_shader: *mut ID3D11PixelShader,
 }
 
 impl FragmentShader {
@@ -141,8 +140,7 @@ impl FragmentShader {
             if FAILED(result) {
                 panic!("Failed to create fragment shader {:x}", result);
             }
-            let fragment_shader = Box::from_raw(fragment_shader_ptr);
-            FragmentShader {fragment_shader}
+            FragmentShader {fragment_shader: fragment_shader_ptr}
         }
     }
 

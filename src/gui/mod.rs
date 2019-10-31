@@ -1,8 +1,7 @@
 use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
-use crate::platform::metal::buffers::VertexBuffer;
-use crate::platform::metal::buffers::{IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
-use crate::platform::metal::shader::Shader;
+use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
+use crate::rendering::shader::Shader;
 use crate::math::{Mat4x4, create_transformation_matrix};
 
 #[derive(Debug)]
@@ -89,7 +88,7 @@ impl GuiDrawable {
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
 
-        let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2]]);
+        let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2], 1.0]);
 
         let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
         return Self {
