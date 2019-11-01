@@ -1,6 +1,0 @@
-using namespace metal;
-
-fragment float4 fragment_main( constant float3 &color [[buffer(0)]])
-{
-    return float4(color[0], color[1], color[2], 1.0);
-}
