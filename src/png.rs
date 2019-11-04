@@ -35,22 +35,17 @@ impl PNG {
             let mut data_chunks = vec![];
             loop {
                 let chunk = parse_chunk(&c, i);
-                println!("{}", chunk.chunk_type);
                 i += 12 + chunk.length as usize;
                 if chunk.chunk_type == "IEND" {
                     break;
                 } else if chunk.chunk_type == "IDAT" {
                     data_chunks.push(chunk);
                 } else if chunk.chunk_type == "IHDR" {
-                    for byte in &chunk.chunk_data {
-                        print!{"{:x}", byte};
-                    }
                     let hdrdata = &chunk.chunk_data;
                     let width = u32_from_bytes([hdrdata[0], hdrdata[1], hdrdata[2], hdrdata[3]]);
                     let height = u32_from_bytes([hdrdata[4], hdrdata[5], hdrdata[6], hdrdata[7]]);
                     header.width = width;
                     header.height = height;
-                    println!();
                 }
             }
 
@@ -65,25 +60,66 @@ impl PNG {
             let mut decoder = compress::zlib::Decoder::new(data_bytes.as_slice());
             let mut decompressed = Vec::new();
             let result = decoder.read_to_end(&mut decompressed);
-            match result {
-                Err(E) => {
-                    println!("Error: {}", E)
-                }
-                Ok(count) => {
-                    println!("Count: {}", count)
-                }
+            if let Err(E) = result {
+                println!("Error: {}", E);
             }
-            println!("Decoded length: {}", decompressed.len());
 
             let mut result_bytes = vec![];
             let row_len = (header.width * 4) + 1;
+            let result_row_len = (header.width * 4) as usize;
             for y in 0..header.height {
+                let filter_method = decompressed[(y * row_len) as usize];
                 for x in 0..header.width  {
                     let index = (y * (row_len) + 1 + x * 4) as usize;
-                    result_bytes.push(decompressed[index]);
-                    result_bytes.push(decompressed[index + 1]);
-                    result_bytes.push(decompressed[index + 2]);
-                    result_bytes.push(decompressed[index + 3]);
+                    let rindex = (y * (result_row_len as u32) + x * 4) as usize;
+                    let bpp = 4;
+                    let raw_r = decompressed[index];
+                    let raw_g = decompressed[index + 1];
+                    let raw_b = decompressed[index + 2];
+                    let raw_a = decompressed[index + 3];
+
+                    let (old_raw_r, old_raw_g, old_raw_b, old_raw_a) = if x > 0 {
+                        (result_bytes[rindex - bpp], result_bytes[rindex + 1 - bpp], result_bytes[rindex + 2 - bpp], result_bytes[rindex + 3 - bpp])
+                    } else {
+                        (0, 0, 0, 0)
+                    };
+
+                    let (prior_r, prior_g, prior_b, prior_a) = if y > 0 {
+                        (
+                            result_bytes[rindex - result_row_len],
+                            result_bytes[rindex + 1 - result_row_len],
+                            result_bytes[rindex + 2 - result_row_len],
+                            result_bytes[rindex + 3 - result_row_len]
+                        )
+                    } else {
+                        (0, 0, 0, 0)
+                    };
+
+                    if filter_method == 1 {
+                        result_bytes.push(raw_r.wrapping_add(old_raw_r));
+                        result_bytes.push(raw_g.wrapping_add(old_raw_g));
+                        result_bytes.push(raw_b.wrapping_add(old_raw_b));
+                        result_bytes.push(raw_a.wrapping_add(old_raw_a));
+                    } else if filter_method == 2 {
+                        result_bytes.push(raw_r.wrapping_add(prior_r));
+                        result_bytes.push(raw_g.wrapping_add(prior_g));
+                        result_bytes.push(raw_b.wrapping_add(prior_b));
+                        result_bytes.push(raw_a.wrapping_add(prior_a));
+                    } else if filter_method == 3 {
+                        let f_r = ((old_raw_r.wrapping_add(prior_r)) as f32 / 2.0).floor();
+                        result_bytes.push(f_r as u8);
+                        let f_g = ((old_raw_g.wrapping_add(prior_g)) as f32 / 2.0).floor();
+                        result_bytes.push(f_g as u8);
+                        let f_b = ((old_raw_b.wrapping_add(prior_b)) as f32 / 2.0).floor();
+                        result_bytes.push(f_b as u8);
+                        let f_a = ((old_raw_a.wrapping_add(prior_a)) as f32 / 2.0).floor();
+                        result_bytes.push(f_a as u8);
+                    } else {
+                        result_bytes.push(raw_r);
+                        result_bytes.push(raw_g);
+                        result_bytes.push(raw_b);
+                        result_bytes.push(raw_a);
+                    }
                 }
             }
             return Some(PNG {
