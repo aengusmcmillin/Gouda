@@ -26,6 +26,7 @@ use crate::main_menu::{MenuScreen, menu_show_system, MainMenu};
 use std::collections::HashMap;
 use gouda::window::WindowProps;
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
+use crate::building::Turret;
 
 mod tilemap;
 mod player;
@@ -47,50 +48,23 @@ struct Pos {
     pub y: f32,
 }
 
-struct ClickMutation {
-    pub x: f32,
-    pub y: f32,
+pub struct CreateTurretMutation {
+    e: Entity,
 }
 
-impl Mutation for ClickMutation {
+impl Mutation for CreateTurretMutation {
     fn apply(&self, ecs: &mut ECS) {
-//        Monster::create(ecs, self.x, self.y);
-        let tilemap = ecs.read_res::<Tilemap>();
-        let t = tilemap.tile_at_pos((self.x + 5.) as usize, (self.y + 3.) as usize);
-        println!("{} {}", self.x + 5., self.y + 4.);
-
-
-        let mut selected_players = vec![];
-        let mut deselected_players = vec![];
-        for (player, e) in ecs.read1::<Player>() {
-            if player.current_tile == t {
-                selected_players.push(e);
-            } else {
-                deselected_players.push(e);
-            }
-        }
-        for e in selected_players {
-            ecs.write::<Player>(&e).unwrap().set_selected(true);
-        }
-        for e in deselected_players {
-            ecs.write::<Player>(&e).unwrap().set_selected(false);
-        }
+        Turret::create(ecs, self.e);
     }
 }
 
 fn mouse_click_system(ecs: &ECS) -> Mutations {
-//    let input = ecs.read_res::<GameInput>();
     let mut mutations: Mutations = Vec::new();
-//    let camera = ecs.read_res::<Camera>();
-//    if input.mouse.buttons[0].ended_down && input.mouse.buttons[0].half_transition_count == 1 {
-//        let screen_x = input.mouse.x as f32 / 450. - 1.;
-//        let screen_y = input.mouse.y as f32 / 450. - 1.;
-//        let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
-//        mutations.push(Box::new(ClickMutation {
-//            x: (pos[0] + 0.5).floor(),
-//            y: (pos[1] + 0.5).floor(),
-//        }))
-//    }
+    for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
+        if mouse_capture.clicked_buttons[0] {
+            mutations.push(Box::new(CreateTurretMutation{e}));
+        }
+    }
     return mutations;
 }
 
@@ -123,6 +97,10 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
 
     for (player, e) in ecs.read1::<Player>() {
         player.draw(&scene, &camera);
+    }
+
+    for (turret, _) in ecs.read1::<Turret>() {
+        turret.draw(&scene, &camera);
     }
 
     for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
@@ -266,6 +244,7 @@ impl GameLogic for Game {
         ecs.register_component_type::<MouseCaptureArea>();
         ecs.register_component_type::<MouseCaptureLayer>();
         ecs.register_component_type::<ActiveCaptureLayer>();
+        ecs.register_component_type::<Turret>()
     }
 
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {
