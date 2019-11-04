@@ -103,6 +103,14 @@ impl Renderer {
         return res;
     }
 
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
+
     pub fn begin_scene(&self) -> Option<Scene> {
         if let Some(drawable) = self.layer.next_drawable() {
             let render_pass_descriptor = RenderPassDescriptor::new();
