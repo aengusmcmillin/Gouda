@@ -403,7 +403,7 @@ pub struct EntityBuilder<'a> {
 }
 
 impl <'a> EntityBuilder<'a> {
-    pub fn add<T: 'static + Debug>(&mut self, c: T) -> &mut EntityBuilder<'a> {
+    pub fn add<T: 'static + Debug>(mut self, c: T) -> EntityBuilder<'a> {
         self.ecs.add_component(&self.entity, c);
         self
     }

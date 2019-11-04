@@ -3,6 +3,8 @@ use gouda::ecs::{ECS, Entity, GenIndex};
 use std::rc::Rc;
 use crate::camera::Camera;
 use gouda::bmp::{Bitmap, debug_load_bmp};
+use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, ActiveCaptureLayer};
+use gouda::types::Bounds;
 
 const GRASS_COLOR: [f32; 3] = [0.2, 0.4, 0.3];
 const HEARTH_COLOR: [f32; 3] = [0.5, 0.2, 0.2];
@@ -41,7 +43,7 @@ impl Tile {
             x: x as i32 - 5,
             y: y as i32 - 3,
         };
-        ecs.build_entity().add(tile).entity()
+        ecs.build_entity().add(tile).add(MouseCaptureArea::new(Bounds{x: x as i32 * 80, y: y as i32 * 80 + 160, w: 80, h: 80})).entity()
     }
 
     fn create_tile(ecs: &mut ECS, color: [f32; 3], x: usize, y: usize) -> Entity {
@@ -53,7 +55,7 @@ impl Tile {
             x: x as i32 - 5,
             y: y as i32 - 3,
         };
-        ecs.build_entity().add(tile).entity()
+        ecs.build_entity().add(tile).add(MouseCaptureArea::new(Bounds{x: x as i32 * 80, y: y as i32 * 80 + 160, w: 80, h: 80})).entity()
     }
 
     pub fn draw(&self, scene: &Scene, camera: &Camera) {
@@ -84,6 +86,17 @@ impl Tilemap {
                 tiles[x].push(tile);
             }
         }
+        let mut all_tiles = vec![];
+        for tiles in &tiles {
+            for tile in tiles {
+                all_tiles.push(tile.clone());
+            }
+        }
+        let capture_area = MouseCaptureLayer {
+            sort_index: 0,
+            capture_areas: all_tiles,
+        };
+        ecs.build_entity().add(capture_area).add(ActiveCaptureLayer {});
         let res = Tilemap {
             tiles
         };

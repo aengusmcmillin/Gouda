@@ -7,6 +7,8 @@ use crate::rendering::drawable::QuadDrawable;
 use crate::font::{TextDrawable, Font};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;
+use crate::ecs::{ECS, Entity};
+use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
 
 pub mod constraints;
 pub mod button;
@@ -54,13 +56,17 @@ pub struct GuiComponent {
     pub calculated_bounds: Bounds,
     corner_radius: f32,
     color: Color,
-    children: Vec<GuiComponent>,
+    hover_color: Option<Color>,
+    children: Vec<Entity>,
     text: Vec<GuiText>,
     drawable: GuiDrawable,
+    hover_drawable: Option<GuiDrawable>,
+    is_hovered: bool,
 }
 
 impl GuiComponent {
-    pub fn new(renderer: &Renderer, parent_bounds: Option<Bounds>, constraints: GuiConstraints, corner_radius: f32, color: Color) -> GuiComponent {
+    pub fn create_hoverable(ecs: &mut ECS, mouse_layer: Option<Entity>, parent_bounds: Option<Bounds>, constraints: GuiConstraints, corner_radius: f32, color: Color, hover_color: Color) -> Entity {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
         let bounds = match parent_bounds {
             Some(parent_bounds) => {
                 constraints.calculate_bounds(parent_bounds)
@@ -71,43 +77,75 @@ impl GuiComponent {
                 constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
             }
         };
-        let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b]);
-        GuiComponent {
+        let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b, color.a]);
+        let hover_drawable = Some(GuiDrawable::new(renderer, corner_radius, bounds, [hover_color.r, hover_color.g, hover_color.b, hover_color.a]));
+        let component = GuiComponent {
             constraints,
             calculated_bounds: bounds,
             corner_radius,
             color,
+            hover_color: Some(hover_color),
             text: Vec::new(),
             children: Vec::new(),
             drawable,
+            hover_drawable,
+            is_hovered: false,
+        };
+
+        let mut builder = ecs.build_entity().add(component);
+        let entity = builder.entity();
+        if let Some(layer) = mouse_layer {
+            builder.add(MouseCaptureArea::new(bounds));
+
+            let layer = ecs.write::<MouseCaptureLayer>(&layer).unwrap();
+            layer.capture_areas.push(entity);
         }
+        entity
     }
 
-    pub fn recalculate(&mut self, renderer: &Renderer, parent_bounds: Option<Bounds>) {
+    pub fn create(ecs: &mut ECS, mouse_layer: Option<Entity>, parent_bounds: Option<Bounds>, constraints: GuiConstraints, corner_radius: f32, color: Color) -> Entity {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
         let bounds = match parent_bounds {
             Some(parent_bounds) => {
-                self.constraints.calculate_bounds(parent_bounds)
+                constraints.calculate_bounds(parent_bounds)
             }
             None => {
                 let w = renderer.get_width() as i32;
                 let h = renderer.get_height() as i32;
-                self.constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
+                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
             }
         };
-        let drawable = GuiDrawable::new(renderer, self.corner_radius, bounds, [self.color.r, self.color.g, self.color.b]);
-        self.drawable = drawable;
-        self.calculated_bounds = bounds;
+        let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b, color.a]);
+        let component = GuiComponent {
+            constraints,
+            calculated_bounds: bounds,
+            corner_radius,
+            color,
+            hover_color: None,
+            text: Vec::new(),
+            children: Vec::new(),
+            drawable,
+            hover_drawable: None,
+            is_hovered: false,
+        };
+        let mut builder = ecs.build_entity().add(component);
+        let entity = builder.entity();
+        if let Some(layer) = mouse_layer {
+            builder.add(MouseCaptureArea::new(bounds));
 
-        self.children.iter_mut().map(|child| child.recalculate(renderer, Some(bounds)));
+            let layer = ecs.write::<MouseCaptureLayer>(&layer).unwrap();
+            layer.capture_areas.push(entity);
+        }
+        entity
     }
 
     pub fn change_color(&mut self, renderer: &Renderer, color: Color) {
         self.color = color;
-        let drawable = GuiDrawable::new(renderer, self.corner_radius, self.calculated_bounds, [self.color.r, self.color.g, self.color.b]);
+        let drawable = GuiDrawable::new(renderer, self.corner_radius, self.calculated_bounds, [self.color.r, self.color.g, self.color.b, self.color.a]);
         self.drawable = drawable;
     }
 
-    pub fn add_child(&mut self, component: GuiComponent) {
+    pub fn add_child(&mut self, component: Entity) {
         self.children.push(component);
     }
 
@@ -115,15 +153,27 @@ impl GuiComponent {
         self.text.push(text);
     }
 
-    pub fn render(&self, scene: &Scene) {
-        self.drawable.draw(scene);
+    pub fn set_hovered(&mut self, hovered: bool) {
+        self.is_hovered = hovered;
+    }
+
+    pub fn render(&self, ecs: &ECS, scene: &Scene) {
+        if self.is_hovered {
+            if let Some(hover_drawable) = &self.hover_drawable {
+                hover_drawable.draw(scene);
+            } else {
+                self.drawable.draw(scene);
+            }
+        } else {
+            self.drawable.draw(scene);
+        }
 
         for text in &self.text {
             text.render(scene);
         }
 
         for child in &self.children {
-            child.render(scene);
+            ecs.read::<GuiComponent>(child).unwrap().render(&ecs, scene);
         }
     }
 }
@@ -141,7 +191,7 @@ pub struct GuiDrawable {
 }
 
 impl GuiDrawable {
-    pub fn new(renderer: &Renderer, radius: f32, bounds: Bounds, color: [f32; 3]) -> Self {
+    pub fn new(renderer: &Renderer, radius: f32, bounds: Bounds, color: [f32; 4]) -> Self {
         let w = renderer.get_width() as f32;
         let h = renderer.get_height() as f32;
         let position = [(bounds.x as f32) / (w as f32 / 2.) - 1.0, (bounds.y as f32) / (h as f32 / 2.) - 1.0, 1.0];
@@ -174,7 +224,7 @@ impl GuiDrawable {
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
 
-        let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2], 0.5]);
+        let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2], color[3]]);
         let shape_buffer = FragmentConstantBuffer::new(renderer, 1, vec![scale[0], scale[1]]);
         let radius_buffer = FragmentConstantBuffer::new(renderer, 2, vec![radius]);
 

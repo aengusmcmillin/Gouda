@@ -19,7 +19,7 @@ extern crate enum_map;
 pub mod ecs;
 pub mod input;
 mod platform;
-mod window;
+pub mod window;
 pub mod rendering;
 pub mod math;
 mod utils;
@@ -28,6 +28,7 @@ pub mod png;
 pub mod font;
 pub mod types;
 pub mod gui;
+pub mod mouse_capture;
 
 pub trait GameState {
     fn on_state_start(&self, ecs: &mut ECS);
@@ -37,6 +38,7 @@ pub trait GameState {
 }
 
 pub trait GameLogic {
+    fn window_props(&self) -> WindowProps;
     fn register_components(&self, ecs: &mut ECS);
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>>;
     fn initial_game_state(&self) -> GameStateId;
@@ -100,12 +102,8 @@ impl<T: GameLogic> Gouda<T> {
     pub fn run(&mut self) {
         self.setup_engine();
 
-        let props = WindowProps {
-            width: 900.,
-            height: 900.,
-            title: "Gouda Test".to_string(),
-            target_ms_per_frame: 30.,
-        };
+        let props = self.game_logic.window_props();
+
         let mut platform = PlatformLayer::new(props);
 
         let mut now = Instant::now();

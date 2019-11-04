@@ -30,6 +30,6 @@ float calc_rounded_corners(float2 coord, float radius, float width, float height
 
 fragment float4 fragment_main(VertexOut interpolated [[stage_in]], constant float4 &color [[buffer(0)]], constant float2 &dimensions [[buffer(1)]], constant float &radius [[buffer(2)]])
 {
-    float alpha = calc_rounded_corners(interpolated.texCoord, radius, dimensions.x, dimensions.y);
+    float alpha = calc_rounded_corners(interpolated.texCoord, radius, dimensions.x, dimensions.y) * color[3];
     return float4(color[0], color[1], color[2], alpha);
 }

@@ -28,6 +28,12 @@ pub struct Bounds {
     pub h: i32,
 }
 
+impl Bounds {
+    pub fn contains_point(&self, x: i32, y: i32) -> bool {
+        x >= self.x && x <= self.x + self.w && y >= self.y && y <= self.y + self.h
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct WorldPosition {
     pub x: f32,

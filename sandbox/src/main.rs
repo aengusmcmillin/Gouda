@@ -21,9 +21,11 @@ use gouda::gui::constraints::GuiConstraints;
 use gouda::types::Color;
 use gouda::gui::constraints::Constraint::RelativeConstraint;
 use gouda::input::AnyKey::Letter;
-use crate::gui::GameGui;
+use crate::gui::{GameGui, game_gui_system};
 use crate::main_menu::{MenuScreen, menu_show_system, MainMenu};
 use std::collections::HashMap;
+use gouda::window::WindowProps;
+use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
 
 mod tilemap;
 mod player;
@@ -77,24 +79,26 @@ impl Mutation for ClickMutation {
 }
 
 fn mouse_click_system(ecs: &ECS) -> Mutations {
-    let input = ecs.read_res::<GameInput>();
+//    let input = ecs.read_res::<GameInput>();
     let mut mutations: Mutations = Vec::new();
-    let camera = ecs.read_res::<Camera>();
-    if input.mouse.buttons[0].ended_down && input.mouse.buttons[0].half_transition_count == 1 {
-        let screen_x = input.mouse.x as f32 / 450. - 1.;
-        let screen_y = input.mouse.y as f32 / 450. - 1.;
-        let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
-        mutations.push(Box::new(ClickMutation {
-            x: (pos[0] + 0.5).floor(),
-            y: (pos[1] + 0.5).floor(),
-        }))
-    }
+//    let camera = ecs.read_res::<Camera>();
+//    if input.mouse.buttons[0].ended_down && input.mouse.buttons[0].half_transition_count == 1 {
+//        let screen_x = input.mouse.x as f32 / 450. - 1.;
+//        let screen_y = input.mouse.y as f32 / 450. - 1.;
+//        let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
+//        mutations.push(Box::new(ClickMutation {
+//            x: (pos[0] + 0.5).floor(),
+//            y: (pos[1] + 0.5).floor(),
+//        }))
+//    }
     return mutations;
 }
 
 fn register_core_systems(ecs: &mut ECS) {
     ecs.add_system(Box::new(player_move_system));
     ecs.add_system(Box::new(menu_show_system));
+    ecs.add_system(Box::new(mouse_capture_system));
+    ecs.add_system(Box::new(game_gui_system));
 }
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
@@ -106,11 +110,11 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
     let camera = ecs.read_res::<Camera>();
     let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
     let pos = [(pos[0] + 0.5).floor(), (pos[1] + 0.5).floor()];
-    for (tile, e) in ecs.read1::<Tile>() {
+    for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
         tile.draw(&scene, &camera);
-        if tile.x == pos[0] as i32 && tile.y == pos[1] as i32 {
+        if mouse_capture.is_hovered {
             let renderer = ecs.read_res::<Rc<Renderer>>();
-            cursor.draw_at_pos(&renderer, &scene, &camera, [pos[0], pos[1], 0.]);
+            cursor.draw_at_pos(&renderer, &scene, &camera, [tile.x as f32, tile.y as f32, 0.]);
         }
     }
     for (monster, e) in ecs.read1::<Monster>() {
@@ -122,7 +126,7 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
     }
 
     for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
-        gui.render(&scene);
+        gui.render(&ecs, &scene);
     }
 }
 
@@ -219,9 +223,10 @@ impl GameState for MainMenuGameState {
     }
 
     fn render_state(&self, ecs: &ECS, scene: &Scene) {
+        draw_everything(ecs, scene);
         let menu = ecs.read_res::<MenuScreen>();
         let menugui = ecs.read::<GuiComponent>(&menu.entity);
-        menugui.unwrap().render(&scene);
+        menugui.unwrap().render(&ecs, &scene);
     }
 
     fn next_state(&self, ecs: &ECS) -> Option<u32> {
@@ -241,6 +246,15 @@ impl Game {
 }
 
 impl GameLogic for Game {
+    fn window_props(&self) -> WindowProps {
+        WindowProps {
+            width: 900.0,
+            height: 900.0,
+            title: "Hearth of Hestia".to_string(),
+            target_ms_per_frame: 30.0,
+        }
+    }
+
     fn register_components(&self, ecs: &mut ECS) {
         ecs.register_component_type::<Tile>();
         ecs.register_component_type::<Player>();
@@ -249,6 +263,9 @@ impl GameLogic for Game {
         ecs.register_component_type::<Pos>();
         ecs.register_component_type::<GuiComponent>();
         ecs.register_component_type::<ActiveGui>();
+        ecs.register_component_type::<MouseCaptureArea>();
+        ecs.register_component_type::<MouseCaptureLayer>();
+        ecs.register_component_type::<ActiveCaptureLayer>();
     }
 
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {
