@@ -6,6 +6,7 @@ use gouda::rendering::{
 use std::rc::Rc;
 use crate::camera::Camera;
 use crate::tilemap::Tile;
+use gouda::ecs::ECS;
 
 pub struct Cursor {
     top_drawable: QuadDrawable,
@@ -15,6 +16,12 @@ pub struct Cursor {
 }
 
 impl Cursor {
+    pub fn create(ecs: &mut ECS) {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let cursor = Cursor::new(renderer);
+        ecs.add_res(cursor);
+    }
+
     pub fn new(renderer: &Rc<Renderer>) -> Cursor {
         Cursor {
             top_drawable: QuadDrawable::new(false, renderer, [0., 0., 0.], [0., 0., 0.], [0.45, 0.05, 0.4]),

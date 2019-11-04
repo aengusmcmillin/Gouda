@@ -70,7 +70,7 @@ pub struct Tilemap {
 }
 
 impl Tilemap {
-    pub fn create(ecs: &mut ECS) -> Self {
+    pub fn create(ecs: &mut ECS) {
         let mut tiles: Vec<Vec<Entity>> = vec![Vec::with_capacity(9); 11];
         for x in 0..11 {
             for y in 0..9 {
@@ -84,9 +84,14 @@ impl Tilemap {
                 tiles[x].push(tile);
             }
         }
-        return Tilemap {
+        let res = Tilemap {
             tiles
         };
+        ecs.add_res(res);
+    }
+
+    pub fn tile_at_pos(&self, x: usize, y: usize) -> Entity {
+        self.tiles[x][y].clone()
     }
 }
 
