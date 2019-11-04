@@ -1,12 +1,13 @@
-use crate::ecs::ECS;
+use crate::ecs::{ECS, GameStateId};
 use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
 use crate::window::WindowProps;
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
-use crate::rendering::drawable::{TriangleDrawable, Drawable, QuadDrawable};
+use crate::rendering::drawable::{Drawable, QuadDrawable};
 use crate::rendering::Scene;
+use std::collections::HashMap;
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -28,16 +29,25 @@ pub mod font;
 pub mod types;
 pub mod gui;
 
+pub trait GameState {
+    fn on_state_start(&self, ecs: &mut ECS);
+    fn on_state_stop(&self, ecs: &mut ECS);
+    fn render_state(&self, ecs: &ECS, scene: &Scene);
+    fn next_state(&self, ecs: &ECS) -> Option<GameStateId>;
+}
+
 pub trait GameLogic {
     fn register_components(&self, ecs: &mut ECS);
-    fn register_systems(&self, ecs: &mut ECS);
+    fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>>;
+    fn initial_game_state(&self) -> GameStateId;
     fn setup(&mut self, ecs: &mut ECS);
-    fn draw_scene(&self, ecs: &ECS, scene: &Scene);
 }
 
 pub struct Gouda<T: GameLogic> {
     game_logic: T,
     ecs: ECS,
+    game_states: HashMap<GameStateId, Box<dyn GameState>>,
+    active_state: Option<GameStateId>,
 }
 
 impl<T: GameLogic> Gouda<T> {
@@ -45,6 +55,8 @@ impl<T: GameLogic> Gouda<T> {
         Gouda {
             game_logic,
             ecs: ECS::new(),
+            game_states: HashMap::new(),
+            active_state: None,
         }
     }
 
@@ -54,12 +66,32 @@ impl<T: GameLogic> Gouda<T> {
 
     fn setup_game(&mut self) {
         self.game_logic.register_components(&mut self.ecs);
-        self.game_logic.register_systems(&mut self.ecs);
-
         self.game_logic.setup(&mut self.ecs);
+
+        self.game_states.extend(self.game_logic.game_states());
+        let state = self.game_logic.initial_game_state();
+        self.active_state = Some(state);
+        self.game_states.get(&state).unwrap().on_state_start(&mut self.ecs);
+    }
+
+    fn get_active_state(&self) -> &Box<dyn GameState> {
+        self.game_states.get(&self.active_state.unwrap()).unwrap()
     }
 
     fn update(&mut self, game_input: GameInput) {
+        if let Some(state) = self.get_active_state().next_state(&self.ecs) {
+            let gstate = self.game_states.get(&self.active_state.unwrap());
+            if let Some(gstate) = gstate {
+                gstate.on_state_stop(&mut self.ecs);
+                self.ecs.clear_systems();
+            }
+            self.active_state = Some(state);
+            let gstate = self.game_states.get(&self.active_state.unwrap());
+            if let Some(gstate) = gstate {
+                gstate.on_state_start(&mut self.ecs);
+            }
+        }
+
         (*self.ecs.write_res::<GameInput>()) = game_input;
 
         self.ecs.run_systems();
@@ -91,7 +123,7 @@ impl<T: GameLogic> Gouda<T> {
 
             let renderer = platform.get_renderer();
             if let Some(scene) = renderer.begin_scene() {
-                self.game_logic.draw_scene(&self.ecs, &scene);
+                self.game_states.get(&self.active_state.unwrap()).unwrap().render_state(&self.ecs, &scene);
                 renderer.end_scene(scene);
             }
 

@@ -3,6 +3,7 @@
 
 use anymap::AnyMap;
 use std::fmt::Debug;
+use std::collections::HashMap;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct GenIndex {
@@ -146,6 +147,7 @@ pub trait Mutation {
 
 pub type Mutations = Vec<Box<dyn Mutation>>;
 pub type System = dyn Fn(&ECS) -> Mutations;
+pub type GameStateId = u32;
 
 
 pub struct ECS {
@@ -254,6 +256,10 @@ impl From<&str> for MissingComponentError {
 impl ECS {
     pub fn add_system(&mut self, system: Box<System>) {
         self.systems.push(system);
+    }
+
+    pub fn clear_systems(&mut self) {
+        self.systems.clear();
     }
 
     pub fn register_component_type<T: 'static + Debug>(&mut self) {
