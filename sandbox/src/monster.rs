@@ -16,7 +16,7 @@ pub struct Monster {
 impl Monster {
     pub fn create(ecs: &mut ECS, x_pos: f32, y_pos: f32) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let monster_drawable = QuadDrawable::new(false, renderer, [0.7, 0.2, 0.2], [x_pos, y_pos, 0.], [0.4, 0.4, 1.]);
+        let monster_drawable = QuadDrawable::new(false, renderer, [0.7, 0.2, 0.2], [x_pos, y_pos, 0.], [0.4, 0.4, 1.], [0.; 3]);
         ecs.build_entity().add(Monster {drawable: monster_drawable, x: x_pos, y: y_pos});
     }
 

@@ -25,8 +25,8 @@ impl Player {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let bmp = debug_load_bmp("bitmap/test_bmp.bmp");
         let texture = RenderableTexture::new(renderer, bmp.unwrap());
-        let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.]);
-        let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8], [-4., -1., 0.], [0.4, 0.4, 1.]);
+        let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8], [-4., -1., 0.], [0.4, 0.4, 1.], [0.; 3]);
 
         let tile = ecs.read_res::<Tilemap>().tile_at_pos(1, 2);
         ecs.build_entity().add(Player {drawable: player_drawable, selected_drawable, x: -4, y: -1, current_tile: tile, is_selected: false});
@@ -47,7 +47,7 @@ impl Player {
         self.y = new_y;
         self.current_tile = tile;
         self.selected_drawable.translate(renderer, [self.x as f32, self.y as f32, 0.], [0.4, 0.4, 1.]);
-        self.drawable.translate(renderer, [self.x as f32, self.y as f32, 0.], [0.3, 0.3, 1.]);
+        self.drawable.set_position(renderer, [self.x as f32, self.y as f32, 0.]);
     }
 
     pub fn move_pos(&mut self, tile: Entity, renderer: &Renderer, dx: i32, dy: i32) {

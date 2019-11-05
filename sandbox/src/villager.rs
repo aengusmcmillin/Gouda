@@ -19,7 +19,7 @@ impl Villager {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let bmp = debug_load_bmp("bitmap/test_bmp.bmp");
         let texture = RenderableTexture::new(renderer, bmp.unwrap());
-        let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.]);
+        let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
         ecs.build_entity().add(Villager {drawable: player_drawable, x: -4., y: -1.});
     }
 
@@ -30,7 +30,7 @@ impl Villager {
     pub fn set_pos(&mut self, renderer: &Renderer, new_x: f32, new_y: f32) {
         self.x = new_x;
         self.y = new_y;
-        self.drawable.translate(renderer, [self.x, self.y, 0.], [0.3, 0.3, 1.]);
+        self.drawable.set_position(renderer, [self.x, self.y, 0.]);
     }
 
     pub fn move_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {

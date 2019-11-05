@@ -36,7 +36,7 @@ impl Tile {
 
     fn create_texture_tile(ecs: &mut ECS, bmp: Bitmap, x: usize, y: usize) -> Entity {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let drawable = TextureDrawable::new(false, renderer, RenderableTexture::new(renderer, bmp), [-5. + x as f32, -3. + y as f32, 0.], [0.52, 0.52, 1.]);
+        let drawable = TextureDrawable::new(false, renderer, RenderableTexture::new(renderer, bmp), [-5. + x as f32, -3. + y as f32, 0.], [0.52, 0.52, 1.], [0.; 3]);
         let tile = Tile {
             color_drawable: None,
             texture_drawable: Some(drawable),
@@ -48,7 +48,7 @@ impl Tile {
 
     fn create_tile(ecs: &mut ECS, color: [f32; 3], x: usize, y: usize) -> Entity {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let quad = QuadDrawable::new(false, renderer, color, [-5. + x as f32 * 1., -3. + y as f32 * 1., 0.], [0.5, 0.5, 1.]);
+        let quad = QuadDrawable::new(false, renderer, color, [-5. + x as f32 * 1., -3. + y as f32 * 1., 0.], [0.5, 0.5, 1.], [0.; 3]);
         let tile = Tile {
             color_drawable: Some(quad),
             texture_drawable: None,

@@ -68,6 +68,31 @@ fn mouse_click_system(ecs: &ECS) -> Mutations {
     return mutations;
 }
 
+struct CursorSetPositionMutation {
+    tile: Entity,
+}
+
+impl Mutation for CursorSetPositionMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        let tile = ecs.read::<Tile>(&self.tile).unwrap();
+        let (x, y) = (tile.x, tile.y);
+
+        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
+        let cursor = ecs.write_res::<Cursor>();
+        cursor.set_pos(&renderer, [x as f32, y as f32, 0.]);
+    }
+}
+
+fn mouse_cursor_system(ecs: &ECS) -> Mutations {
+    let mut mutations: Mutations = vec![];
+    for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
+        if mouse_capture.is_hovered {
+            mutations.push(Box::new(CursorSetPositionMutation {tile: e}))
+        }
+    }
+    return mutations;
+}
+
 fn register_core_systems(ecs: &mut ECS) {
     ecs.add_system(Box::new(player_move_system));
     ecs.add_system(Box::new(menu_show_system));
@@ -88,7 +113,7 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
         tile.draw(&scene, &camera);
         if mouse_capture.is_hovered {
             let renderer = ecs.read_res::<Rc<Renderer>>();
-            cursor.draw_at_pos(&renderer, &scene, &camera, [tile.x as f32, tile.y as f32, 0.]);
+            cursor.draw(&renderer, &scene, &camera);
         }
     }
     for (monster, e) in ecs.read1::<Monster>() {
@@ -119,6 +144,7 @@ impl GameState for MainGameState {
         ecs.add_system(Box::new(wave_spawner_system));
         ecs.add_system(Box::new(monster_move_system));
         ecs.add_system(Box::new(mouse_click_system));
+        ecs.add_system(Box::new(mouse_cursor_system));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {

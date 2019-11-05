@@ -1,4 +1,4 @@
-use gouda::ecs::{ECS, Entity};
+use gouda::ecs::{ECS, Entity, Mutations};
 use crate::tilemap::Tile;
 use gouda::rendering::drawable::TextureDrawable;
 use gouda::rendering::{Renderer, Scene};
@@ -18,7 +18,7 @@ impl Turret {
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let texture = RenderableTexture::new_from_png(renderer, PNG::from_file("bitmap/turret.png").unwrap());
-        let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0]);
+        let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0.; 3]);
         let turret = Turret {
             texture_drawable,
         };
@@ -30,3 +30,14 @@ impl Turret {
     }
 }
 
+pub struct Arrow {
+    texture_drawable: TextureDrawable,
+}
+
+
+
+pub fn turret_attack_system(ecs: &ECS) -> Mutations {
+    let mut mutations: Mutations = vec![];
+
+    return mutations;
+}
