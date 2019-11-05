@@ -26,7 +26,7 @@ use crate::main_menu::{MenuScreen, menu_show_system, MainMenu};
 use std::collections::HashMap;
 use gouda::window::WindowProps;
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
-use crate::building::Turret;
+use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system};
 
 mod tilemap;
 mod player;
@@ -128,6 +128,10 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
         turret.draw(&scene, &camera);
     }
 
+    for (arrow, _) in ecs.read1::<Arrow>() {
+        arrow.draw(&scene, &camera);
+    }
+
     for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
         gui.render(&ecs, &scene);
     }
@@ -145,6 +149,8 @@ impl GameState for MainGameState {
         ecs.add_system(Box::new(monster_move_system));
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(mouse_cursor_system));
+        ecs.add_system(Box::new(turret_attack_system));
+        ecs.add_system(Box::new(arrow_move_system));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -270,7 +276,8 @@ impl GameLogic for Game {
         ecs.register_component_type::<MouseCaptureArea>();
         ecs.register_component_type::<MouseCaptureLayer>();
         ecs.register_component_type::<ActiveCaptureLayer>();
-        ecs.register_component_type::<Turret>()
+        ecs.register_component_type::<Turret>();
+        ecs.register_component_type::<Arrow>();
     }
 
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {

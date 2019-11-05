@@ -9,8 +9,8 @@ use rand::Rng;
 #[derive(Debug)]
 pub struct Monster {
     drawable: QuadDrawable,
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
 }
 
 impl Monster {
