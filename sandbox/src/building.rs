@@ -27,8 +27,8 @@ impl Turret {
         let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0.; 3]);
         let turret = Turret {
             texture_drawable,
-            fire_cooldown: 4.,
-            fire_timer: 4.,
+            fire_cooldown: 1.,
+            fire_timer: 1.,
             x: tile.x as f32,
             y: tile.y as f32,
         };
@@ -43,17 +43,18 @@ impl Turret {
 #[derive(Debug)]
 pub struct Arrow {
     drawable: QuadDrawable,
+    target: Entity,
     x: f32,
     y: f32,
     speed: f32,
 }
 
 impl Arrow {
-    pub fn create(ecs: &mut ECS, x: f32, y: f32) {
+    pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
         println!("Creating arrow");
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let quad = QuadDrawable::new(false, renderer, [1.0, 0.0, 0.0], [x, y, 0.], [0.1; 3], [0.; 3]);
-        ecs.build_entity().add(Arrow {drawable: quad, x, y, speed: 3.});
+        ecs.build_entity().add(Arrow {drawable: quad, target, x, y, speed: 5.});
     }
 
     pub fn set_position(&mut self, renderer: &Renderer, x: f32, y: f32) {
@@ -72,6 +73,21 @@ struct ArrowCollisionMutation {
 }
 
 impl Mutation for ArrowCollisionMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        let target = ecs.read::<Arrow>(&self.arrow).unwrap().target.clone();
+        ecs.remove_component::<Arrow>(&self.arrow);
+        ecs.delete_entity(&self.arrow);
+
+        ecs.remove_component::<Monster>(&target);
+        ecs.delete_entity(&target);
+    }
+}
+
+struct ArrowDestroyMutation {
+    arrow: Entity,
+}
+
+impl Mutation for ArrowDestroyMutation {
     fn apply(&self, ecs: &mut ECS) {
         ecs.remove_component::<Arrow>(&self.arrow);
         ecs.delete_entity(&self.arrow);
@@ -94,45 +110,25 @@ impl Mutation for MoveArrowTowardsMutation {
 
 pub fn arrow_move_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
-    let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];
-    for (monster, entity) in ecs.read1::<Monster>() {
-        monster_positions.push((entity, monster.x, monster.y));
-    }
-
     let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
-
     for (arrow, entity) in ecs.read1::<Arrow>() {
-        let mut closest: Option<(f32, f32, f32)> = None;
-
-        for (monster, x, y) in &monster_positions {
-            let x_dist = arrow.x - *x;
-            let y_dist = arrow.y - *y;
-            let distsq = x_dist * x_dist + y_dist * y_dist;
-
-            if let Some((_, _, closest_distsq)) = closest {
-                if distsq < closest_distsq {
-                    closest = Some((*x, *y, distsq));
-                }
-            } else {
-                closest = Some((*x, *y, distsq));
-            }
-        }
-
-        if let Some((x, y, distsq)) = closest {
-            if distsq < 0.6 {
+        let target = ecs.read::<Monster>(&arrow.target);
+        if let Some(monster) = target {
+            let v = (monster.x - arrow.x, monster.y - arrow.y);
+            let dist = (v.0 * v.0 + v.1 * v.1).sqrt();
+            if dist < 0.5 {
                 mutations.push(Box::new(ArrowCollisionMutation {
                     arrow: entity,
                 }));
             } else {
-                let v = (x - arrow.x, y - arrow.y);
                 mutations.push(Box::new(MoveArrowTowardsMutation {
                     arrow: entity,
-                    dx: v.0 * dt / distsq.sqrt() * arrow.speed,
-                    dy: v.1 * dt / distsq.sqrt() * arrow.speed,
+                    dx: v.0 * dt / dist * arrow.speed,
+                    dy: v.1 * dt / dist * arrow.speed,
                 }))
             }
         } else {
-            mutations.push(Box::new(ArrowCollisionMutation {
+            mutations.push(Box::new(ArrowDestroyMutation {
                 arrow: entity,
             }));
         }
@@ -144,6 +140,7 @@ pub fn arrow_move_system(ecs: &ECS) -> Mutations {
 
 pub struct FireArrowMutation {
     pub turret: Entity,
+    pub target: Entity,
 }
 
 impl Mutation for FireArrowMutation {
@@ -151,7 +148,7 @@ impl Mutation for FireArrowMutation {
         let turret = ecs.write::<Turret>(&self.turret).unwrap();
         turret.fire_timer = turret.fire_cooldown;
         let (x, y) = (turret.x, turret.y);
-        Arrow::create(ecs, x, y);
+        Arrow::create(ecs, self.target, x, y);
     }
 }
 
@@ -169,15 +166,35 @@ impl Mutation for DecrTurretTimerMutation {
 
 pub fn turret_attack_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
+    let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
+
+    let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];
+    for (monster, entity) in ecs.read1::<Monster>() {
+        monster_positions.push((entity, monster.x, monster.y));
+    }
 
     let input = ecs.read_res::<GameInput>();
     for (turret, e) in ecs.read1::<Turret>() {
-        if turret.fire_timer - input.seconds_to_advance_over_update <= 0. {
-            if ecs.get1::<Monster>().len() > 0 {
-                mutations.push(Box::new(FireArrowMutation {turret: e}));
+        let mut closest: Option<(Entity, f32)> = None;
+        for (monster, x, y) in &monster_positions {
+            let (x, y) = (turret.x - x, turret.y - y);
+            let dist = (x * x + y * y).sqrt();
+
+            if let Some((_, closest_dist)) = closest {
+                if dist < closest_dist {
+                    closest = Some((monster.clone(), dist));
+                }
+            } else {
+                closest = Some((monster.clone(), dist));
             }
-        } else {
-            mutations.push(Box::new(DecrTurretTimerMutation {turret: e, dt: input.seconds_to_advance_over_update}));
+        }
+
+        if let Some((monster, distsq)) = closest {
+            if turret.fire_timer - input.seconds_to_advance_over_update <= 0. {
+                mutations.push(Box::new(FireArrowMutation {turret: e, target: monster}));
+            } else {
+                mutations.push(Box::new(DecrTurretTimerMutation {turret: e, dt: input.seconds_to_advance_over_update}));
+            }
         }
     }
 
