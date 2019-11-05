@@ -15,7 +15,7 @@ use crate::cursor::Cursor;
 use crate::camera::Camera;
 use gouda::font::{Font, TextDrawable};
 use crate::spawners::{WaveSpawner, wave_spawner_system, WaveSpec, MonsterSpec, MonsterType};
-use crate::monster::{Monster, monster_move_system};
+use crate::monster::{Monster, monster_move_system, monster_damage_system};
 use gouda::gui::{GuiComponent, ActiveGui};
 use gouda::gui::constraints::GuiConstraints;
 use gouda::types::Color;
@@ -26,7 +26,7 @@ use crate::main_menu::{MenuScreen, menu_show_system, MainMenu};
 use std::collections::HashMap;
 use gouda::window::WindowProps;
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
-use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system};
+use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
 
 mod tilemap;
 mod player;
@@ -151,6 +151,7 @@ impl GameState for MainGameState {
         ecs.add_system(Box::new(mouse_cursor_system));
         ecs.add_system(Box::new(turret_attack_system));
         ecs.add_system(Box::new(arrow_move_system));
+        ecs.add_system(Box::new(monster_damage_system));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -278,6 +279,7 @@ impl GameLogic for Game {
         ecs.register_component_type::<ActiveCaptureLayer>();
         ecs.register_component_type::<Turret>();
         ecs.register_component_type::<Arrow>();
+        ecs.register_component_type::<DamageDealt>();
     }
 
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {

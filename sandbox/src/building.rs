@@ -47,14 +47,14 @@ pub struct Arrow {
     x: f32,
     y: f32,
     speed: f32,
+    damage: u32,
 }
 
 impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
-        println!("Creating arrow");
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let quad = QuadDrawable::new(false, renderer, [1.0, 0.0, 0.0], [x, y, 0.], [0.1; 3], [0.; 3]);
-        ecs.build_entity().add(Arrow {drawable: quad, target, x, y, speed: 5.});
+        ecs.build_entity().add(Arrow {drawable: quad, target, x, y, speed: 5., damage: 1});
     }
 
     pub fn set_position(&mut self, renderer: &Renderer, x: f32, y: f32) {
@@ -68,18 +68,24 @@ impl Arrow {
     }
 }
 
+#[derive(Debug)]
+pub struct DamageDealt {
+    pub damage: u32,
+}
+
 struct ArrowCollisionMutation {
     arrow: Entity,
 }
 
 impl Mutation for ArrowCollisionMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let target = ecs.read::<Arrow>(&self.arrow).unwrap().target.clone();
+        let arrow = ecs.read::<Arrow>(&self.arrow).unwrap();
+        let target = arrow.target.clone();
+        let damage = arrow.damage;
         ecs.remove_component::<Arrow>(&self.arrow);
         ecs.delete_entity(&self.arrow);
 
-        ecs.remove_component::<Monster>(&target);
-        ecs.delete_entity(&target);
+        ecs.add_component(&target, DamageDealt {damage});
     }
 }
 
