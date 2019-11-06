@@ -82,7 +82,6 @@ impl Mutation for ArrowCollisionMutation {
         let arrow = ecs.read::<Arrow>(&self.arrow).unwrap();
         let target = arrow.target.clone();
         let damage = arrow.damage;
-        ecs.remove_component::<Arrow>(&self.arrow);
         ecs.delete_entity(&self.arrow);
 
         ecs.add_component(&target, DamageDealt {damage});
@@ -95,7 +94,6 @@ struct ArrowDestroyMutation {
 
 impl Mutation for ArrowDestroyMutation {
     fn apply(&self, ecs: &mut ECS) {
-        ecs.remove_component::<Arrow>(&self.arrow);
         ecs.delete_entity(&self.arrow);
     }
 }

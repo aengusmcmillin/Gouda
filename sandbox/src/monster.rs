@@ -63,7 +63,6 @@ impl Mutation for MonsterMoveMutation {
             monster.move_pos(&renderer, 0.0, 0.06);
         } else {
             println!("Deleting");
-            ecs.remove_component::<Monster>(&self.monster);
             ecs.delete_entity(&self.monster);
         }
     }
@@ -88,7 +87,6 @@ impl Mutation for MonsterDamageMutation {
         let monster = ecs.write::<Monster>(&self.monster).unwrap();
         monster.take_damage(self.damage);
         if monster.is_dead() {
-            ecs.remove_component::<Monster>(&self.monster);
             ecs.delete_entity(&self.monster);
         }
     }

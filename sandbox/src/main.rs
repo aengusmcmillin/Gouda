@@ -282,6 +282,22 @@ impl GameLogic for Game {
         ecs.register_component_type::<DamageDealt>();
     }
 
+    fn cleanup_components(&self, ecs: &mut ECS) {
+        ecs.cleanup_components::<Tile>();
+        ecs.cleanup_components::<Player>();
+        ecs.cleanup_components::<Monster>();
+        ecs.cleanup_components::<WaveSpawner>();
+        ecs.cleanup_components::<Pos>();
+        ecs.cleanup_components::<GuiComponent>();
+        ecs.cleanup_components::<ActiveGui>();
+        ecs.cleanup_components::<MouseCaptureArea>();
+        ecs.cleanup_components::<MouseCaptureLayer>();
+        ecs.cleanup_components::<ActiveCaptureLayer>();
+        ecs.cleanup_components::<Turret>();
+        ecs.cleanup_components::<Arrow>();
+        ecs.cleanup_components::<DamageDealt>();
+    }
+
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {
         let mut res: HashMap<GameStateId, Box<dyn GameState>> = HashMap::new();
         res.insert(MAIN_GAME_STATE, Box::new(MainGameState {}));

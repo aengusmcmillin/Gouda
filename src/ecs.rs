@@ -49,10 +49,10 @@ impl GenIndexAllocator {
         let e = self.entries.get_mut(index.index);
         match e {
             Some(entry) => {
-                if !entry.is_free {
+                if entry.is_free {
                     return false;
                 }
-                entry.is_free = false;
+                entry.is_free = true;
                 self.free.push(index.index);
                 return true;
             },
@@ -321,6 +321,7 @@ impl ECS {
                 if let Some(e) = &comps.0[i] {
                     let e = GenIndex {index: i, generation: e.generation};
                     if !self.entity_allocator.is_live(e) {
+                        println!("Not live");
                         comps_to_remove.push(e);
                     }
                 }
