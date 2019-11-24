@@ -1,4 +1,4 @@
-use crate::window::{WindowProps, GameWindowImpl};
+use crate::window::{WindowProps, GameWindowImpl, WindowEvent};
 
 extern crate libc;
 
@@ -21,15 +21,36 @@ use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel, YES};
 
 use crate::input::GameInput;
-use cocoa::appkit::NSView;
+use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
 use crate::platform::osx::osx_input::{osx_process_key, osx_process_keyboard_message};
 use std::mem;
 use crate::rendering::Renderer;
+use std::rc::Rc;
+
+struct CocoaEventQueue {
+
+}
+
+impl CocoaEventQueue {
+
+    pub fn new() -> CocoaEventQueue {
+        CocoaEventQueue {}
+    }
+
+    pub fn queue_resize_event(&mut self, width: f32, height: f32) {
+
+    }
+
+    pub fn queue_close_event(&mut self) {
+
+    }
+}
 
 pub struct OsxWindow {
     cocoa_window: CocoaWindow,
     props: WindowProps,
     input: GameInput,
+    event_queue: Rc<CocoaEventQueue>,
 }
 
 impl OsxWindow {
@@ -43,7 +64,8 @@ impl OsxWindow {
             },
         };
 
-        let mut cocoa_window = show_window(&props.title, props.width, props.height);
+        let cocoa_event_queue = Rc::new(CocoaEventQueue::new());
+        let mut cocoa_window = show_window(cocoa_event_queue.clone(), &props.title, props.width, props.height);
         cocoa_window.create_view(frame_rect);
 
         let mut input = GameInput::default();
@@ -53,6 +75,7 @@ impl OsxWindow {
             cocoa_window,
             props,
             input,
+            event_queue: cocoa_event_queue,
         }
     }
 
@@ -83,7 +106,7 @@ fn create_menu_bar(title: &String) {
     }
 }
 
-fn show_window(title: &String, width: f64, height: f64) -> CocoaWindow {
+fn show_window(cocoa_ev_queue: Rc<CocoaEventQueue>, title: &String, width: f64, height: f64) -> CocoaWindow {
     unsafe {
         let app_name = NSString::alloc(nil).init_str(title);
         let frame = NSRect::new(NSPoint::new(0., 0.), NSSize::new(width, height));
@@ -103,15 +126,34 @@ fn show_window(title: &String, width: f64, height: f64) -> CocoaWindow {
 
         let superclass = Class::get("NSObject").unwrap();
         let mut decl = ClassDecl::new("WindowDelegate", superclass).unwrap();
-        extern "C" fn window_will_close(_: &Object, _: Sel, _: id) {
-//            unsafe {
-//                // Will be closing window here when I have events
-//            }
+        decl.add_ivar::<f32>("width");
+        decl.add_ivar::<f32>("height");
+        decl.add_ivar::<bool>("updated_size");
+        decl.add_ivar::<bool>("should_close");
+        extern "C" fn window_will_close(this: &mut Object, _: Sel, _: id) {
+            unsafe {
+                this.set_ivar::<bool>("should_close", true);
+            }
+        }
+
+        extern "C" fn window_will_resize(this: &mut Object, _: Sel, _: id, size: NSSize) -> NSSize {
+            let w = size.width;
+            let h = size.height;
+            unsafe {
+                this.set_ivar::<f32>("width", w as f32);
+                this.set_ivar::<f32>("height", h as f32);
+                this.set_ivar::<bool>("updated_size", true);
+            }
+            NSSize::new(w, h)
         }
 
         decl.add_method(
             sel!(windowWillClose:),
-            window_will_close as extern "C" fn(&Object, Sel, id),
+            window_will_close as extern "C" fn(&mut Object, Sel, id),
+        );
+        decl.add_method(
+            sel!(windowWillResize:toSize:),
+            window_will_resize as extern "C" fn(&mut Object, Sel, id, NSSize) -> NSSize,
         );
         let delegate_class = decl.register();
         let delegate_object = msg_send![delegate_class, new];
@@ -130,23 +172,25 @@ fn show_window(title: &String, width: f64, height: f64) -> CocoaWindow {
         let view_object = msg_send![view_class, new];
         window.setContentView_(view_object);
 
-        return CocoaWindow::new(window);
+        return CocoaWindow::new(window, delegate_object);
     }
 }
 
 pub struct CocoaWindow {
     window: id,
     view: Option<id>,
+    delegate: id,
 }
 
 impl CocoaWindow {
-    pub fn new(window: id) -> CocoaWindow {
-        CocoaWindow{window, view: None}
+    pub fn new(window: id, delegate: id) -> CocoaWindow {
+        CocoaWindow{window, view: None, delegate}
     }
 
     pub fn create_view(&mut self, frame_rect: NSRect) {
         unsafe {
             let view = NSView::alloc(nil).initWithFrame_(frame_rect);
+            view.setAutoresizingMask_(NSViewHeightSizable | NSViewWidthSizable);
             view.setWantsBestResolutionOpenGLSurface_(YES);
             view.setWantsLayer(YES);
             self.window.contentView().addSubview_(view);
@@ -167,9 +211,38 @@ impl CocoaWindow {
             self.view.unwrap().setLayer(mem::transmute(renderer.get_layer()));
         }
     }
+
+    pub fn current_size(&self) -> (f32, f32) {
+        unsafe {
+            let w = (*self.delegate).get_ivar::<f32>("width");
+            let h = (*self.delegate).get_ivar::<f32>("height");
+            return (*w, *h);
+        }
+    }
+
+    pub fn process_events(&mut self) -> Vec<WindowEvent> {
+        let mut events = vec![];
+        unsafe {
+            if *(*self.delegate).get_ivar::<bool>("updated_size") {
+                let (w, h) = self.current_size();
+                events.push(WindowEvent::ResizeEvent {width: w, height: h});
+                (*self.delegate).set_ivar("updated_size", false);
+            }
+            if *(*self.delegate).get_ivar::<bool>("should_close") {
+                events.push(WindowEvent::CloseEvent);
+                (*self.delegate).set_ivar("should_close", false);
+            }
+        }
+        return events;
+    }
+
 }
 
 impl GameWindowImpl for OsxWindow {
+    fn capture_events(&mut self) -> Vec<WindowEvent> {
+        return self.cocoa_window.process_events();
+    }
+
     fn capture_input(&mut self) -> GameInput {
         unsafe {
             self.input = GameInput::from(&self.input);

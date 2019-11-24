@@ -103,6 +103,16 @@ impl Renderer {
         return res;
     }
 
+    pub fn resize(&mut self, width: f32, height: f32) {
+        self.width = width as usize;
+        self.height = height as usize;
+        println!("Resizing {} {}", width, height);
+        self.layer.set_drawable_size(CGSize::new(
+            width as f64,
+            height as f64,
+        ));
+    }
+
     pub fn get_width(&self) -> usize {
         self.width
     }

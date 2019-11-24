@@ -51,6 +51,10 @@ impl OSXPlatformLayer {
     pub fn get_renderer(&mut self) -> &Rc<Renderer> {
         return &self.renderer;
     }
+
+    pub fn get_mut_renderer(&mut self) -> &mut Renderer {
+        Rc::get_mut(&mut self.renderer).unwrap()
+    }
 }
 
 
