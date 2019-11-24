@@ -22,6 +22,21 @@ pub struct PNG {
     pub data: Vec<u8>,
 }
 
+fn paeth(a: i32, b: i32, c: i32) -> u8 {
+    let p = a + b - c;
+    let pa = (p - a).abs();
+    let pb = (p - b).abs();
+    let pc = (p - c).abs();
+
+    if pa <= pb && pa <= pc {
+        return a as u8;
+    } else if pb <= pc {
+        return b as u8;
+    } else {
+        return c as u8;
+    }
+}
+
 impl PNG {
     pub fn from_file(path: &str) -> Option<PNG> {
         let mut file = File::open(path);
@@ -95,6 +110,18 @@ impl PNG {
                         (0, 0, 0, 0)
                     };
 
+                    let (prior_old_r, prior_old_g, prior_old_b, prior_old_a) = if y > 0 && x > 0 {
+                        (
+                            result_bytes[rindex - bpp - result_row_len],
+                            result_bytes[rindex + 1 - bpp  - result_row_len],
+                            result_bytes[rindex + 2 - bpp - result_row_len],
+                            result_bytes[rindex + 3 - bpp - result_row_len]
+                        )
+                    } else {
+                        (0, 0, 0, 0)
+                    };
+
+
                     if filter_method == 1 {
                         result_bytes.push(raw_r.wrapping_add(old_raw_r));
                         result_bytes.push(raw_g.wrapping_add(old_raw_g));
@@ -106,14 +133,19 @@ impl PNG {
                         result_bytes.push(raw_b.wrapping_add(prior_b));
                         result_bytes.push(raw_a.wrapping_add(prior_a));
                     } else if filter_method == 3 {
-                        let f_r = ((old_raw_r.wrapping_add(prior_r)) as f32 / 2.0).floor();
-                        result_bytes.push(f_r as u8);
-                        let f_g = ((old_raw_g.wrapping_add(prior_g)) as f32 / 2.0).floor();
-                        result_bytes.push(f_g as u8);
-                        let f_b = ((old_raw_b.wrapping_add(prior_b)) as f32 / 2.0).floor();
-                        result_bytes.push(f_b as u8);
-                        let f_a = ((old_raw_a.wrapping_add(prior_a)) as f32 / 2.0).floor();
-                        result_bytes.push(f_a as u8);
+                        let f_r = ((old_raw_r.wrapping_add(prior_r)) as f32 / 2.0 % 256.).floor();
+                        result_bytes.push(raw_r.wrapping_add(f_r as u8));
+                        let f_g = ((old_raw_g.wrapping_add(prior_g)) as f32 / 2.0 % 256.).floor();
+                        result_bytes.push(raw_g.wrapping_add(f_g as u8));
+                        let f_b = ((old_raw_b.wrapping_add(prior_b)) as f32 / 2.0 % 256.).floor();
+                        result_bytes.push(raw_b.wrapping_add(f_b as u8));
+                        let f_a = ((old_raw_a.wrapping_add(prior_a)) as f32 / 2.0 % 256.).floor();
+                        result_bytes.push(raw_a.wrapping_add(f_a as u8));
+                    } else if filter_method == 4 {
+                        result_bytes.push(raw_r.wrapping_add(paeth(old_raw_r as i32, prior_r as i32, prior_old_r as i32)));
+                        result_bytes.push(raw_g.wrapping_add(paeth(old_raw_g as i32, prior_g as i32, prior_old_g as i32)));
+                        result_bytes.push(raw_b.wrapping_add(paeth(old_raw_b as i32, prior_b as i32, prior_old_b as i32)));
+                        result_bytes.push(raw_a.wrapping_add(paeth(old_raw_a as i32, prior_a as i32, prior_old_a as i32)));
                     } else {
                         result_bytes.push(raw_r);
                         result_bytes.push(raw_g);
