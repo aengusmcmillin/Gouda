@@ -4,7 +4,7 @@ use std::rc::Rc;
 use crate::camera::Camera;
 use gouda::bmp::{Bitmap, debug_load_bmp};
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, ActiveCaptureLayer};
-use gouda::types::Bounds;
+use gouda::types::{Bounds, Direction};
 
 const GRASS_COLOR: [f32; 3] = [0.2, 0.4, 0.3];
 const HEARTH_COLOR: [f32; 3] = [0.5, 0.2, 0.2];
@@ -14,11 +14,13 @@ const BORDER_COLOR: [f32; 3] = [0.5, 0.5, 0.5];
 pub struct Tile {
     pub x: i32,
     pub y: i32,
+    neighbors: [Option<Entity>; 4],
     color_drawable: Option<QuadDrawable>,
     texture_drawable: Option<TextureDrawable>,
 }
 
 impl Tile {
+
     pub fn create_grass(ecs: &mut ECS, x: usize, y: usize) -> Entity {
         let grass = debug_load_bmp("bitmap/grass.bmp");
         Self::create_texture_tile(ecs, grass.unwrap(), x, y)
@@ -34,6 +36,10 @@ impl Tile {
         Self::create_texture_tile(ecs, hearth.unwrap(), x, y)
     }
 
+    pub fn neighbor(&self, direction: Direction) -> Option<Entity> {
+        self.neighbors[direction as usize]
+    }
+
     fn create_texture_tile(ecs: &mut ECS, bmp: Bitmap, x: usize, y: usize) -> Entity {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let drawable = TextureDrawable::new(false, renderer, RenderableTexture::new(renderer, bmp), [-5. + x as f32, -3. + y as f32, 0.], [0.52, 0.52, 1.], [0.; 3]);
@@ -42,6 +48,7 @@ impl Tile {
             texture_drawable: Some(drawable),
             x: x as i32 - 5,
             y: y as i32 - 3,
+            neighbors: [None; 4],
         };
         ecs.build_entity().add(tile).add(MouseCaptureArea::new(Bounds{x: x as i32 * 80, y: y as i32 * 80 + 160, w: 80, h: 80})).entity()
     }
@@ -54,6 +61,7 @@ impl Tile {
             texture_drawable: None,
             x: x as i32 - 5,
             y: y as i32 - 3,
+            neighbors: [None; 4],
         };
         ecs.build_entity().add(tile).add(MouseCaptureArea::new(Bounds{x: x as i32 * 80, y: y as i32 * 80 + 160, w: 80, h: 80})).entity()
     }
@@ -69,6 +77,15 @@ impl Tile {
 
 pub struct Tilemap {
     tiles: Vec<Vec<Entity>>,
+}
+
+fn set_neighbors(tile: &mut Tile, x: usize, y: usize, tiles: &Vec<Vec<Entity>>) {
+    tile.neighbors = [
+        if y > 0 { Some(tiles[x][y - 1]) } else { None },
+        if x < (tiles.len() - 1) { Some(tiles[x + 1][y]) } else { None },
+        if y < (tiles[x].len() - 1) { Some(tiles[x][y + 1]) } else { None },
+        if x > 0 { Some(tiles[x - 1][y]) } else { None },
+    ]
 }
 
 impl Tilemap {
@@ -90,6 +107,13 @@ impl Tilemap {
         for tiles in &tiles {
             for tile in tiles {
                 all_tiles.push(tile.clone());
+            }
+        }
+
+        for x in 0..11 {
+            for y in 0..9 {
+                let t = ecs.write::<Tile>(&tiles[x][y]).unwrap();
+                set_neighbors(t, x, y, &tiles);
             }
         }
         let capture_area = MouseCaptureLayer {

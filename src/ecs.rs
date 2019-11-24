@@ -337,6 +337,10 @@ impl ECS {
         self.resources.insert(value);
     }
 
+    pub fn remove_res<T: 'static>(&mut self) {
+        self.resources.remove::<T>();
+    }
+
     pub fn read_res<T: 'static>(&self) -> &T {
         self.resources.get::<T>().unwrap()
     }

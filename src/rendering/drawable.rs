@@ -4,6 +4,8 @@ use crate::rendering::{Scene, Renderer};
 use crate::input::{GameInput, LetterKeys};
 use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix, Mat4x4};
 use crate::rendering::texture::RenderableTexture;
+use crate::ecs::Entity;
+use crate::{RenderLayer, RenderOrder};
 
 #[derive(Debug)]
 pub struct TextureDrawable {

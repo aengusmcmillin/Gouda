@@ -23,30 +23,60 @@ pub struct GuiText {
     calculated_bounds: Bounds,
     color: Color,
     drawable: TextDrawable,
+    visible: bool,
+    center_x: bool,
+    center_y: bool,
 }
 
 impl GuiText {
-    pub fn new(renderer: &Renderer, parent_bounds: Option<Bounds>, text: String, font: Rc<Font>, constraints: GuiConstraints, color: Color) -> GuiText {
+    pub fn create(ecs: &mut ECS, parent_bounds: Option<Bounds>, text: String, font: Rc<Font>, center_x: bool, center_y: bool, font_size: f32, constraints: GuiConstraints, color: Color) -> Entity {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
         let bounds = match parent_bounds {
-            Some(parent) => {
-                constraints.calculate_bounds(parent)
+            Some(parent_bounds) => {
+                constraints.calculate_bounds(parent_bounds)
             }
             None => {
-                constraints.calculate_bounds(Bounds {x: 0, y: 0, w: 900, h: 900})
+                let w = renderer.get_width() as i32;
+                let h = renderer.get_height() as i32;
+                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
             }
         };
-        let pos = [(bounds.x as f32) / 450., (bounds.y as f32) / 450.];
-        let drawable = TextDrawable::new(renderer, pos, font, text, 12.);
-        GuiText {
+        let pos = [(bounds.x as f32) / 450. - 1., (bounds.y as f32) / 450. - 1.];
+        let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];
+        let drawable = TextDrawable::new(renderer, pos, size, center_x, center_y, font, [color.r, color.g, color.b], text, font_size);
+        let text = GuiText {
             constraints,
             calculated_bounds: bounds,
             color,
             drawable,
-        }
+            visible: true,
+            center_x,
+            center_y
+        };
+
+        ecs.build_entity().add(text).entity()
+    }
+
+    pub fn change_text(&mut self, renderer: &Renderer, text: String, font: Rc<Font>) {
+        let bounds = self.calculated_bounds;
+        let pos = [(bounds.x as f32) / 450. - 1., (bounds.y as f32) / 450. - 1.];
+        let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];
+        let drawable = TextDrawable::new(renderer, pos, size, self.center_x, self.center_y, font, [self.color.r, self.color.g, self.color.b], text, 16.);
+        self.drawable = drawable;
+    }
+
+    pub fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    pub fn show(&mut self) {
+        self.visible = true;
     }
 
     pub fn render(&self, scene: &Scene) {
-        self.drawable.draw(scene);
+        if self.visible {
+            self.drawable.draw(scene);
+        }
     }
 }
 
@@ -58,10 +88,11 @@ pub struct GuiComponent {
     color: Color,
     hover_color: Option<Color>,
     children: Vec<Entity>,
-    text: Vec<GuiText>,
+    text: Vec<Entity>,
     drawable: GuiDrawable,
     hover_drawable: Option<GuiDrawable>,
     is_hovered: bool,
+    visible: bool,
 }
 
 impl GuiComponent {
@@ -90,6 +121,7 @@ impl GuiComponent {
             drawable,
             hover_drawable,
             is_hovered: false,
+            visible: true,
         };
 
         let mut builder = ecs.build_entity().add(component);
@@ -127,6 +159,7 @@ impl GuiComponent {
             drawable,
             hover_drawable: None,
             is_hovered: false,
+            visible: true,
         };
         let mut builder = ecs.build_entity().add(component);
         let entity = builder.entity();
@@ -149,15 +182,28 @@ impl GuiComponent {
         self.children.push(component);
     }
 
-    pub fn add_text(&mut self, text: GuiText) {
+    pub fn add_text(&mut self, text: Entity) -> &mut Self {
         self.text.push(text);
+        self
     }
 
     pub fn set_hovered(&mut self, hovered: bool) {
         self.is_hovered = hovered;
     }
 
+    pub fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    pub fn show(&mut self) {
+        self.visible = true;
+    }
+
     pub fn render(&self, ecs: &ECS, scene: &Scene) {
+        if !self.visible {
+            return;
+        }
+
         if self.is_hovered {
             if let Some(hover_drawable) = &self.hover_drawable {
                 hover_drawable.draw(scene);
@@ -169,7 +215,7 @@ impl GuiComponent {
         }
 
         for text in &self.text {
-            text.render(scene);
+            ecs.read::<GuiText>(text).unwrap().render(scene);
         }
 
         for child in &self.children {

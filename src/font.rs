@@ -30,25 +30,26 @@ pub struct TextDrawable {
 }
 
 impl TextDrawable {
-    pub fn new(renderer: &Renderer, position: [f32; 2], font: Rc<Font>, text: String, font_size: f32) -> Self {
-        println!("{}", text);
+    pub fn new(renderer: &Renderer, position: [f32; 2], size: [f32; 2], center_x: bool, center_y: bool, font: Rc<Font>, color: [f32; 3], text: String, font_size: f32) -> Self {
         let mut vertices = vec![];
 
+        let scaling = 1./font.base_size * font_size / font.size;
         let mut cursor = 0.;
-        let mut base = position[1];
+        let mut base = position[1] + size[1];
         let start = position[0];
 
-        let max_line_length = 450.;
-        let line_height = 100.;
-        let scaling = 1./font.base_size * font_size / font.size;
+        let max_line_length = size[0];
+        let mut line_start_index = 0;
+        let mut current_char_index = 0;
+        let line_height = font.line_height * scaling;
         for text_char in text.chars() {
             let char_val = text_char as u32;
             let character = &font.characters[&char_val];
 
             let top = base - character.y_offset as f32 * scaling;
-            let bottom = base - character.y_offset as f32 * scaling - character.height as f32 * scaling;
+            let bottom = top - character.height as f32 * scaling;
             let left = start + cursor + character.x_offset as f32 * scaling;
-            let right = start + cursor + character.x_offset as f32 * scaling + character.width as f32 * scaling;
+            let right = left + character.width as f32 * scaling;
 
             vertices.push([left, top, character.x as f32, character.y as f32]);
             vertices.push([right, top, (character.x + character.width) as f32, character.y as f32]);
@@ -57,17 +58,50 @@ impl TextDrawable {
             vertices.push([right, top, (character.x + character.width) as f32, character.y as f32]);
             vertices.push([right, bottom, (character.x + character.width) as f32, (character.y + character.height) as f32]);
 
+            current_char_index += 6;
+
             cursor += character.xadvance as f32 * scaling;
 
             if cursor > max_line_length {
-                base -= font.line_height;
+                if center_x {
+                    let line_width = cursor;
+                    let offset = size[0] - line_width;
+                    let offset = offset / 2.;
+
+                    for i in line_start_index..current_char_index {
+                        vertices[i][0] += offset;
+                    }
+                }
+
+                line_start_index = current_char_index;
+
+                base -= line_height;
                 cursor = 0.;
+            }
+        }
+
+        if center_x {
+            let line_width = cursor;
+            let offset = size[0] - line_width;
+            let offset = offset / 2.;
+
+            for i in line_start_index..current_char_index {
+                vertices[i][0] += offset;
+            }
+        }
+
+        if center_y {
+            let text_height = position[1] + size[1] - base + line_height;
+            let offset = size[1] - text_height;
+            let offset = offset / 2.;
+
+            for i in 0..vertices.len() {
+                vertices[i][1] -= offset;
             }
         }
 
         let mut adjusted_vertices = vec![];
         for [x, y, u, v] in vertices {
-            println!("{} {}", u / 512., v / 512.);
             adjusted_vertices.push([x, y, 0.0, 1.0, u / 512., v / 512.]);
         }
 
@@ -75,7 +109,7 @@ impl TextDrawable {
 
         let shader = Shader::new(renderer, true, "shaders/fontVertexShader.txt", "shaders/fontFragmentShader.txt");
 
-        let color = FragmentConstantBuffer::new(renderer, 0, vec!([1.0, 1.0, 1.0, 0.0]));
+        let color = FragmentConstantBuffer::new(renderer, 0, vec!([color[0], color[1], color[2], 0.0]));
 
         return TextDrawable {
             text,

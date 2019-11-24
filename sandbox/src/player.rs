@@ -8,6 +8,7 @@ use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};
 use crate::camera::Camera;
 use gouda::bmp::{Bitmap, debug_load_bmp};
+use gouda::png::PNG;
 use crate::tilemap::{Tilemap, Tile};
 
 #[derive(Debug)]
@@ -23,8 +24,8 @@ pub struct Player {
 impl Player {
     pub fn create(ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let bmp = debug_load_bmp("bitmap/test_bmp.bmp");
-        let texture = RenderableTexture::new(renderer, bmp.unwrap());
+        let png = PNG::from_file("bitmap/player.png");
+        let texture = RenderableTexture::new_from_png(renderer, png.unwrap());
         let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
         let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8], [-4., -1., 0.], [0.4, 0.4, 1.], [0.; 3]);
 
@@ -77,6 +78,7 @@ pub fn player_move_system(ecs: &ECS) -> Mutations {
     let input = ecs.read_res::<GameInput>();
     let mut mutations: Mutations = Vec::new();
     for (p, ent) in ecs.read1::<Player>() {
+        let tile = ecs.read::<Tile>(&p.current_tile);
         if input.keyboard.letter_pressed(LetterKeys::A) {
             mutations.push(Box::new(MoveMutation {entity: ent, dx: -1, dy: 0}))
         } else if input.keyboard.letter_pressed(LetterKeys::D) {

@@ -1,6 +1,8 @@
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use crate::{Monster, Pos};
 use gouda::input::GameInput;
+use crate::tilemap::Tile;
+use crate::spawners::MonsterType::Wolf;
 
 pub struct ProcessSpawnerMutation {
     entity: Entity,
@@ -69,7 +71,7 @@ impl WaveSpawner {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WaveSpec {
     pub monsters: Vec<MonsterSpec>,
 }
@@ -82,4 +84,26 @@ pub struct MonsterSpec {
 #[derive(Debug, Clone, Copy)]
 pub enum MonsterType {
     Wolf,
+}
+
+#[derive(Debug, Clone)]
+pub struct SpawnerSpec {
+    pub wave: WaveSpec,
+}
+
+pub struct GameDay {
+    pub day_length: f32,
+    pub night_length: f32,
+    pub waves: Vec<SpawnerSpec>
+}
+
+pub fn generate_days() -> Vec<GameDay> {
+    return vec![
+        GameDay {day_length: 20., night_length: 30., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 15]}}]},
+        GameDay {day_length: 20., night_length: 40., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 20]}}]},
+        GameDay {day_length: 20., night_length: 50., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 25]}}]},
+        GameDay {day_length: 20., night_length: 60., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 30]}}]},
+        GameDay {day_length: 20., night_length: 70., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 35]}}]},
+        GameDay {day_length: 20., night_length: 80., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 40]}}]},
+    ]
 }

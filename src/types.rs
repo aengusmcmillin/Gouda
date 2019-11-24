@@ -1,3 +1,10 @@
+pub enum Direction {
+    Top,
+    Right,
+    Down,
+    Left
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
     pub r: f32,

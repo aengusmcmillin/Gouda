@@ -1,13 +1,14 @@
 use crate::ecs::{ECS, GameStateId};
 use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
-use crate::window::WindowProps;
+use crate::window::{WindowProps, WindowEvent};
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
 use crate::rendering::drawable::{QuadDrawable};
-use crate::rendering::Scene;
+use crate::rendering::{Scene, Renderer};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -30,11 +31,15 @@ pub mod types;
 pub mod gui;
 pub mod mouse_capture;
 
+pub type RenderLayer = String;
+pub type RenderOrder = u32;
+
 pub trait GameState {
     fn on_state_start(&self, ecs: &mut ECS);
     fn on_state_stop(&self, ecs: &mut ECS);
     fn render_state(&self, ecs: &ECS, scene: &Scene);
     fn next_state(&self, ecs: &ECS) -> Option<GameStateId>;
+    fn active_layers(&self) -> Vec<RenderLayer>;
 }
 
 pub trait GameLogic {
@@ -81,7 +86,7 @@ impl<T: GameLogic> Gouda<T> {
         self.game_states.get(&self.active_state.unwrap()).unwrap()
     }
 
-    fn update(&mut self, game_input: GameInput) {
+    fn update(&mut self, game_input: GameInput, events: Vec<WindowEvent>) {
         if let Some(state) = self.get_active_state().next_state(&self.ecs) {
             let gstate = self.game_states.get(&self.active_state.unwrap());
             if let Some(gstate) = gstate {
@@ -96,6 +101,7 @@ impl<T: GameLogic> Gouda<T> {
         }
 
         (*self.ecs.write_res::<GameInput>()) = game_input;
+        (*self.ecs.write_res::<Vec<WindowEvent>>()) = events;
 
         self.ecs.run_systems();
         self.game_logic.cleanup_components(&mut self.ecs);
@@ -119,7 +125,21 @@ impl<T: GameLogic> Gouda<T> {
         loop {
             let window = platform.get_window();
             let input = window.capture_input();
-            self.update(input.clone());
+            let events = window.capture_events();
+            for event in &events {
+                match event {
+                    WindowEvent::CloseEvent => {
+                        return;
+                    }
+                    WindowEvent::ResizeEvent { width, height } => {
+                        self.ecs.remove_res::<Rc<Renderer>>();
+                        platform.get_mut_renderer().resize(*width, *height);
+                        let renderer = platform.get_renderer();
+                        self.ecs.add_res(renderer.clone());
+                    }
+                };
+            }
+            self.update(input.clone(), events);
 
             let renderer = platform.get_renderer();
             if let Some(scene) = renderer.begin_scene() {
