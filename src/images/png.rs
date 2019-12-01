@@ -4,6 +4,8 @@ use crate::utils::{u16_from_bytes, u32_from_bytes};
 
 use std::fs::File;
 use std::io::prelude::*;
+use crate::images::Image;
+use crate::types::Color;
 
 pub struct Chunk {
     length: u32,
@@ -38,7 +40,40 @@ fn paeth(a: i32, b: i32, c: i32) -> u8 {
 }
 
 impl PNG {
+    pub fn image(&self) -> Image {
+        let w = self.header_chunk.width as usize;
+        let h = self.header_chunk.height as usize;
+
+        let mut data = vec![];
+        for y in 0..h {
+            for x in 0..w {
+                let r = self.data[y * w * 4 + x * 4];
+                let g = self.data[y * w * 4 + x * 4 + 1];
+                let b = self.data[y * w * 4 + x * 4 + 2];
+                let a = self.data[y * w * 4 + x * 4 + 3];
+                data.push(Color::from_u8(r, g, b, a));
+            }
+        }
+
+        Image {
+            width: w,
+            height: h,
+            data,
+        }
+    }
+
     pub fn from_file(path: &str) -> Option<PNG> {
+        if true {
+            let decoder = png::Decoder::new(File::open(path).unwrap());
+            let (info, mut reader) = decoder.read_info().unwrap();
+            let mut buf = vec![0; info.buffer_size()];
+            reader.next_frame(&mut buf).unwrap();
+            return Some(PNG {
+                header_chunk: PNGHeader { width: info.width, height: info.height },
+                data: buf,
+            })
+        }
+
         let mut file = File::open(path);
         if let Ok(mut file) = file {
             let mut c = Vec::new();

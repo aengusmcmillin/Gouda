@@ -23,8 +23,8 @@ impl Turret {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = RenderableTexture::new_from_png(renderer, PNG::from_file("bitmap/turret.png").unwrap());
-        let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0.; 3]);
+        let texture = RenderableTexture::new(renderer, PNG::from_file("bitmap/turret2.png").unwrap().image());
+        let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0., 0., 0.]);
         let turret = Turret {
             texture_drawable,
             fire_cooldown: 1.,
@@ -42,7 +42,7 @@ impl Turret {
 
 #[derive(Debug)]
 pub struct Arrow {
-    drawable: QuadDrawable,
+    drawable: TextureDrawable,
     target: Entity,
     x: f32,
     y: f32,
@@ -53,14 +53,18 @@ pub struct Arrow {
 impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let quad = QuadDrawable::new(false, renderer, [1.0, 0.0, 0.0], [x, y, 0.], [0.1; 3], [0.; 3]);
+        let texture = PNG::from_file("bitmap/arrow.png").unwrap().image();
+        let texture = RenderableTexture::new(renderer, texture);
+        let quad = TextureDrawable::new(false, renderer, texture, [x, y, 0.], [0.3, 0.1, 1.], [0.; 3]);
         ecs.build_entity().add(Arrow {drawable: quad, target, x, y, speed: 5., damage: 1});
     }
 
-    pub fn set_position(&mut self, renderer: &Renderer, x: f32, y: f32) {
-        self.x = x;
-        self.y = y;
-        self.drawable.set_position(renderer, [x, y, 0.]);
+    pub fn change_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
+        //let deg = (dy / dx).atan() / (std::f32::consts::PI / 180.);
+        self.drawable.set_rotation(renderer, [0., 0., 0.]);
+        self.x += dx;
+        self.y += dy;
+        self.drawable.set_position(renderer, [self.x, self.y, 0.]);
     }
 
     pub fn draw(&self, scene: &Scene, camera: &Camera) {
@@ -108,7 +112,7 @@ impl Mutation for MoveArrowTowardsMutation {
     fn apply(&self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>().clone();
         let arrow = ecs.write::<Arrow>(&self.arrow).unwrap();
-        arrow.set_position(&renderer, arrow.x + self.dx, arrow.y + self.dy);
+        arrow.change_pos(&renderer, self.dx, self.dy);
     }
 }
 

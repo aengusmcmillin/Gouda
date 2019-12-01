@@ -4,6 +4,7 @@ use crate::bmp::Bitmap;
 use std::mem;
 use std::os::raw::c_void;
 use crate::png::PNG;
+use crate::images::Image;
 
 #[derive(Debug)]
 pub struct RenderableTexture {
@@ -11,9 +12,9 @@ pub struct RenderableTexture {
 }
 
 impl RenderableTexture {
-    pub fn new_from_png(renderer: &Renderer, png: PNG) -> RenderableTexture {
-        let width = png.header_chunk.width as u64;
-        let height = png.header_chunk.height as u64;
+    pub fn new(renderer: &Renderer, image: Image) -> RenderableTexture {
+        let width = image.width as u64;
+        let height = image.height as u64;
 
         let descriptor = TextureDescriptor::new();
         descriptor.set_pixel_format(MTLPixelFormat::RGBA8Unorm);
@@ -26,32 +27,7 @@ impl RenderableTexture {
             size: MTLSize {width, height, depth: 1 }
         };
         let data: *const c_void = unsafe {
-            mem::transmute(png.data.as_ptr())
-        };
-        metal_texture.replace_region(region, 0, 4 * width, data);
-
-        let result = Self {
-            metal_texture,
-        };
-        return result;
-    }
-
-    pub fn new(renderer: &Renderer, bitmap: Bitmap) -> RenderableTexture {
-        let width = bitmap.header.width as u64;
-        let height = bitmap.header.height as u64;
-
-        let descriptor = TextureDescriptor::new();
-        descriptor.set_pixel_format(MTLPixelFormat::BGRA8Unorm);
-        descriptor.set_width(width);
-        descriptor.set_height(height);
-        let metal_texture = renderer.device.new_texture(&descriptor);
-
-        let region = MTLRegion {
-            origin: MTLOrigin {x: 0, y: 0, z: 0},
-            size: MTLSize {width, height, depth: 1 }
-        };
-        let data: *const c_void = unsafe {
-            mem::transmute(bitmap.contents.as_ptr())
+            mem::transmute(image.raw_pixels().as_ptr())
         };
         metal_texture.replace_region(region, 0, 4 * width, data);
 

@@ -194,8 +194,8 @@ impl Font {
             characters.insert(character.id, character);
         }
 
-        let texture = PNG::from_file(font_png_path).unwrap();
-        let texture = RenderableTexture::new_from_png(renderer, texture);
+        let texture = PNG::from_file(font_png_path).unwrap().image();
+        let texture = RenderableTexture::new(renderer, texture);
 
         Font {
             texture,

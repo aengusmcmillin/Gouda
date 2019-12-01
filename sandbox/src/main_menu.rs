@@ -6,8 +6,10 @@ use gouda::rendering::Renderer;
 use gouda::input::{GameInput, LetterKeys};
 use gouda::gui::constraints::{Constraint, GuiConstraints};
 use gouda::font::Font;
-use gouda::mouse_capture::{MouseCaptureLayer, ActiveCaptureLayer};
+use gouda::mouse_capture::{MouseCaptureLayer, ActiveCaptureLayer, MouseCaptureArea};
 use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint};
+use crate::main_menu::MainMenuButtonId::{Quit, Save, Settings, Resume};
+use gouda::QuitEvent;
 
 pub struct MenuScreen {
     pub entity: Entity,
@@ -16,13 +18,47 @@ pub struct MenuScreen {
     active: bool,
 }
 
-fn menu_mouse_system(ecs: &ECS) -> Mutations {
+pub struct ResumeEvent;
+pub struct SettingsEvent;
+pub struct SaveEvent;
+
+#[derive(Debug, Copy, Clone)]
+pub enum MainMenuButtonId {
+    Resume,
+    Settings,
+    Save,
+    Quit,
+}
+
+pub struct MenuClickMutation {
+    buttonid: MainMenuButtonId,
+}
+
+impl Mutation for MenuClickMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        match self.buttonid {
+            Resume => {ecs.push_event(ResumeEvent)},
+            Settings => {ecs.push_event(SettingsEvent)},
+            Save => {ecs.push_event(SaveEvent)},
+            Quit => {ecs.push_event(QuitEvent)},
+        }
+    }
+}
+
+pub fn menu_mouse_system(ecs: &ECS) -> Mutations {
     let menu = ecs.read_res::<MenuScreen>();
     let mut mutations: Mutations = vec![];
+    for (capture_area, button, entity) in ecs.read2::<MouseCaptureArea, MainMenuButtonId>() {
+        if capture_area.clicked_buttons[0] {
+            mutations.push(Box::new(MenuClickMutation {
+                buttonid: *button,
+            }));
+        }
+    }
     return mutations;
 }
 
-fn add_menu_button(menu_layer: Entity, bounds: Bounds, y: f32, ecs: &mut ECS, menu_screen_entity: Entity) {
+fn add_menu_button(button_id: MainMenuButtonId, text: &str, menu_layer: Entity, bounds: Bounds, y: f32, ecs: &mut ECS, menu_screen_entity: Entity) {
     let button = GuiComponent::create_hoverable(
         ecs,
         Some(menu_layer),
@@ -37,13 +73,14 @@ fn add_menu_button(menu_layer: Entity, bounds: Bounds, y: f32, ecs: &mut ECS, me
         Color::from_u8(0x33, 0x33, 0x33, 0xAA),
         Color::from_u8(0x88, 0x33, 0x33, 0xAA),
     );
+    ecs.add_component(&button, button_id);
 
     let comp = ecs.read::<GuiComponent>(&button).unwrap();
     let font = ecs.read_res::<Rc<Font>>();
     let text = GuiText::create(
         ecs,
         Some(comp.calculated_bounds),
-        String::from("BUTTON"),
+        String::from(text),
         font.clone(),
         true,
         true,
@@ -86,33 +123,12 @@ impl MainMenu {
 
         let menu_screen = ecs.read::<GuiComponent>(&menu_screen_entity).unwrap();
         let bounds = menu_screen.calculated_bounds;
-        add_menu_button(menu_button_layer, bounds, 0.2, ecs, menu_screen_entity);
-        add_menu_button(menu_button_layer, bounds, 0.35, ecs, menu_screen_entity);
-        add_menu_button(menu_button_layer, bounds, 0.5, ecs, menu_screen_entity);
-        add_menu_button(menu_button_layer, bounds, 0.65, ecs, menu_screen_entity);
+        add_menu_button(Quit, "Quit", menu_button_layer, bounds, 0.2, ecs, menu_screen_entity);
+        add_menu_button(Save, "Save", menu_button_layer, bounds, 0.35, ecs, menu_screen_entity);
+        add_menu_button(Settings, "Settings", menu_button_layer, bounds, 0.5, ecs, menu_screen_entity);
+        add_menu_button(Resume, "Resume", menu_button_layer, bounds, 0.65, ecs, menu_screen_entity);
 
-
-        let font = ecs.read_res::<Rc<Font>>().clone();
-        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
-
-
-        let text = GuiText::create(
-            ecs,
-            Some(bounds),
-            "LONG TEST STRING PAy ATTENTION TO ME".parse().unwrap(),
-            font.clone(),
-            true,
-            true,
-            20.,
-            GuiConstraints::new(
-                Constraint::CenterConstraint,
-                Constraint::CenterConstraint,
-                Constraint::RelativeConstraint {size: 1.},
-                Constraint::RelativeConstraint {size: 1.}
-            ),
-            Color::from_u8(0x00, 0x00, 0x00, 0xFF));
         let menu_screen = ecs.write::<GuiComponent>(&menu_screen_entity).unwrap();
-        menu_screen.add_text(text);
         ecs.add_res(MenuScreen {entity: menu_screen_entity, button_layer: menu_button_layer, capture_layer: main_menu_layer, active: false});
     }
 }

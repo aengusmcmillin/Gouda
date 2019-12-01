@@ -155,6 +155,8 @@ pub struct ECS {
     components: AnyMap,
     resources: AnyMap,
     systems: Vec<Box<System>>,
+    queued_events: AnyMap,
+    processing_events: AnyMap,
 }
 
 #[macro_use]
@@ -333,6 +335,29 @@ impl ECS {
         }
     }
 
+    pub fn register_event_type<T: 'static>(&mut self) {
+        let events: Vec<T> = Vec::new();
+        self.queued_events.insert(events);
+        let events: Vec<T> = Vec::new();
+        self.processing_events.insert(events);
+    }
+
+    pub fn migrate_events<T: 'static>(&mut self) {
+        self.processing_events.get_mut::<Vec<T>>().unwrap().clear();
+        let v = self.queued_events.get_mut::<Vec<T>>().unwrap();
+        while !v.is_empty() {
+            self.processing_events.get_mut::<Vec<T>>().unwrap().push(v.pop().unwrap());
+        }
+    }
+
+    pub fn push_event<T: 'static>(&mut self, event: T) {
+        self.queued_events.get_mut::<Vec<T>>().unwrap().push(event);
+    }
+
+    pub fn events<T: 'static>(&self) -> &Vec<T> {
+        self.processing_events.get::<Vec<T>>().unwrap()
+    }
+
     pub fn add_res<T: 'static>(&mut self, value: T) {
         self.resources.insert(value);
     }
@@ -392,6 +417,8 @@ impl ECS {
             components: AnyMap::new(),
             resources: AnyMap::new(),
             systems: Vec::new(),
+            queued_events: AnyMap::new(),
+            processing_events: AnyMap::new(),
         }
     }
 }

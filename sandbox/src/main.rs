@@ -1,4 +1,4 @@
-use gouda::{Gouda, GameLogic, GameState, RenderLayer};
+use gouda::{Gouda, GameLogic, GameState, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameStateId};
 use gouda::rendering::{
     Scene, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
@@ -22,12 +22,15 @@ use gouda::types::Color;
 use gouda::gui::constraints::Constraint::RelativeConstraint;
 use gouda::input::AnyKey::Letter;
 use crate::gui::{GameGui, game_gui_system, StageText, change_stage_text};
-use crate::main_menu::{MenuScreen, MainMenu};
+use crate::main_menu::{MenuScreen, MainMenu, MainMenuButtonId, menu_mouse_system, SaveEvent, ResumeEvent, SettingsEvent};
 use std::collections::HashMap;
 use gouda::window::{WindowProps, WindowEvent};
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
 use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
+use crate::hearth::Hearth;
+use crate::start_menu::{StartMenu, START_MENU_GAME_STATE, StartMenuButtonId, StartMenuGameState, StartEvent};
 
+mod start_menu;
 mod tilemap;
 mod player;
 mod building;
@@ -127,6 +130,10 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
         turret.draw(&scene, &camera);
     }
 
+    for (hearth, _) in ecs.read1::<Hearth>() {
+        hearth.draw(&scene, &camera);
+    }
+
     for (arrow, _) in ecs.read1::<Arrow>() {
         arrow.draw(&scene, &camera);
     }
@@ -193,7 +200,7 @@ pub struct StateCountdownMutation {
 impl Mutation for StateCountdownMutation {
     fn apply(&self, ecs: &mut ECS) {
         ecs.write_res::<StateTimer>().countdown_s -= self.dt;
-        change_stage_text(ecs, &(ecs.read_res::<StateTimer>().countdown_s).to_string());
+        change_stage_text(ecs, &(ecs.read_res::<StateTimer>().countdown_s.ceil().to_string()));
     }
 }
 
@@ -344,6 +351,7 @@ pub struct MainMenuGameState {
 impl GameState for MainMenuGameState {
     fn on_state_start(&self, ecs: &mut ECS) {
         register_core_systems(ecs);
+        ecs.add_system(Box::new(menu_mouse_system));
         let capture_layer = ecs.read_res::<MenuScreen>().capture_layer;
         ecs.add_component(&capture_layer, ActiveCaptureLayer {});
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
@@ -355,7 +363,7 @@ impl GameState for MainMenuGameState {
         let capture_layer = ecs.read_res::<MenuScreen>().capture_layer;
         ecs.remove_component::<ActiveCaptureLayer>(&capture_layer);
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
-        ecs.add_component(&button_layer, ActiveCaptureLayer {});
+        ecs.remove_component::<ActiveCaptureLayer>(&button_layer);
     }
 
     fn render_state(&self, ecs: &ECS, scene: &Scene) {
@@ -368,6 +376,9 @@ impl GameState for MainMenuGameState {
     fn next_state(&self, ecs: &ECS) -> Option<u32> {
         let input = ecs.read_res::<GameInput>();
         if input.keyboard.letter_pressed(LetterKeys::B) {
+            return Some(ecs.read_res::<LastState>().0);
+        }
+        if ecs.events::<ResumeEvent>().len() > 0 {
             return Some(ecs.read_res::<LastState>().0);
         }
         return None;
@@ -403,6 +414,7 @@ impl GameLogic for Game {
 
     fn register_components(&self, ecs: &mut ECS) {
         ecs.register_component_type::<Tile>();
+        ecs.register_component_type::<Hearth>();
         ecs.register_component_type::<Player>();
         ecs.register_component_type::<Monster>();
         ecs.register_component_type::<WaveSpawner>();
@@ -417,6 +429,8 @@ impl GameLogic for Game {
         ecs.register_component_type::<Arrow>();
         ecs.register_component_type::<DamageDealt>();
         ecs.register_component_type::<StageText>();
+        ecs.register_component_type::<MainMenuButtonId>();
+        ecs.register_component_type::<StartMenuButtonId>();
     }
 
     fn cleanup_components(&self, ecs: &mut ECS) {
@@ -435,10 +449,28 @@ impl GameLogic for Game {
         ecs.cleanup_components::<Arrow>();
         ecs.cleanup_components::<DamageDealt>();
         ecs.cleanup_components::<StageText>();
+        ecs.cleanup_components::<StartMenuButtonId>();
+    }
+
+    fn register_events(&self, ecs: &mut ECS) {
+        ecs.register_event_type::<ResumeEvent>();
+        ecs.register_event_type::<SaveEvent>();
+        ecs.register_event_type::<SettingsEvent>();
+        ecs.register_event_type::<QuitEvent>();
+        ecs.register_event_type::<StartEvent>();
+    }
+
+    fn migrate_events(&self, ecs: &mut ECS) {
+        ecs.migrate_events::<ResumeEvent>();
+        ecs.migrate_events::<SaveEvent>();
+        ecs.migrate_events::<SettingsEvent>();
+        ecs.migrate_events::<QuitEvent>();
+        ecs.migrate_events::<StartEvent>();
     }
 
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {
         let mut res: HashMap<GameStateId, Box<dyn GameState>> = HashMap::new();
+        res.insert(START_MENU_GAME_STATE, Box::new(StartMenuGameState {}));
         res.insert(MAIN_GAME_STATE, Box::new(MainGameState {}));
         res.insert(MAIN_MENU_GAME_STATE, Box::new(MainMenuGameState {}));
         res.insert(DAY_GAME_STATE, Box::new(DayGameState {}));
@@ -447,7 +479,7 @@ impl GameLogic for Game {
     }
 
     fn initial_game_state(&self) -> u32 {
-        return DAY_GAME_STATE;
+        return START_MENU_GAME_STATE;
     }
 
     fn setup(&mut self, ecs: &mut ECS) {
@@ -466,6 +498,7 @@ impl GameLogic for Game {
         Camera::create(ecs);
 
         GameGui::create(ecs);
+        StartMenu::create(ecs);
         MainMenu::create(ecs);
     }
 }

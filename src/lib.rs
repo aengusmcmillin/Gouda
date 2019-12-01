@@ -24,8 +24,9 @@ pub mod window;
 pub mod rendering;
 pub mod math;
 mod utils;
-pub mod bmp;
-pub mod png;
+pub mod images;
+pub use images::bmp as bmp;
+pub use images::png as png;
 pub mod font;
 pub mod types;
 pub mod gui;
@@ -33,6 +34,8 @@ pub mod mouse_capture;
 
 pub type RenderLayer = String;
 pub type RenderOrder = u32;
+
+pub struct QuitEvent;
 
 pub trait GameState {
     fn on_state_start(&self, ecs: &mut ECS);
@@ -46,6 +49,8 @@ pub trait GameLogic {
     fn window_props(&self) -> WindowProps;
     fn register_components(&self, ecs: &mut ECS);
     fn cleanup_components(&self, ecs: &mut ECS);
+    fn register_events(&self, ecs: &mut ECS);
+    fn migrate_events(&self, ecs: &mut ECS);
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>>;
     fn initial_game_state(&self) -> GameStateId;
     fn setup(&mut self, ecs: &mut ECS);
@@ -74,6 +79,7 @@ impl<T: GameLogic> Gouda<T> {
 
     fn setup_game(&mut self) {
         self.game_logic.register_components(&mut self.ecs);
+        self.game_logic.register_events(&mut self.ecs);
         self.game_logic.setup(&mut self.ecs);
 
         self.game_states.extend(self.game_logic.game_states());
@@ -123,6 +129,7 @@ impl<T: GameLogic> Gouda<T> {
         self.setup_game();
 
         loop {
+            self.game_logic.migrate_events(&mut self.ecs);
             let window = platform.get_window();
             let input = window.capture_input();
             let events = window.capture_events();
@@ -140,6 +147,9 @@ impl<T: GameLogic> Gouda<T> {
                 };
             }
             self.update(input.clone(), events);
+            if self.ecs.events::<QuitEvent>().len() > 0 {
+                return;
+            }
 
             let renderer = platform.get_renderer();
             if let Some(scene) = renderer.begin_scene() {

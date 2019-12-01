@@ -7,30 +7,50 @@ use std::rc::Rc;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};
 use crate::camera::Camera;
-use gouda::bmp::{Bitmap, debug_load_bmp};
+use gouda::bmp::Bitmap;
 use gouda::png::PNG;
 use crate::tilemap::{Tilemap, Tile};
+use gouda::images::spritesheet::Spritesheet;
+use std::fs::File;
+use gouda::types::Direction;
+use gouda::types::Direction::{Right, Left, Down, Top};
 
 #[derive(Debug)]
 pub struct Player {
-    drawable: TextureDrawable,
+    drawables: [TextureDrawable; 4],
     selected_drawable: QuadDrawable,
     x: i32,
     y: i32,
     pub current_tile: Entity,
     is_selected: bool,
+    direction: Direction,
 }
 
 impl Player {
     pub fn create(ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let png = PNG::from_file("bitmap/player.png");
-        let texture = RenderableTexture::new_from_png(renderer, png.unwrap());
-        let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+
+        let png = PNG::from_file("bitmap/spritesheet.png");
+        let sheet = Spritesheet::new(1, 4, png.unwrap().image());
+
+        let texture = RenderableTexture::new(renderer, sheet.sprite(0, 0));
+        let player_drawable_down = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let texture = RenderableTexture::new(renderer, sheet.sprite(1, 0));
+        let player_drawable_left = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let texture = RenderableTexture::new(renderer, sheet.sprite(2, 0));
+        let player_drawable_up = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let texture = RenderableTexture::new(renderer, sheet.sprite(3, 0));
+        let player_drawable_right = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
         let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8], [-4., -1., 0.], [0.4, 0.4, 1.], [0.; 3]);
 
         let tile = ecs.read_res::<Tilemap>().tile_at_pos(1, 2);
-        ecs.build_entity().add(Player {drawable: player_drawable, selected_drawable, x: -4, y: -1, current_tile: tile, is_selected: false});
+        let drawables = [
+            player_drawable_down,
+            player_drawable_left,
+            player_drawable_up,
+            player_drawable_right
+        ];
+        ecs.build_entity().add(Player {drawables, selected_drawable, x: -4, y: -1, current_tile: tile, is_selected: false, direction: Direction::Down});
     }
 
     pub fn set_selected(&mut self, selected: bool) {
@@ -40,7 +60,15 @@ impl Player {
         if self.is_selected {
             self.selected_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         }
-        self.drawable.draw_with_projection(&scene, &camera.projection_buffer)
+        if self.direction == Down {
+            self.drawables[0].draw_with_projection(&scene, &camera.projection_buffer)
+        } else if self.direction == Left {
+            self.drawables[1].draw_with_projection(&scene, &camera.projection_buffer)
+        } else if self.direction == Top {
+            self.drawables[2].draw_with_projection(&scene, &camera.projection_buffer)
+        } else if self.direction == Right {
+            self.drawables[3].draw_with_projection(&scene, &camera.projection_buffer)
+        }
     }
 
     pub fn set_pos(&mut self, tile: Entity, renderer: &Renderer, new_x: i32, new_y: i32) {
@@ -48,11 +76,23 @@ impl Player {
         self.y = new_y;
         self.current_tile = tile;
         self.selected_drawable.translate(renderer, [self.x as f32, self.y as f32, 0.], [0.4, 0.4, 1.]);
-        self.drawable.set_position(renderer, [self.x as f32, self.y as f32, 0.]);
+        for drawable in &mut self.drawables {
+            drawable.set_position(renderer, [self.x as f32, self.y as f32, 0.]);
+        }
     }
 
     pub fn move_pos(&mut self, tile: Entity, renderer: &Renderer, dx: i32, dy: i32) {
         self.set_pos(tile, renderer, self.x + dx, self.y + dy);
+
+        if dx > 0 {
+            self.direction = Right;
+        } else if dx < 0 {
+            self.direction = Left;
+        } else if dy < 0 {
+            self.direction = Down;
+        } else if dy > 0 {
+            self.direction = Top;
+        }
     }
 }
 

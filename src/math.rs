@@ -176,6 +176,6 @@ pub fn create_transformation_matrix(translate: [f32; 3], rot: [f32; 3], scale: [
         ]
     };
 
-    let transform_mat = transform_mat * xrot * yrot * zrot * scale_mat;
+    let transform_mat = zrot * yrot * xrot * transform_mat * scale_mat;
     return transform_mat;
 }
