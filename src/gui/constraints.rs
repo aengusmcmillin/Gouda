@@ -39,7 +39,6 @@ impl GuiConstraints {
             y -= (h as f32 * 0.5) as i32;
         }
 
-        println!("{} {} {} {}", x, y, w, h);
         return Bounds {
             x,
             y,

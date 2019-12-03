@@ -10,6 +10,13 @@ use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint};
 use std::rc::Rc;
 use gouda::font::Font;
 use crate::start_menu::StartMenuButtonId::Start;
+use crate::tilemap::{Tilemap, Tile};
+use crate::cursor::Cursor;
+use crate::player::Player;
+use crate::camera::Camera;
+use crate::main_menu::MainMenu;
+use crate::gui::GameGui;
+use crate::tree::Tree;
 
 pub struct StartMenuScreen {
     pub entity: Entity,
@@ -76,7 +83,15 @@ pub struct MenuClickMutation {
 impl Mutation for MenuClickMutation {
     fn apply(&self, ecs: &mut ECS) {
         match self.buttonid {
-            Start => {ecs.push_event(StartEvent)},
+            Start => {
+                Tilemap::create(ecs);
+                Cursor::create(ecs);
+                Player::create(ecs);
+                Camera::create(ecs);
+
+                MainMenu::create(ecs);
+                ecs.push_event(StartEvent)
+            },
         }
     }
 }

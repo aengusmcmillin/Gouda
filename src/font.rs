@@ -195,7 +195,7 @@ impl Font {
         }
 
         let texture = PNG::from_file(font_png_path).unwrap().image();
-        let texture = RenderableTexture::new(renderer, texture);
+        let texture = RenderableTexture::new(renderer, &texture);
 
         Font {
             texture,

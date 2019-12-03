@@ -17,7 +17,7 @@ impl Hearth {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = RenderableTexture::new(renderer, PNG::from_file("bitmap/hearth.png").unwrap().image());
+        let texture = RenderableTexture::new(renderer, &PNG::from_file("bitmap/hearth.png").unwrap().image());
         let drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0.; 3]);
         let hearth = Hearth {
             drawable,

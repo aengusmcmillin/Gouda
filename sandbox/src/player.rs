@@ -33,13 +33,13 @@ impl Player {
         let png = PNG::from_file("bitmap/spritesheet.png");
         let sheet = Spritesheet::new(1, 4, png.unwrap().image());
 
-        let texture = RenderableTexture::new(renderer, sheet.sprite(0, 0));
+        let texture = RenderableTexture::new(renderer, &sheet.sprite(0, 0));
         let player_drawable_down = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
-        let texture = RenderableTexture::new(renderer, sheet.sprite(1, 0));
+        let texture = RenderableTexture::new(renderer, &sheet.sprite(1, 0));
         let player_drawable_left = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
-        let texture = RenderableTexture::new(renderer, sheet.sprite(2, 0));
+        let texture = RenderableTexture::new(renderer, &sheet.sprite(2, 0));
         let player_drawable_up = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
-        let texture = RenderableTexture::new(renderer, sheet.sprite(3, 0));
+        let texture = RenderableTexture::new(renderer, &sheet.sprite(3, 0));
         let player_drawable_right = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
         let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8], [-4., -1., 0.], [0.4, 0.4, 1.], [0.; 3]);
 

@@ -12,7 +12,7 @@ pub struct RenderableTexture {
 }
 
 impl RenderableTexture {
-    pub fn new(renderer: &Renderer, image: Image) -> RenderableTexture {
+    pub fn new(renderer: &Renderer, image: &Image) -> RenderableTexture {
         let width = image.width as u64;
         let height = image.height as u64;
 

@@ -3,12 +3,14 @@ use crate::rendering::{Scene, Renderer};
 use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::rendering::shader::Shader;
 use crate::math::{Mat4x4, create_transformation_matrix};
-use crate::rendering::drawable::QuadDrawable;
+use crate::rendering::drawable::{QuadDrawable, TextureDrawable};
 use crate::font::{TextDrawable, Font};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;
 use crate::ecs::{ECS, Entity};
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
+use crate::images::Image;
+use crate::platform::metal::texture::RenderableTexture;
 
 pub mod constraints;
 pub mod button;
@@ -16,6 +18,60 @@ pub mod slider;
 
 #[derive(Debug)]
 pub struct ActiveGui {}
+
+#[derive(Debug)]
+pub struct GuiImage {
+    constraints: GuiConstraints,
+    calculated_bounds: Bounds,
+    drawable: TextureDrawable,
+    visible: bool,
+}
+
+impl GuiImage {
+
+    pub fn create(ecs: &mut ECS, parent_bounds: Option<Bounds>, image: Image, constraints: GuiConstraints) -> Entity {
+        let renderer = ecs.read_res::<Rc<Renderer>>();
+        let bounds = match parent_bounds {
+            Some(parent_bounds) => {
+                constraints.calculate_bounds(parent_bounds)
+            }
+            None => {
+                let w = renderer.get_width() as i32;
+                let h = renderer.get_height() as i32;
+                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
+            }
+        };
+        let w = renderer.get_width() as f32;
+        let h = renderer.get_height() as f32;
+        let pos = [(bounds.x as f32) / (w as f32 / 2.) - 1.0, (bounds.y as f32) / (h as f32 / 2.) - 1.0, 1.0];
+        let size = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
+        let renderable_texture=  RenderableTexture::new(renderer, &image);
+
+        let drawable = TextureDrawable::new(true, renderer, renderable_texture, pos, size, [0.; 3]);
+        let image = GuiImage {
+            constraints,
+            calculated_bounds: bounds,
+            drawable,
+            visible: true,
+        };
+
+        ecs.build_entity().add(image).entity()
+    }
+
+    pub fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    pub fn show(&mut self) {
+        self.visible = true;
+    }
+
+    pub fn render(&self, scene: &Scene) {
+        if self.visible {
+            self.drawable.draw(scene);
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct GuiText {
@@ -43,7 +99,7 @@ impl GuiText {
         };
         let pos = [(bounds.x as f32) / 450. - 1., (bounds.y as f32) / 450. - 1.];
         let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];
-        let drawable = TextDrawable::new(renderer, pos, size, center_x, center_y, font, [color.r, color.g, color.b], text, font_size);
+        let drawable = TextDrawable::new(renderer,  pos, size, center_x, center_y, font, [color.r, color.g, color.b], text, font_size);
         let text = GuiText {
             constraints,
             calculated_bounds: bounds,
@@ -89,6 +145,7 @@ pub struct GuiComponent {
     hover_color: Option<Color>,
     children: Vec<Entity>,
     text: Vec<Entity>,
+    images: Vec<Entity>,
     drawable: GuiDrawable,
     hover_drawable: Option<GuiDrawable>,
     is_hovered: bool,
@@ -117,6 +174,7 @@ impl GuiComponent {
             color,
             hover_color: Some(hover_color),
             text: Vec::new(),
+            images: Vec::new(),
             children: Vec::new(),
             drawable,
             hover_drawable,
@@ -155,6 +213,7 @@ impl GuiComponent {
             color,
             hover_color: None,
             text: Vec::new(),
+            images: Vec::new(),
             children: Vec::new(),
             drawable,
             hover_drawable: None,
@@ -187,6 +246,10 @@ impl GuiComponent {
         self
     }
 
+    pub fn add_image(&mut self, image: Entity) {
+        self.images.push(image);
+    }
+
     pub fn set_hovered(&mut self, hovered: bool) {
         self.is_hovered = hovered;
     }
@@ -216,6 +279,10 @@ impl GuiComponent {
 
         for text in &self.text {
             ecs.read::<GuiText>(text).unwrap().render(scene);
+        }
+
+        for image in &self.images {
+            ecs.read::<GuiImage>(image).unwrap().render(scene);
         }
 
         for child in &self.children {

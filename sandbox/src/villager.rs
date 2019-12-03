@@ -18,7 +18,7 @@ impl Villager {
     pub fn create(ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let bmp = Bitmap::new("bitmap/test_bmp.bmp");
-        let texture = RenderableTexture::new(renderer, bmp.unwrap().image());
+        let texture = RenderableTexture::new(renderer, &bmp.unwrap().image());
         let player_drawable = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
         ecs.build_entity().add(Villager {drawable: player_drawable, x: -4., y: -1.});
     }

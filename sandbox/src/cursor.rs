@@ -9,6 +9,7 @@ use crate::tilemap::Tile;
 use gouda::ecs::ECS;
 
 pub struct Cursor {
+    visible: bool,
     top_drawable: QuadDrawable,
     left_drawable: QuadDrawable,
     bottom_drawable: QuadDrawable,
@@ -24,11 +25,16 @@ impl Cursor {
 
     pub fn new(renderer: &Rc<Renderer>) -> Cursor {
         Cursor {
+            visible: false,
             top_drawable: QuadDrawable::new(false, renderer, [0., 0., 0.], [0., 0., 0.], [0.42, 0.02, 0.4], [0.; 3]),
             left_drawable: QuadDrawable::new(false, renderer, [0., 0., 0.], [0., 0., 0.], [0.02, 0.42, 0.4], [0.; 3]),
             bottom_drawable: QuadDrawable::new(false, renderer, [0., 0., 0.], [0., 0., 0.], [0.42, 0.02, 0.4], [0.; 3]),
             right_drawable: QuadDrawable::new(false, renderer, [0., 0., 0.], [0., 0., 0.], [0.02, 0.42, 0.4], [0.; 3]),
         }
+    }
+
+    pub fn set_visible(&mut self, visible: bool) {
+        self.visible = visible;
     }
 
     pub fn set_pos(&mut self, renderer: &Renderer, pos: [f32; 3]) {
@@ -38,7 +44,10 @@ impl Cursor {
         self.right_drawable.set_position(renderer, [pos[0] + 0.4, pos[1], pos[2]]);
     }
 
-    pub fn draw(&self, renderer: &Renderer, scene: &Scene, camera: &Camera) {
+    pub fn draw(&self, scene: &Scene, camera: &Camera) {
+        if !self.visible {
+            return;
+        }
         self.top_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         self.left_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         self.bottom_drawable.draw_with_projection(&scene, &camera.projection_buffer);

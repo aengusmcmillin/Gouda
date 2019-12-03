@@ -12,10 +12,13 @@ use crate::monster::Monster;
 #[derive(Debug)]
 pub struct Turret {
     texture_drawable: TextureDrawable,
+    range_drawable: TextureDrawable,
+    pub selected: bool,
     fire_cooldown: f32,
     fire_timer: f32,
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
+    range: f32,
 }
 
 impl Turret {
@@ -23,20 +26,28 @@ impl Turret {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = RenderableTexture::new(renderer, PNG::from_file("bitmap/turret2.png").unwrap().image());
+        let texture = RenderableTexture::new(renderer, &PNG::from_file("bitmap/turret2.png").unwrap().image());
         let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0., 0., 0.]);
+        let range_texture = RenderableTexture::new(renderer, &PNG::from_file("bitmap/range_indicator.png").unwrap().image());
+        let range_drawable = TextureDrawable::new(false, renderer, range_texture, [tile.x as f32, tile.y as f32, 0.], [3.0, 3.0, 1.0], [0., 0., 0.]);
         let turret = Turret {
             texture_drawable,
+            range_drawable,
+            selected: false,
             fire_cooldown: 1.,
             fire_timer: 1.,
             x: tile.x as f32,
             y: tile.y as f32,
+            range: 3.,
         };
         ecs.build_entity().add(turret);
     }
 
     pub fn draw(&self, scene: &Scene, camera: &Camera) {
         self.texture_drawable.draw_with_projection(scene, &camera.projection_buffer);
+        if self.selected {
+            self.range_drawable.draw_with_projection(scene, &camera.projection_buffer);
+        }
     }
 }
 
@@ -54,14 +65,13 @@ impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let texture = PNG::from_file("bitmap/arrow.png").unwrap().image();
-        let texture = RenderableTexture::new(renderer, texture);
+        let texture = RenderableTexture::new(renderer, &texture);
         let quad = TextureDrawable::new(false, renderer, texture, [x, y, 0.], [0.3, 0.1, 1.], [0.; 3]);
         ecs.build_entity().add(Arrow {drawable: quad, target, x, y, speed: 5., damage: 1});
     }
 
     pub fn change_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
         //let deg = (dy / dx).atan() / (std::f32::consts::PI / 180.);
-        self.drawable.set_rotation(renderer, [0., 0., 0.]);
         self.x += dx;
         self.y += dy;
         self.drawable.set_position(renderer, [self.x, self.y, 0.]);
@@ -197,9 +207,11 @@ pub fn turret_attack_system(ecs: &ECS) -> Mutations {
             }
         }
 
-        if let Some((monster, distsq)) = closest {
+        if let Some((monster, dist)) = closest {
             if turret.fire_timer - input.seconds_to_advance_over_update <= 0. {
-                mutations.push(Box::new(FireArrowMutation {turret: e, target: monster}));
+                if dist < turret.range {
+                    mutations.push(Box::new(FireArrowMutation {turret: e, target: monster}));
+                }
             } else {
                 mutations.push(Box::new(DecrTurretTimerMutation {turret: e, dt: input.seconds_to_advance_over_update}));
             }

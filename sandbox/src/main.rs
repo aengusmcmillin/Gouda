@@ -8,7 +8,7 @@ use gouda::input::{LetterKeys, GameInput};
 use gouda::math::Mat4x4;
 
 extern crate rand;
-use rand::Rng;
+use rand::{Rng, thread_rng};
 use crate::tilemap::{Tile, Tilemap};
 use crate::player::{Player, player_move_system};
 use crate::cursor::Cursor;
@@ -16,12 +16,12 @@ use crate::camera::Camera;
 use gouda::font::{Font, TextDrawable};
 use crate::spawners::{WaveSpawner, wave_spawner_system, WaveSpec, MonsterSpec, MonsterType, GameDay, generate_days};
 use crate::monster::{Monster, monster_move_system, monster_damage_system};
-use gouda::gui::{GuiComponent, ActiveGui, GuiText};
+use gouda::gui::{GuiComponent, ActiveGui, GuiText, GuiImage};
 use gouda::gui::constraints::GuiConstraints;
 use gouda::types::Color;
 use gouda::gui::constraints::Constraint::RelativeConstraint;
 use gouda::input::AnyKey::Letter;
-use crate::gui::{GameGui, game_gui_system, StageText, change_stage_text};
+use crate::gui::{GameGui, game_gui_system, StageText, change_stage_text, GoldText, WoodText, StoneText};
 use crate::main_menu::{MenuScreen, MainMenu, MainMenuButtonId, menu_mouse_system, SaveEvent, ResumeEvent, SettingsEvent};
 use std::collections::HashMap;
 use gouda::window::{WindowProps, WindowEvent};
@@ -29,7 +29,10 @@ use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_sy
 use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
 use crate::hearth::Hearth;
 use crate::start_menu::{StartMenu, START_MENU_GAME_STATE, StartMenuButtonId, StartMenuGameState, StartEvent};
+use crate::supplies::Supplies;
+use crate::tree::Tree;
 
+mod tree;
 mod start_menu;
 mod tilemap;
 mod player;
@@ -44,6 +47,7 @@ mod villager;
 mod hearth;
 mod gui;
 mod main_menu;
+mod supplies;
 
 #[derive(Debug)]
 struct Pos {
@@ -52,20 +56,78 @@ struct Pos {
 }
 
 pub struct CreateTurretMutation {
-    e: Entity,
+    tile_e: Entity,
 }
 
 impl Mutation for CreateTurretMutation {
     fn apply(&self, ecs: &mut ECS) {
-        Turret::create(ecs, self.e);
+        if ecs.write_res::<Supplies>().spend_supplies(0, 5, 0) {
+            Turret::create(ecs, self.tile_e);
+
+            ecs.write::<Tile>(&self.tile_e).unwrap().occupied = true;
+        } else {
+
+        }
+    }
+}
+
+pub struct TurretSelectMutation {
+    turret_e: Entity,
+}
+
+impl Mutation for TurretSelectMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        ecs.write::<Turret>(&self.turret_e).unwrap().selected = true;
+    }
+}
+pub struct TurretDeselectMutation {
+}
+
+impl Mutation for TurretDeselectMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        let turrets = ecs.get1::<Turret>();
+        for turret in &turrets {
+            ecs.write::<Turret>(turret).unwrap().selected = false;
+        }
+    }
+}
+
+pub struct TreeHarvestMutation {
+    tree: Entity,
+}
+
+impl Mutation for TreeHarvestMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        let mut tree = ecs.write::<Tree>(&self.tree).unwrap();
+        let wood = tree.harvest();
+        ecs.write_res::<Supplies>().add_wood(wood);
+        ecs.delete_entity(&self.tree);
     }
 }
 
 fn mouse_click_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = Vec::new();
-    for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
+    for (tile, mouse_capture, tile_e) in ecs.read2::<Tile, MouseCaptureArea>() {
         if mouse_capture.clicked_buttons[0] {
-            mutations.push(Box::new(CreateTurretMutation{e}));
+            mutations.push(Box::new(TurretDeselectMutation{}));
+            if !tile.occupied {
+                println!("Unoccupied");
+                mutations.push(Box::new(CreateTurretMutation{tile_e}));
+            } else {
+                println!("Occupied");
+                for (turret, e) in ecs.read1::<Turret>() {
+                    if turret.x == tile.x as f32 && turret.y == tile.y as f32 && !turret.selected {
+                        println!("Mutating");
+                        mutations.push(Box::new(TurretSelectMutation{turret_e: e}));
+                    }
+                }
+
+                for (tree, e) in ecs.read1::<Tree>() {
+                    if tree.x == tile.x as f32 && tree.y == tile.y as f32 {
+                        mutations.push(Box::new(TreeHarvestMutation {tree: e}))
+                    }
+                }
+            }
         }
     }
     return mutations;
@@ -86,13 +148,26 @@ impl Mutation for CursorSetPositionMutation {
     }
 }
 
+struct CursorVisibilityMutation {
+    visible: bool,
+}
+
+impl Mutation for CursorVisibilityMutation {
+    fn apply(&self, ecs: &mut ECS) {
+        ecs.write_res::<Cursor>().set_visible(self.visible);
+    }
+}
+
 fn mouse_cursor_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
+    let mut any_hovered = false;
     for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
         if mouse_capture.is_hovered {
-            mutations.push(Box::new(CursorSetPositionMutation {tile: e}))
+            mutations.push(Box::new(CursorSetPositionMutation {tile: e}));
+            any_hovered = true;
         }
     }
+    mutations.push(Box::new(CursorVisibilityMutation {visible: any_hovered}));
     return mutations;
 }
 
@@ -103,26 +178,18 @@ fn register_core_systems(ecs: &mut ECS) {
 }
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
-    let input = ecs.read_res::<GameInput>();
-    let screen_x = input.mouse.x as f32 / 450. - 1.;
-    let screen_y = input.mouse.y as f32 / 450. - 1.;
-    let cursor = ecs.read_res::<Cursor>();
-
     let camera = ecs.read_res::<Camera>();
-    let pos = camera.screen_space_to_world_space(screen_x, -1. * screen_y);
-    let pos = [(pos[0] + 0.5).floor(), (pos[1] + 0.5).floor()];
-    for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
+    for (tile, _) in ecs.read1::<Tile>() {
         tile.draw(&scene, &camera);
-        if mouse_capture.is_hovered {
-            let renderer = ecs.read_res::<Rc<Renderer>>();
-            cursor.draw(&renderer, &scene, &camera);
-        }
     }
-    for (monster, e) in ecs.read1::<Monster>() {
+
+    ecs.read_res::<Cursor>().draw(&scene, &camera);
+
+    for (monster, _) in ecs.read1::<Monster>() {
         monster.draw(&scene, &camera);
     }
 
-    for (player, e) in ecs.read1::<Player>() {
+    for (player, _) in ecs.read1::<Player>() {
         player.draw(&scene, &camera);
     }
 
@@ -134,8 +201,16 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
         hearth.draw(&scene, &camera);
     }
 
+    for (tree, _) in ecs.read1::<Tree>() {
+        tree.draw(&scene, &camera);
+    }
+
     for (arrow, _) in ecs.read1::<Arrow>() {
         arrow.draw(&scene, &camera);
+    }
+
+    for (spawner, _) in ecs.read1::<WaveSpawner>() {
+        spawner.draw(&scene, &camera);
     }
 
     for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
@@ -209,11 +284,6 @@ fn day_state_countdown(ecs: &ECS) -> Mutations {
     return vec![Box::new(StateCountdownMutation {dt: input.seconds_to_advance_over_update})];
 }
 
-fn setup_next_wave() {
-
-}
-
-
 fn next_day(ecs: &mut ECS) {
     change_stage_text(ecs, "Day");
 
@@ -221,21 +291,28 @@ fn next_day(ecs: &mut ECS) {
     ecs.add_res(game_day);
     ecs.write_res::<StateTimer>().countdown_s = ecs.read_res::<GameDay>().day_length;
 
-    ecs.write_res::<StateTimer>().countdown_s = 15.;
+
+    let tilemap = ecs.read_res::<Tilemap>();
+    let borders: Vec<(f32, f32)> = tilemap.borders().iter().map(|border| {
+        tilemap.pos_of_tile(*border)
+    }).collect();
+
+    let waves = &ecs.read_res::<GameDay>().waves.clone();
+    for wave in waves {
+        let border_index = thread_rng().gen_range(0, borders.len());
+        let border = borders.get(border_index).unwrap();
+        WaveSpawner::create(ecs, wave.wave.clone(),  border.0, border.1, 1.);
+    }
+
+    let tilemap = ecs.read_res::<Tilemap>();
+    Tree::create(ecs, tilemap.tile_at_pos(2, 4));
+    let tilemap = ecs.read_res::<Tilemap>();
+    Tree::create(ecs, tilemap.tile_at_pos(8, 2));
 }
 
 fn next_night(ecs: &mut ECS) {
     change_stage_text(ecs, "Night");
 
-    let waves = &ecs.read_res::<GameDay>().waves;
-    let mut wave_spawners = vec![];
-    for wave in waves {
-        wave_spawners.push(WaveSpawner::new(wave.wave.clone(), 1.));
-    }
-
-    for spawner in wave_spawners {
-        ecs.build_entity().add(spawner).add(Pos {x: 5., y: 0.});
-    }
     ecs.write_res::<StateTimer>().countdown_s = ecs.read_res::<GameDay>().night_length;
 }
 
@@ -266,7 +343,6 @@ impl GameState for DayGameState {
 
     fn next_state(&self, ecs: &ECS) -> Option<u32> {
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
-            println!("Now in night state");
             return Some(NIGHT_GAME_STATE);
         } else {
             if ecs.read_res::<GameInput>().keyboard.letter_pressed(LetterKeys::B) {
@@ -319,7 +395,6 @@ impl GameState for NightGameState {
 
     fn next_state(&self, ecs: &ECS) -> Option<u32> {
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
-            println!("Now in day state");
             return Some(DAY_GAME_STATE);
         } else {
             if ecs.read_res::<GameInput>().keyboard.letter_pressed(LetterKeys::B) {
@@ -421,14 +496,19 @@ impl GameLogic for Game {
         ecs.register_component_type::<Pos>();
         ecs.register_component_type::<GuiComponent>();
         ecs.register_component_type::<GuiText>();
+        ecs.register_component_type::<GuiImage>();
         ecs.register_component_type::<ActiveGui>();
         ecs.register_component_type::<MouseCaptureArea>();
         ecs.register_component_type::<MouseCaptureLayer>();
         ecs.register_component_type::<ActiveCaptureLayer>();
         ecs.register_component_type::<Turret>();
+        ecs.register_component_type::<Tree>();
         ecs.register_component_type::<Arrow>();
         ecs.register_component_type::<DamageDealt>();
         ecs.register_component_type::<StageText>();
+        ecs.register_component_type::<GoldText>();
+        ecs.register_component_type::<WoodText>();
+        ecs.register_component_type::<StoneText>();
         ecs.register_component_type::<MainMenuButtonId>();
         ecs.register_component_type::<StartMenuButtonId>();
     }
@@ -441,14 +521,19 @@ impl GameLogic for Game {
         ecs.cleanup_components::<Pos>();
         ecs.cleanup_components::<GuiComponent>();
         ecs.cleanup_components::<GuiText>();
+        ecs.cleanup_components::<GuiImage>();
         ecs.cleanup_components::<ActiveGui>();
         ecs.cleanup_components::<MouseCaptureArea>();
         ecs.cleanup_components::<MouseCaptureLayer>();
         ecs.cleanup_components::<ActiveCaptureLayer>();
         ecs.cleanup_components::<Turret>();
+        ecs.cleanup_components::<Tree>();
         ecs.cleanup_components::<Arrow>();
         ecs.cleanup_components::<DamageDealt>();
         ecs.cleanup_components::<StageText>();
+        ecs.cleanup_components::<GoldText>();
+        ecs.cleanup_components::<WoodText>();
+        ecs.cleanup_components::<StoneText>();
         ecs.cleanup_components::<StartMenuButtonId>();
     }
 
@@ -489,17 +574,11 @@ impl GameLogic for Game {
 
         ecs.add_res(StateTimer{countdown_s: 0.});
 
+        GameGui::create(ecs);
         ecs.add_res(generate_days());
         ecs.add_res::<Vec<WindowEvent>>(vec![]);
-
-        Tilemap::create(ecs);
-        Cursor::create(ecs);
-        Player::create(ecs);
-        Camera::create(ecs);
-
-        GameGui::create(ecs);
+        ecs.add_res(Supplies::new());
         StartMenu::create(ecs);
-        MainMenu::create(ecs);
     }
 }
 
