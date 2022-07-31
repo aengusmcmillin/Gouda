@@ -30,7 +30,7 @@ impl IndexBuffer {
         };
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, _scene: &Scene) {
 
     }
 }
@@ -55,7 +55,7 @@ impl <T> FragmentConstantBuffer<T> {
         scene.encoder.set_fragment_buffer(self.offset, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, renderer: &Renderer, mut data: Vec<T>) {
+    pub fn update_data(&self, _renderer: &Renderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }
@@ -84,7 +84,7 @@ impl <T> VertexConstantBuffer<T> {
         scene.encoder.set_vertex_buffer(self.offset + 1, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, renderer: &Renderer, mut data: Vec<T>) {
+    pub fn update_data(&self, _renderer: &Renderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }
@@ -113,7 +113,7 @@ impl <T> VertexBuffer <T> {
         scene.encoder.set_vertex_buffer(self.offset, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, renderer: &Renderer, mut data: Vec<T>) {
+    pub fn update_data(&self, _renderer: &Renderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }

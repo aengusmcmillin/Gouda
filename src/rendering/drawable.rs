@@ -1,11 +1,8 @@
 use crate::rendering::shader::Shader;
 use crate::rendering::buffers::{VertexBuffer, IndexBuffer, VertexConstantBuffer, FragmentConstantBuffer};
 use crate::rendering::{Scene, Renderer};
-use crate::input::{GameInput, LetterKeys};
-use crate::math::{create_transformation_matrix, create_projection_matrix, create_view_matrix, Mat4x4};
+use crate::math::{create_transformation_matrix, Mat4x4};
 use crate::rendering::texture::RenderableTexture;
-use crate::ecs::Entity;
-use crate::{RenderLayer, RenderOrder};
 
 #[derive(Debug)]
 pub struct TextureDrawable {
@@ -21,7 +18,7 @@ pub struct TextureDrawable {
 }
 
 impl TextureDrawable {
-    pub fn new(is_gui: bool, renderer: &Renderer, texture: RenderableTexture, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) -> Self {
+    pub fn new(_is_gui: bool, renderer: &Renderer, texture: RenderableTexture, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) -> Self {
         let vb = VertexBuffer::new(
             renderer,
             0,

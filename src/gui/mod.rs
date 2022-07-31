@@ -3,7 +3,7 @@ use crate::rendering::{Scene, Renderer};
 use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::rendering::shader::Shader;
 use crate::math::{Mat4x4, create_transformation_matrix};
-use crate::rendering::drawable::{QuadDrawable, TextureDrawable};
+use crate::rendering::drawable::TextureDrawable;
 use crate::font::{TextDrawable, Font};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;

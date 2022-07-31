@@ -4,19 +4,8 @@ use metal::*;
 use core_graphics::geometry::CGSize;
 use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
-use std::mem;
-use cocoa::base::id;
-use std::any::Any;
-use std::collections::HashMap;
-use metal::MTLPrimitiveType::Triangle;
-use std::convert::TryInto;
 use std::f32;
-use crate::math::{Mat4x4, create_transformation_matrix, create_projection_matrix, create_view_matrix};
-use std::os::raw::c_void;
-use crate::input::{GameInput, LetterKeys};
-use crate::platform::metal::shader::Shader;
-use crate::platform::metal::buffers::{VertexBuffer, IndexBuffer};
-use metal::MTLFunctionType::Vertex;
+use crate::platform::metal::buffers::{IndexBuffer};
 
 pub mod drawable;
 pub mod shader;
@@ -72,7 +61,6 @@ pub struct Renderer {
     command_queue: CommandQueue,
     width: usize,
     height: usize,
-    drawables: Vec<Box<Drawable>>,
 }
 
 impl Renderer {
@@ -92,13 +80,12 @@ impl Renderer {
 
         let command_queue = device.new_command_queue();
 
-        let mut res = Renderer {
+        let res = Renderer {
             device,
             layer,
             command_queue,
             width,
             height,
-            drawables: vec![],
         };
         return res;
     }

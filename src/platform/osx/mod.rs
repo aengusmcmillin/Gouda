@@ -14,6 +14,7 @@ use std::rc::Rc;
 pub mod osx_window;
 pub mod osx_input;
 
+#[allow(dead_code)]
 pub struct OSXPlatformLayer {
     pool: id,
     window: GameWindow,

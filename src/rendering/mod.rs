@@ -1,5 +1,3 @@
-use std::any::Any;
-
 pub mod drawable;
 
 #[cfg(target_os = "macos")]

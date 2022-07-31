@@ -47,7 +47,6 @@ pub trait GameState {
 
 pub trait GameLogic {
     fn window_props(&self) -> WindowProps;
-    fn register_components(&self, ecs: &mut ECS);
     fn cleanup_components(&self, ecs: &mut ECS);
     fn register_events(&self, ecs: &mut ECS);
     fn migrate_events(&self, ecs: &mut ECS);
@@ -78,7 +77,6 @@ impl<T: GameLogic> Gouda<T> {
     }
 
     fn setup_game(&mut self) {
-        self.game_logic.register_components(&mut self.ecs);
         self.game_logic.register_events(&mut self.ecs);
         self.game_logic.setup(&mut self.ecs);
 

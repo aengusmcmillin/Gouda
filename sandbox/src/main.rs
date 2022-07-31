@@ -487,32 +487,6 @@ impl GameLogic for Game {
         }
     }
 
-    fn register_components(&self, ecs: &mut ECS) {
-        ecs.register_component_type::<Tile>();
-        ecs.register_component_type::<Hearth>();
-        ecs.register_component_type::<Player>();
-        ecs.register_component_type::<Monster>();
-        ecs.register_component_type::<WaveSpawner>();
-        ecs.register_component_type::<Pos>();
-        ecs.register_component_type::<GuiComponent>();
-        ecs.register_component_type::<GuiText>();
-        ecs.register_component_type::<GuiImage>();
-        ecs.register_component_type::<ActiveGui>();
-        ecs.register_component_type::<MouseCaptureArea>();
-        ecs.register_component_type::<MouseCaptureLayer>();
-        ecs.register_component_type::<ActiveCaptureLayer>();
-        ecs.register_component_type::<Turret>();
-        ecs.register_component_type::<Tree>();
-        ecs.register_component_type::<Arrow>();
-        ecs.register_component_type::<DamageDealt>();
-        ecs.register_component_type::<StageText>();
-        ecs.register_component_type::<GoldText>();
-        ecs.register_component_type::<WoodText>();
-        ecs.register_component_type::<StoneText>();
-        ecs.register_component_type::<MainMenuButtonId>();
-        ecs.register_component_type::<StartMenuButtonId>();
-    }
-
     fn cleanup_components(&self, ecs: &mut ECS) {
         ecs.cleanup_components::<Tile>();
         ecs.cleanup_components::<Player>();

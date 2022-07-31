@@ -310,7 +310,7 @@ impl GameWindowImpl for OsxWindow {
                     YES,
                 );
             }
-            msg_send![pool2, release];
+            let _: () = msg_send![pool2, release];
             return self.input.clone();
         }
     }

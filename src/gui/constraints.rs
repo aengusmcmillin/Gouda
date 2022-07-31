@@ -26,9 +26,9 @@ impl GuiConstraints {
 
         if w == 0 && h == 0 {
             panic!("Bad width and height");
-        } else if let Constraint::AspectConstraint {aspect: aspect} = self.width {
+        } else if let Constraint::AspectConstraint {aspect} = self.width {
             w = (h as f32 * aspect) as i32;
-        } else if let Constraint::AspectConstraint {aspect: aspect} = self.height {
+        } else if let Constraint::AspectConstraint {aspect} = self.height {
             h = (w as f32 * aspect) as i32;
         }
 
@@ -59,13 +59,13 @@ pub enum Constraint {
 impl Constraint {
     pub fn calculate(&self, min: i32, max: i32) -> i32 {
         match self {
-            Constraint::RelativeConstraint { size: size } => {
+            Constraint::RelativeConstraint { size } => {
                 min + ((max - min) as f32 * size) as i32
             }
             Constraint::CenterConstraint => {
                 (min + max) / 2
             }
-            Constraint::PixelConstraint { size: size } => {
+            Constraint::PixelConstraint { size } => {
                 if *size < 0 {
                     max - min + *size
                 } else {

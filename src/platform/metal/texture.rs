@@ -1,9 +1,7 @@
 use metal::{Texture, TextureDescriptor, MTLPixelFormat, MTLRegion, MTLOrigin, MTLSize};
 use crate::platform::metal::{Renderer, Scene};
-use crate::bmp::Bitmap;
 use std::mem;
 use std::os::raw::c_void;
-use crate::png::PNG;
 use crate::images::Image;
 
 #[derive(Debug)]

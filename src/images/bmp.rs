@@ -7,7 +7,7 @@ use crate::images::Image;
 use crate::types::Color;
 
 #[repr(packed)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct BitmapHeader {
     pub file_type: u16,
     pub file_size: u32,

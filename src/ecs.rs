@@ -1,9 +1,8 @@
 #![allow(non_camel_case_types)]
 #![allow(unused_parens)]
 
-use anymap::AnyMap;
+use anymap::{AnyMap, raw::RawMap};
 use std::fmt::Debug;
-use std::collections::HashMap;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct GenIndex {
@@ -159,22 +158,24 @@ pub struct ECS {
     processing_events: AnyMap,
 }
 
-#[macro_use]
 macro_rules! impl_read {
         ( $fn_name:ident, [$($r:ident),*] ) => {
             pub fn $fn_name<$($r: 'static),*>(&self) -> Vec<($(&$r),*, Entity)> {
 
             let mut minlen = 1000;
         $(
-            let $r = self.components.get::<EntityMap<$r>>().unwrap();
-            minlen = std::cmp::min(minlen, $r.0.len());
+            let $r = self.components.get::<EntityMap<$r>>();
+            if $r.is_none() {
+                return Vec::new();
+            }
+            minlen = std::cmp::min(minlen, $r.unwrap().0.len());
         )*
 
             let mut res = Vec::new();
             let num_iter = minlen;
             for i in 0..num_iter {
                 $(
-                    let $r = $r.0.get(i);
+                    let $r = $r.unwrap().0.get(i);
                 )*
                 match ($($r),*) {
                     ($(Some($r)),*) => {
@@ -203,22 +204,24 @@ macro_rules! impl_read {
     }
 }
 
-#[macro_use]
 macro_rules! impl_get {
         ( $fn_name:ident, [$($r:ident),*] ) => {
             pub fn $fn_name<$($r: 'static),*>(&self) -> Vec<Entity> {
 
             let mut minlen = 1000;
         $(
-            let $r = self.components.get::<EntityMap<$r>>().unwrap();
-            minlen = std::cmp::min(minlen, $r.0.len());
+            let $r = self.components.get::<EntityMap<$r>>();
+            if $r.is_none() {
+                return Vec::new();
+            }
+            minlen = std::cmp::min(minlen, $r.unwrap().0.len());
         )*
 
             let mut res = Vec::new();
             let num_iter = minlen;
             for i in 0..num_iter {
                 $(
-                    let $r = $r.0.get(i);
+                    let $r = $r.unwrap().0.get(i);
                 )*
                 match ($($r),*) {
                     ($(Some($r)),*) => {
@@ -264,9 +267,10 @@ impl ECS {
         self.systems.clear();
     }
 
-    pub fn register_component_type<T: 'static + Debug>(&mut self) {
+    pub fn register_component_type<T: 'static + Debug>(&mut self) -> &mut EntityMap<T> {
         let e: EntityMap<T> = EntityMap::new();
         self.components.insert(e);
+        return self.components.get_mut::<EntityMap<T>>().unwrap();
     }
 
     pub fn run_systems(&mut self) {
@@ -296,7 +300,10 @@ impl ECS {
     }
 
     pub fn add_component<T: 'static + Debug>(&mut self, entity: &Entity, component: T) {
-        let comps = self.components.get_mut::<EntityMap<T>>();
+        let mut comps = self.components.get_mut::<EntityMap<T>>();
+        if (comps.is_none()) {
+            comps = Some(self.register_component_type::<T>())
+        }
         match comps {
             Some(comps) => {
                 comps.set(*entity, component);
@@ -323,14 +330,12 @@ impl ECS {
                 if let Some(e) = &comps.0[i] {
                     let e = GenIndex {index: i, generation: e.generation};
                     if !self.entity_allocator.is_live(e) {
-                        println!("Not live");
                         comps_to_remove.push(e);
                     }
                 }
             }
         }
         for e in comps_to_remove {
-            println!("removing");
             self.remove_component::<T>(&e);
         }
     }
@@ -374,18 +379,11 @@ impl ECS {
         self.resources.get_mut::<T>().unwrap()
     }
 
-    pub fn read<T: 'static>(&self, entity: &Entity) -> Option<&T>{
-        let i = self.components.get::<EntityMap<T>>().unwrap().0.get(entity.index);
-        match i {
-            Some(i) => {
-                match i {
-                    Some(i) => {
-                        return Some(&i.value);
-                    },
-                    None => {}
-                }
+    pub fn read<T: 'static + Debug>(&self, entity: &Entity) -> Option<&T>{
+        if let Some(map) = self.components.get::<EntityMap<T>>() {
+            if let Some(Some(i)) = map.0.get(entity.index) {
+                return Some(&i.value);
             }
-            None => {}
         }
         return None;
     }
@@ -435,7 +433,7 @@ pub struct EntityBuilder<'a> {
 }
 
 impl <'a> EntityBuilder<'a> {
-    pub fn add<T: 'static + Debug>(mut self, c: T) -> EntityBuilder<'a> {
+    pub fn add<T: 'static + Debug>(self, c: T) -> EntityBuilder<'a> {
         self.ecs.add_component(&self.entity, c);
         self
     }
