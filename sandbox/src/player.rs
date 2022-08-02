@@ -6,12 +6,10 @@ use gouda::rendering::{
 use std::rc::Rc;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};
-use crate::camera::Camera;
-use gouda::bmp::Bitmap;
 use gouda::png::PNG;
-use crate::tilemap::{Tilemap, Tile};
+use gouda::camera::Camera;
+use crate::tilemap::{Tilemap};
 use gouda::images::spritesheet::Spritesheet;
-use std::fs::File;
 use gouda::types::Direction;
 use gouda::types::Direction::{Right, Left, Down, Top};
 
@@ -34,14 +32,14 @@ impl Player {
         let sheet = Spritesheet::new(1, 4, png.unwrap().image());
 
         let texture = RenderableTexture::new(renderer, &sheet.sprite(0, 0));
-        let player_drawable_down = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let player_drawable_down = TextureDrawable::new(false, renderer, texture);
         let texture = RenderableTexture::new(renderer, &sheet.sprite(1, 0));
-        let player_drawable_left = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let player_drawable_left = TextureDrawable::new(false, renderer, texture);
         let texture = RenderableTexture::new(renderer, &sheet.sprite(2, 0));
-        let player_drawable_up = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
+        let player_drawable_up = TextureDrawable::new(false, renderer, texture);
         let texture = RenderableTexture::new(renderer, &sheet.sprite(3, 0));
-        let player_drawable_right = TextureDrawable::new(false, renderer, texture, [-4., -1., 0.], [0.3, 0.3, 1.], [0.; 3]);
-        let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8], [-4., -1., 0.], [0.4, 0.4, 1.], [0.; 3]);
+        let player_drawable_right = TextureDrawable::new(false, renderer, texture);
+        let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8]);
 
         let tile = ecs.read_res::<Tilemap>().tile_at_pos(1, 2);
         let drawables = [
@@ -56,6 +54,7 @@ impl Player {
     pub fn set_selected(&mut self, selected: bool) {
         self.is_selected = selected;
     }
+
     pub fn draw(&self, scene: &Scene, camera: &Camera) {
         if self.is_selected {
             self.selected_drawable.draw_with_projection(&scene, &camera.projection_buffer);
@@ -77,7 +76,7 @@ impl Player {
         self.current_tile = tile;
         self.selected_drawable.translate(renderer, [self.x as f32, self.y as f32, 0.], [0.4, 0.4, 1.]);
         for drawable in &mut self.drawables {
-            drawable.set_position(renderer, [self.x as f32, self.y as f32, 0.]);
+            drawable.set_position([self.x as f32, self.y as f32, 0.]);
         }
     }
 
@@ -117,8 +116,7 @@ impl Mutation for MoveMutation {
 pub fn player_move_system(ecs: &ECS) -> Mutations {
     let input = ecs.read_res::<GameInput>();
     let mut mutations: Mutations = Vec::new();
-    for (p, ent) in ecs.read1::<Player>() {
-        let tile = ecs.read::<Tile>(&p.current_tile);
+    for (_, ent) in ecs.read1::<Player>() {
         if input.keyboard.letter_pressed(LetterKeys::A) {
             mutations.push(Box::new(MoveMutation {entity: ent, dx: -1, dy: 0}))
         } else if input.keyboard.letter_pressed(LetterKeys::D) {

@@ -1,39 +1,18 @@
-use gouda::rendering::drawable::QuadDrawable;
-use gouda::rendering::{Renderer, Scene};
+use gouda::TransformComponent;
+use gouda::rendering::sprites::ColorBoxComponent;
 use gouda::ecs::{ECS, Entity, Mutation, Mutations};
-use std::rc::Rc;
-use crate::camera::Camera;
-use gouda::input::GameInput;
-use rand::Rng;
 use crate::building::DamageDealt;
 
 #[derive(Debug)]
 pub struct Monster {
-    drawable: QuadDrawable,
-    pub x: f32,
-    pub y: f32,
     health: u32,
 }
 
 impl Monster {
     pub fn create(ecs: &mut ECS, x_pos: f32, y_pos: f32) {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let monster_drawable = QuadDrawable::new(false, renderer, [0.7, 0.2, 0.2], [x_pos, y_pos, 0.], [0.4, 0.4, 1.], [0.; 3]);
-        ecs.build_entity().add(Monster {drawable: monster_drawable, x: x_pos, y: y_pos, health: 2});
-    }
-
-    pub fn draw(&self, scene: &Scene, camera: &Camera) {
-        self.drawable.draw_with_projection(&scene, &camera.projection_buffer);
-    }
-
-    pub fn move_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
-        self.set_pos(renderer, self.x + dx, self.y + dy);
-    }
-
-    pub fn set_pos(&mut self, renderer: &Renderer, new_x: f32, new_y: f32) {
-        self.x = new_x;
-        self.y = new_y;
-        self.drawable.translate(renderer, [self.x, self.y, 0.], [0.3, 0.3, 1.]);
+        let drawable = ColorBoxComponent::new(ecs, [0.7, 0.2, 0.2]);
+        let transform = TransformComponent::builder().location(x_pos, y_pos).scale(0.4, 0.4).build();
+        ecs.build_entity().add(Monster {health: 2}).add(drawable).add(transform);
     }
 
     pub fn take_damage(&mut self, damage: u32) {
@@ -51,18 +30,16 @@ pub struct MonsterMoveMutation {
 
 impl Mutation for MonsterMoveMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
-        let monster = ecs.write::<Monster>(&self.monster).unwrap();
+        let monster = ecs.write::<TransformComponent>(&self.monster).unwrap();
         if monster.x > 0.03 {
-            monster.move_pos(&renderer, -0.06, 0.);
+            monster.change_pos(-0.06, 0.);
         } else if monster.x < -0.03 {
-            monster.move_pos(&renderer, 0.06, 0.);
+            monster.change_pos(0.06, 0.);
         } else if monster.y > 1.1 {
-            monster.move_pos(&renderer, 0.0, -0.06);
+            monster.change_pos(0.0, -0.06);
         } else if monster.y < 0.9 {
-            monster.move_pos(&renderer, 0.0, 0.06);
+            monster.change_pos(0.0, 0.06);
         } else {
-            println!("Deleting");
             ecs.delete_entity(&self.monster);
         }
     }
@@ -94,7 +71,7 @@ impl Mutation for MonsterDamageMutation {
 
 pub fn monster_damage_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
-    for (monster, damage, entity) in ecs.read2::<Monster, DamageDealt>() {
+    for (_, damage, entity) in ecs.read2::<Monster, DamageDealt>() {
         mutations.push(Box::new(MonsterDamageMutation {monster: entity, damage: damage.damage}));
     }
     return mutations;

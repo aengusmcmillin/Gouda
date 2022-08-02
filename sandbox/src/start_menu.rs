@@ -13,10 +13,10 @@ use crate::start_menu::StartMenuButtonId::Start;
 use crate::tilemap::{Tilemap, Tile};
 use crate::cursor::Cursor;
 use crate::player::Player;
-use crate::camera::Camera;
+use gouda::camera::Camera;
 use crate::main_menu::MainMenu;
 use crate::gui::GameGui;
-use crate::tree::Tree;
+use crate::tree::TreeComponent;
 
 pub struct StartMenuScreen {
     pub entity: Entity,

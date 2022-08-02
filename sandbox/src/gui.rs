@@ -4,10 +4,9 @@ use gouda::types::Color;
 use std::rc::Rc;
 use gouda::rendering::Renderer;
 use gouda::gui::constraints::{Constraint, GuiConstraints};
-use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint, PixelConstraint};
+use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint};
 use gouda::mouse_capture::{MouseCaptureLayer, MouseCaptureArea, ActiveCaptureLayer};
 use gouda::font::Font;
-use gouda::images::Image;
 use gouda::images::png::PNG;
 use crate::supplies::Supplies;
 

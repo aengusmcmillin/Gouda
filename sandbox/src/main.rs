@@ -1,36 +1,31 @@
+use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent};
 use gouda::{Gouda, GameLogic, GameState, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameStateId};
-use gouda::rendering::{
-    Scene, drawable::QuadDrawable, Renderer, buffers::VertexBuffer};
+use gouda::rendering::{Scene, Renderer};
+use tree::create_tree;
 use std::rc::Rc;
-use std::ops::Deref;
 use gouda::input::{LetterKeys, GameInput};
-use gouda::math::Mat4x4;
+use gouda::TransformComponent;
+use gouda::camera::Camera;
 
 extern crate rand;
 use rand::{Rng, thread_rng};
 use crate::tilemap::{Tile, Tilemap};
 use crate::player::{Player, player_move_system};
 use crate::cursor::Cursor;
-use crate::camera::Camera;
-use gouda::font::{Font, TextDrawable};
-use crate::spawners::{WaveSpawner, wave_spawner_system, WaveSpec, MonsterSpec, MonsterType, GameDay, generate_days};
+use gouda::font::Font;
+use crate::spawners::{WaveSpawner, wave_spawner_system, GameDay, generate_days};
 use crate::monster::{Monster, monster_move_system, monster_damage_system};
 use gouda::gui::{GuiComponent, ActiveGui, GuiText, GuiImage};
-use gouda::gui::constraints::GuiConstraints;
-use gouda::types::Color;
-use gouda::gui::constraints::Constraint::RelativeConstraint;
-use gouda::input::AnyKey::Letter;
 use crate::gui::{GameGui, game_gui_system, StageText, change_stage_text, GoldText, WoodText, StoneText};
-use crate::main_menu::{MenuScreen, MainMenu, MainMenuButtonId, menu_mouse_system, SaveEvent, ResumeEvent, SettingsEvent};
+use crate::main_menu::{MenuScreen, menu_mouse_system, SaveEvent, ResumeEvent, SettingsEvent};
 use std::collections::HashMap;
 use gouda::window::{WindowProps, WindowEvent};
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
 use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
-use crate::hearth::Hearth;
 use crate::start_menu::{StartMenu, START_MENU_GAME_STATE, StartMenuButtonId, StartMenuGameState, StartEvent};
 use crate::supplies::Supplies;
-use crate::tree::Tree;
+use crate::tree::TreeComponent;
 
 mod tree;
 mod start_menu;
@@ -38,7 +33,6 @@ mod tilemap;
 mod player;
 mod building;
 mod cursor;
-mod camera;
 mod game_stage;
 mod spawners;
 mod monster;
@@ -48,12 +42,6 @@ mod hearth;
 mod gui;
 mod main_menu;
 mod supplies;
-
-#[derive(Debug)]
-struct Pos {
-    pub x: f32,
-    pub y: f32,
-}
 
 pub struct CreateTurretMutation {
     tile_e: Entity,
@@ -77,9 +65,17 @@ pub struct TurretSelectMutation {
 
 impl Mutation for TurretSelectMutation {
     fn apply(&self, ecs: &mut ECS) {
-        ecs.write::<Turret>(&self.turret_e).unwrap().selected = true;
+        let mut loc = *ecs.read::<TransformComponent>(&self.turret_e).unwrap();
+        loc.scale_x = 3.0;
+        loc.scale_y = 3.0;
+        let range_sprite = SpriteComponent::new(ecs, "bitmap/range_indicator.png".to_string());
+        let range_indicator = Some(ecs.build_entity().add(range_sprite).add(loc).entity());
+        let turret = ecs.write::<Turret>(&self.turret_e).unwrap();
+        turret.selected = true;
+        turret.range_indicator = range_indicator;
     }
 }
+
 pub struct TurretDeselectMutation {
 }
 
@@ -87,7 +83,14 @@ impl Mutation for TurretDeselectMutation {
     fn apply(&self, ecs: &mut ECS) {
         let turrets = ecs.get1::<Turret>();
         for turret in &turrets {
-            ecs.write::<Turret>(turret).unwrap().selected = false;
+            let turret = ecs.write::<Turret>(&turret).unwrap();
+            turret.selected = false;
+            let indicator = turret.range_indicator;
+            if let Some(e) = indicator {
+                println!("Deletintg indicator");
+                turret.range_indicator = None;
+                ecs.delete_entity(&e);
+            }
         }
     }
 }
@@ -98,7 +101,7 @@ pub struct TreeHarvestMutation {
 
 impl Mutation for TreeHarvestMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let mut tree = ecs.write::<Tree>(&self.tree).unwrap();
+        let tree = ecs.write::<TreeComponent>(&self.tree).unwrap();
         let wood = tree.harvest();
         ecs.write_res::<Supplies>().add_wood(wood);
         ecs.delete_entity(&self.tree);
@@ -111,19 +114,16 @@ fn mouse_click_system(ecs: &ECS) -> Mutations {
         if mouse_capture.clicked_buttons[0] {
             mutations.push(Box::new(TurretDeselectMutation{}));
             if !tile.occupied {
-                println!("Unoccupied");
                 mutations.push(Box::new(CreateTurretMutation{tile_e}));
             } else {
-                println!("Occupied");
-                for (turret, e) in ecs.read1::<Turret>() {
-                    if turret.x == tile.x as f32 && turret.y == tile.y as f32 && !turret.selected {
-                        println!("Mutating");
+                for (turret, loc, e) in ecs.read2::<Turret, TransformComponent>() {
+                    if loc.x == tile.x as f32 && loc.y == tile.y as f32 && !turret.selected {
                         mutations.push(Box::new(TurretSelectMutation{turret_e: e}));
                     }
                 }
 
-                for (tree, e) in ecs.read1::<Tree>() {
-                    if tree.x == tile.x as f32 && tree.y == tile.y as f32 {
+                for (_, location, e) in ecs.read2::<TreeComponent, TransformComponent>() {
+                    if location.x == tile.x as f32 && location.y == tile.y as f32 {
                         mutations.push(Box::new(TreeHarvestMutation {tree: e}))
                     }
                 }
@@ -142,9 +142,8 @@ impl Mutation for CursorSetPositionMutation {
         let tile = ecs.read::<Tile>(&self.tile).unwrap();
         let (x, y) = (tile.x, tile.y);
 
-        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
         let cursor = ecs.write_res::<Cursor>();
-        cursor.set_pos(&renderer, [x as f32, y as f32, 0.]);
+        cursor.set_pos([x as f32, y as f32, 0.]);
     }
 }
 
@@ -179,38 +178,21 @@ fn register_core_systems(ecs: &mut ECS) {
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
     let camera = ecs.read_res::<Camera>();
-    for (tile, _) in ecs.read1::<Tile>() {
-        tile.draw(&scene, &camera);
+
+
+    for (location, sprite, _) in ecs.read2::<TransformComponent, SpriteComponent>() {
+        sprite.draw(&scene, &camera, location);
     }
+
+    for (location, color_box, _) in ecs.read2::<TransformComponent, ColorBoxComponent>() {
+        color_box.draw(&scene, &camera, location);
+    }
+
 
     ecs.read_res::<Cursor>().draw(&scene, &camera);
 
-    for (monster, _) in ecs.read1::<Monster>() {
-        monster.draw(&scene, &camera);
-    }
-
     for (player, _) in ecs.read1::<Player>() {
         player.draw(&scene, &camera);
-    }
-
-    for (turret, _) in ecs.read1::<Turret>() {
-        turret.draw(&scene, &camera);
-    }
-
-    for (hearth, _) in ecs.read1::<Hearth>() {
-        hearth.draw(&scene, &camera);
-    }
-
-    for (tree, _) in ecs.read1::<Tree>() {
-        tree.draw(&scene, &camera);
-    }
-
-    for (arrow, _) in ecs.read1::<Arrow>() {
-        arrow.draw(&scene, &camera);
-    }
-
-    for (spawner, _) in ecs.read1::<WaveSpawner>() {
-        spawner.draw(&scene, &camera);
     }
 
     for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
@@ -305,9 +287,9 @@ fn next_day(ecs: &mut ECS) {
     }
 
     let tilemap = ecs.read_res::<Tilemap>();
-    Tree::create(ecs, tilemap.tile_at_pos(2, 4));
+    create_tree(ecs, tilemap.tile_at_pos(2, 4));
     let tilemap = ecs.read_res::<Tilemap>();
-    Tree::create(ecs, tilemap.tile_at_pos(8, 2));
+    create_tree(ecs, tilemap.tile_at_pos(8, 2));
 }
 
 fn next_night(ecs: &mut ECS) {
@@ -492,7 +474,8 @@ impl GameLogic for Game {
         ecs.cleanup_components::<Player>();
         ecs.cleanup_components::<Monster>();
         ecs.cleanup_components::<WaveSpawner>();
-        ecs.cleanup_components::<Pos>();
+        ecs.cleanup_components::<SpriteComponent>();
+        ecs.cleanup_components::<TransformComponent>();
         ecs.cleanup_components::<GuiComponent>();
         ecs.cleanup_components::<GuiText>();
         ecs.cleanup_components::<GuiImage>();
@@ -501,7 +484,7 @@ impl GameLogic for Game {
         ecs.cleanup_components::<MouseCaptureLayer>();
         ecs.cleanup_components::<ActiveCaptureLayer>();
         ecs.cleanup_components::<Turret>();
-        ecs.cleanup_components::<Tree>();
+        ecs.cleanup_components::<TreeComponent>();
         ecs.cleanup_components::<Arrow>();
         ecs.cleanup_components::<DamageDealt>();
         ecs.cleanup_components::<StageText>();

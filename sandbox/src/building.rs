@@ -1,84 +1,54 @@
+use gouda::TransformComponent;
 use gouda::ecs::{ECS, Entity, Mutations, Mutation};
+use gouda::rendering::sprites::SpriteComponent;
 use crate::tilemap::Tile;
-use gouda::rendering::drawable::{TextureDrawable, QuadDrawable};
-use gouda::rendering::{Renderer, Scene};
-use gouda::rendering::texture::RenderableTexture;
-use std::rc::Rc;
-use gouda::png::PNG;
-use crate::camera::Camera;
 use gouda::input::GameInput;
 use crate::monster::Monster;
 
 #[derive(Debug)]
 pub struct Turret {
-    texture_drawable: TextureDrawable,
-    range_drawable: TextureDrawable,
     pub selected: bool,
     fire_cooldown: f32,
     fire_timer: f32,
-    pub x: f32,
-    pub y: f32,
     range: f32,
+    pub range_indicator: Option<Entity>,
 }
 
 impl Turret {
     pub fn create(ecs: &mut ECS, tile: Entity) {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = RenderableTexture::new(renderer, &PNG::from_file("bitmap/turret2.png").unwrap().image());
-        let texture_drawable = TextureDrawable::new(false, renderer, texture, [tile.x as f32, tile.y as f32, 0.], [0.4, 0.4, 1.0], [0., 0., 0.]);
-        let range_texture = RenderableTexture::new(renderer, &PNG::from_file("bitmap/range_indicator.png").unwrap().image());
-        let range_drawable = TextureDrawable::new(false, renderer, range_texture, [tile.x as f32, tile.y as f32, 0.], [3.0, 3.0, 1.0], [0., 0., 0.]);
+        let location = TransformComponent {x: tile.x as f32, y: tile.y as f32, scale_x: 0.4, scale_y: 0.4, rot_x: 0., rot_y: 0.};
         let turret = Turret {
-            texture_drawable,
-            range_drawable,
             selected: false,
             fire_cooldown: 1.,
             fire_timer: 1.,
-            x: tile.x as f32,
-            y: tile.y as f32,
             range: 3.,
+            range_indicator: None
         };
-        ecs.build_entity().add(turret);
-    }
 
-    pub fn draw(&self, scene: &Scene, camera: &Camera) {
-        self.texture_drawable.draw_with_projection(scene, &camera.projection_buffer);
-        if self.selected {
-            self.range_drawable.draw_with_projection(scene, &camera.projection_buffer);
-        }
+        let turret_sprite = SpriteComponent::new(ecs, "bitmap/turret2.png".to_string());
+        ecs.build_entity()
+           .add(location)
+           .add(turret_sprite)
+           .add(turret);
     }
 }
 
 #[derive(Debug)]
 pub struct Arrow {
-    drawable: TextureDrawable,
     target: Entity,
-    x: f32,
-    y: f32,
     speed: f32,
     damage: u32,
 }
 
 impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = PNG::from_file("bitmap/arrow.png").unwrap().image();
-        let texture = RenderableTexture::new(renderer, &texture);
-        let quad = TextureDrawable::new(false, renderer, texture, [x, y, 0.], [0.3, 0.1, 1.], [0.; 3]);
-        ecs.build_entity().add(Arrow {drawable: quad, target, x, y, speed: 5., damage: 1});
-    }
-
-    pub fn change_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
-        //let deg = (dy / dx).atan() / (std::f32::consts::PI / 180.);
-        self.x += dx;
-        self.y += dy;
-        self.drawable.set_position(renderer, [self.x, self.y, 0.]);
-    }
-
-    pub fn draw(&self, scene: &Scene, camera: &Camera) {
-        self.drawable.draw_with_projection(scene, &camera.projection_buffer);
+        let sprite = SpriteComponent::new(ecs, "bitmap/arrow.png".to_string());
+        ecs.build_entity()
+        .add(TransformComponent::builder().location(x, y).scale(0.3, 0.1).build())
+        .add(sprite)
+        .add(Arrow {target, speed: 5., damage: 1});
     }
 }
 
@@ -120,19 +90,18 @@ struct MoveArrowTowardsMutation {
 
 impl Mutation for MoveArrowTowardsMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let renderer = ecs.read_res::<Rc<Renderer>>().clone();
-        let arrow = ecs.write::<Arrow>(&self.arrow).unwrap();
-        arrow.change_pos(&renderer, self.dx, self.dy);
+        let arrow = ecs.write::<TransformComponent>(&self.arrow).unwrap();
+        arrow.change_pos(self.dx, self.dy);
     }
 }
 
 pub fn arrow_move_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
     let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
-    for (arrow, entity) in ecs.read1::<Arrow>() {
-        let target = ecs.read::<Monster>(&arrow.target);
+    for (arrow, arrow_location, entity) in ecs.read2::<Arrow, TransformComponent>() {
+        let target = ecs.read::<TransformComponent>(&arrow.target);
         if let Some(monster) = target {
-            let v = (monster.x - arrow.x, monster.y - arrow.y);
+            let v = (monster.x - arrow_location.x, monster.y - arrow_location.y);
             let dist = (v.0 * v.0 + v.1 * v.1).sqrt();
             if dist < 0.5 {
                 mutations.push(Box::new(ArrowCollisionMutation {
@@ -163,9 +132,10 @@ pub struct FireArrowMutation {
 
 impl Mutation for FireArrowMutation {
     fn apply(&self, ecs: &mut ECS) {
+        let turret_loc = ecs.read::<TransformComponent>(&self.turret).unwrap();
+        let (x, y) = (turret_loc.x, turret_loc.y);
         let turret = ecs.write::<Turret>(&self.turret).unwrap();
         turret.fire_timer = turret.fire_cooldown;
-        let (x, y) = (turret.x, turret.y);
         Arrow::create(ecs, self.target, x, y);
     }
 }
@@ -187,15 +157,15 @@ pub fn turret_attack_system(ecs: &ECS) -> Mutations {
     let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
 
     let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];
-    for (monster, entity) in ecs.read1::<Monster>() {
-        monster_positions.push((entity, monster.x, monster.y));
+    for (monster, transform, entity) in ecs.read2::<Monster, TransformComponent>() {
+        monster_positions.push((entity, transform.x, transform.y));
     }
 
     let input = ecs.read_res::<GameInput>();
-    for (turret, e) in ecs.read1::<Turret>() {
+    for (turret, loc, e) in ecs.read2::<Turret, TransformComponent>() {
         let mut closest: Option<(Entity, f32)> = None;
         for (monster, x, y) in &monster_positions {
-            let (x, y) = (turret.x - x, turret.y - y);
+            let (x, y) = (loc.x - x, loc.y - y);
             let dist = (x * x + y * y).sqrt();
 
             if let Some((_, closest_dist)) = closest {

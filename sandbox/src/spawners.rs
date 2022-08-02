@@ -1,11 +1,11 @@
+use gouda::TransformComponent;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
-use crate::{Monster, Pos};
+use gouda::rendering::sprites::ColorBoxComponent;
+use crate::Monster;
 use gouda::input::GameInput;
-use crate::tilemap::Tile;
 use crate::spawners::MonsterType::Wolf;
 use gouda::rendering::drawable::QuadDrawable;
-use gouda::rendering::{Scene, Renderer};
-use crate::camera::Camera;
+use gouda::rendering::{Renderer};
 use std::rc::Rc;
 
 pub struct ProcessSpawnerMutation {
@@ -18,7 +18,7 @@ pub struct ProcessSpawnerMutation {
 impl Mutation for ProcessSpawnerMutation {
     fn apply(&self, ecs: &mut ECS) {
         let spawner = ecs.write::<WaveSpawner>(&self.entity).unwrap();
-        if let Some(spawned) = spawner.progress(self.dt) {
+        if let Some(_) = spawner.progress(self.dt) {
             Monster::create(ecs, self.x, self.y);
         }
 
@@ -32,8 +32,8 @@ pub fn wave_spawner_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = Vec::new();
     let input = ecs.read_res::<GameInput>();
 
-    for (spawner, entity) in ecs.read1::<WaveSpawner>() {
-        mutations.push(Box::new(ProcessSpawnerMutation {entity, dt: input.seconds_to_advance_over_update, x: spawner.x, y: spawner.y}));
+    for (spawner, transform, entity) in ecs.read2::<WaveSpawner, TransformComponent>() {
+        mutations.push(Box::new(ProcessSpawnerMutation {entity, dt: input.seconds_to_advance_over_update, x: transform.x, y: transform.y}));
     }
 
     return mutations;
@@ -46,27 +46,24 @@ pub struct WaveSpawner {
     current_monster_index: usize,
     spawn_max_cd: f32,
     spawn_current_cd: f32,
-    x: f32,
-    y: f32,
-    drawable: QuadDrawable,
 }
 
 impl WaveSpawner {
     pub fn create(ecs: &mut ECS, spec: WaveSpec, x: f32, y: f32, spawn_cd: f32) {
         let num_monsters = spec.monsters.len();
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.2], [x, y, 0.], [0.2, 0.2, 1.0], [0.; 3]);
+        let color_box = ColorBoxComponent::new(ecs, [0.8, 0.8, 0.2]);
+        let transform = TransformComponent::builder()
+            .location(x, y)
+            .scale(0.2, 0.2)
+            .build();
         let spawner = WaveSpawner {
             wave_spec: spec,
             num_monsters: num_monsters,
             current_monster_index: 0,
             spawn_max_cd: spawn_cd,
             spawn_current_cd: spawn_cd,
-            x,
-            y,
-            drawable,
         };
-        ecs.build_entity().add(spawner);
+        ecs.build_entity().add(spawner).add(transform).add(color_box);
     }
 
     pub fn progress(&mut self, dt: f32) -> Option<MonsterSpec> {
@@ -86,10 +83,6 @@ impl WaveSpawner {
 
     pub fn is_finished(&self) -> bool {
         return self.current_monster_index >= self.num_monsters;
-    }
-
-    pub fn draw(&self, scene: &Scene, camera: &Camera) {
-        self.drawable.draw_with_projection(scene, &camera.projection_buffer);
     }
 }
 
