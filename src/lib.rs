@@ -17,6 +17,7 @@ extern crate objc;
 #[macro_use]
 extern crate enum_map;
 
+pub mod genindex;
 pub mod ecs;
 pub mod input;
 mod platform;
@@ -31,11 +32,79 @@ pub mod font;
 pub mod types;
 pub mod gui;
 pub mod mouse_capture;
+pub mod camera;
 
 pub type RenderLayer = String;
 pub type RenderOrder = u32;
 
 pub struct QuitEvent;
+
+#[derive(Debug, Clone, Copy)]
+pub struct TransformComponent {
+    pub x: f32,
+    pub y: f32,
+    pub scale_x: f32,
+    pub scale_y: f32,
+    pub rot_x: f32,
+    pub rot_y: f32,
+}
+
+impl TransformComponent {
+    pub fn change_pos(&mut self, dx: f32, dy: f32) {
+        //let deg = (dy / dx).atan() / (std::f32::consts::PI / 180.);
+        self.x += dx;
+        self.y += dy;
+    }
+
+    pub fn builder() -> TransformComponentBuilder {
+        TransformComponentBuilder::new()
+    }
+}
+
+#[derive(Default)]
+pub struct TransformComponentBuilder {
+    pub x: f32,
+    pub y: f32,
+    pub scale_x: f32,
+    pub scale_y: f32,
+    pub rot_x: f32,
+    pub rot_y: f32,
+}
+
+impl TransformComponentBuilder {
+    pub fn new() -> TransformComponentBuilder {
+        TransformComponentBuilder {
+            x: 0.,
+            y: 0.,
+            scale_x: 1.,
+            scale_y: 1.,
+            rot_x: 0.,
+            rot_y: 0.,
+        }
+    }
+
+    pub fn location(mut self, x: f32, y: f32) -> TransformComponentBuilder {
+        self.x = x;
+        self.y = y;
+        self
+    }
+
+    pub fn scale(mut self, scale_x: f32, scale_y: f32) -> TransformComponentBuilder {
+        self.scale_x = scale_x;
+        self.scale_y = scale_y;
+        self
+    }
+
+    pub fn rotation(mut self, rot_x: f32, rot_y: f32) -> TransformComponentBuilder {
+        self.rot_x = rot_x;
+        self.rot_y = rot_y;
+        self
+    }
+
+    pub fn build(self) -> TransformComponent {
+        TransformComponent { x: self.x, y: self.y, scale_x: self.scale_x, scale_y: self.scale_y, rot_x: self.rot_x, rot_y: self.rot_y }
+    }
+}
 
 pub trait GameState {
     fn on_state_start(&self, ecs: &mut ECS);

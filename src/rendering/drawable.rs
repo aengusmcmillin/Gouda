@@ -18,7 +18,7 @@ pub struct TextureDrawable {
 }
 
 impl TextureDrawable {
-    pub fn new(_is_gui: bool, renderer: &Renderer, texture: RenderableTexture, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) -> Self {
+    pub fn new(_is_gui: bool, renderer: &Renderer, texture: RenderableTexture) -> Self {
         let vb = VertexBuffer::new(
             renderer,
             0,
@@ -42,6 +42,10 @@ impl TextureDrawable {
             "shaders/textureVertexShader.txt",
             "shaders/textureFragmentShader.txt");
 
+        let position = [0.; 3];
+        let scale = [1.; 3];
+        let rotation = [0.; 3];
+
         let transform_mat = create_transformation_matrix(position, rotation, scale);
         let transform_buffer = VertexConstantBuffer::new(renderer, 0, transform_mat.raw_data().to_vec());
         let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
@@ -59,24 +63,29 @@ impl TextureDrawable {
         }
     }
 
-    pub fn set_position(&mut self, renderer: &Renderer, position: [f32; 3]) {
+    pub fn set_position(&mut self, position: [f32; 3]) {
         self.position = position;
-        self.update_transform(renderer);
+        self.update_transform();
     }
 
-    pub fn set_scale(&mut self, renderer: &Renderer, scale: [f32; 3]) {
+    pub fn set_scale(&mut self, scale: [f32; 3]) {
         self.scale = scale;
-        self.update_transform(renderer);
+        self.update_transform();
     }
 
-    pub fn set_rotation(&mut self, renderer: &Renderer, rotation: [f32; 3]) {
+    pub fn set_rotation(&mut self, rotation: [f32; 3]) {
         self.rotation = rotation;
-        self.update_transform(renderer);
+        self.update_transform();
     }
 
-    fn update_transform(&self, renderer: &Renderer) {
+    pub fn apply_transform(&self, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) {
+        let transform_mat = create_transformation_matrix(position, rotation, scale);
+        self.transform_buffer.update_data(transform_mat.to_vec());
+    }
+
+    fn update_transform(&self) {
         let transform_mat = create_transformation_matrix(self.position, self.rotation, self.scale);
-        self.transform_buffer.update_data(renderer, transform_mat.to_vec());
+        self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
     pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer<f32>) {
@@ -114,7 +123,7 @@ pub struct QuadDrawable {
 }
 
 impl QuadDrawable {
-    pub fn new(is_gui: bool, renderer: &Renderer, color: [f32; 3], position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) -> Self {
+    pub fn new(is_gui: bool, renderer: &Renderer, color: [f32; 3]) -> Self {
         let vb = VertexBuffer::new(
             renderer,
             0,
@@ -137,6 +146,10 @@ impl QuadDrawable {
                 false,
                 "shaders/quadVertexShader.txt",
                 "shaders/quadFragmentShader.txt");
+
+        let position = [0.; 3];
+        let scale = [1.; 3];
+        let rotation = [0.; 3];
 
         let transform_mat = create_transformation_matrix(position, rotation, scale);
         let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
@@ -165,27 +178,32 @@ impl QuadDrawable {
 
     pub fn translate(&self, renderer: &Renderer, position: [f32; 3], scale: [f32; 3]) {
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        self.transform_buffer.update_data(renderer, transform_mat.to_vec());
+        self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
-    pub fn set_position(&mut self, renderer: &Renderer, position: [f32; 3]) {
+    pub fn set_position(&mut self, position: [f32; 3]) {
         self.position = position;
-        self.update_transform(renderer);
+        self.update_transform();
     }
 
-    pub fn set_scale(&mut self, renderer: &Renderer, scale: [f32; 3]) {
+    pub fn set_scale(&mut self, scale: [f32; 3]) {
         self.scale = scale;
-        self.update_transform(renderer);
+        self.update_transform();
     }
 
-    pub fn set_rotation(&mut self, renderer: &Renderer, rotation: [f32; 3]) {
+    pub fn set_rotation(&mut self, rotation: [f32; 3]) {
         self.rotation = rotation;
-        self.update_transform(renderer);
+        self.update_transform();
     }
 
-    fn update_transform(&self, renderer: &Renderer) {
+    pub fn apply_transform(&self, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) {
+        let transform_mat = create_transformation_matrix(position, rotation, scale);
+        self.transform_buffer.update_data(transform_mat.to_vec());
+    }
+
+    fn update_transform(&self) {
         let transform_mat = create_transformation_matrix(self.position, self.rotation, self.scale);
-        self.transform_buffer.update_data(renderer, transform_mat.to_vec());
+        self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
     pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer<f32>) {

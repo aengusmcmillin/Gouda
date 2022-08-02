@@ -84,7 +84,7 @@ impl <T> VertexConstantBuffer<T> {
         scene.encoder.set_vertex_buffer(self.offset + 1, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, _renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data(&self, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }

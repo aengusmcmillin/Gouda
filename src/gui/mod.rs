@@ -47,7 +47,10 @@ impl GuiImage {
         let size = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
         let renderable_texture=  RenderableTexture::new(renderer, &image);
 
-        let drawable = TextureDrawable::new(true, renderer, renderable_texture, pos, size, [0.; 3]);
+        let mut drawable = TextureDrawable::new(true, renderer, renderable_texture);
+        drawable.set_position(pos);
+        drawable.set_scale(size);
+
         let image = GuiImage {
             constraints,
             calculated_bounds: bounds,

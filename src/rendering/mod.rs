@@ -1,4 +1,5 @@
 pub mod drawable;
+pub mod sprites;
 
 #[cfg(target_os = "macos")]
 pub use crate::platform::metal::Renderer as Renderer;
