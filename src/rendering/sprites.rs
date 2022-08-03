@@ -23,9 +23,10 @@ impl SpriteComponent {
     }
 }
 
+#[derive(Debug)]
 pub struct SpriteSheetComponent {
     texture_drawables: Vec<TextureDrawable>,
-    active: usize,
+    pub active: usize,
 }
 
 impl SpriteSheetComponent {
@@ -47,6 +48,12 @@ impl SpriteSheetComponent {
             texture_drawables: all_textures,
             active: 0,
         }
+    }
+
+    pub fn draw(&self, scene: &Scene, camera: &Camera, location: &TransformComponent) {
+        let texture_drawable = self.texture_drawables.get(self.active).unwrap();
+        texture_drawable.apply_transform([location.x, location.y, 0.], [location.scale_x, location.scale_y, 1.0], [location.rot_x, location.rot_y, 0.]);
+        texture_drawable.draw_with_projection(scene, &camera.projection_buffer);
     }
 }
 

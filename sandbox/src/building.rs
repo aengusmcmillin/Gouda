@@ -157,7 +157,7 @@ pub fn turret_attack_system(ecs: &ECS) -> Mutations {
     let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
 
     let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];
-    for (monster, transform, entity) in ecs.read2::<Monster, TransformComponent>() {
+    for (_, transform, entity) in ecs.read2::<Monster, TransformComponent>() {
         monster_positions.push((entity, transform.x, transform.y));
     }
 

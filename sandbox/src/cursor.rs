@@ -1,8 +1,7 @@
 use gouda::rendering::{
-    drawable::{QuadDrawable, TextureDrawable},
+    drawable::QuadDrawable,
     Renderer,
-    Scene,
-    texture::RenderableTexture};
+    Scene};
 use std::rc::Rc;
 use gouda::camera::Camera;
 use crate::tilemap::Tile;

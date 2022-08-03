@@ -1,4 +1,4 @@
-use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent};
+use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetComponent};
 use gouda::{Gouda, GameLogic, GameState, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameStateId};
 use gouda::rendering::{Scene, Renderer};
@@ -188,6 +188,9 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
         color_box.draw(&scene, &camera, location);
     }
 
+    for (location, spritesheet, _) in ecs.read2::<TransformComponent, SpriteSheetComponent>() {
+        spritesheet.draw(&scene, &camera, location);
+    }
 
     ecs.read_res::<Cursor>().draw(&scene, &camera);
 
