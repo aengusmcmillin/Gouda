@@ -11,9 +11,6 @@ pub fn osx_process_key(
     keyboard: &mut KeyboardInput,
     u16_char: u16,
     key_down: bool,
-    _alt_down: bool,
-    _ctrl_down: bool,
-    cmd_down: bool,
 ) {
     match u16_char {
         0xF700 => {
@@ -105,18 +102,10 @@ pub fn osx_process_key(
                         &mut keyboard.letter_keys[LetterKeys::P],
                         key_down,
                     ),
-                    'q' | 'Q' => {
-                        if cmd_down {
-//                            unsafe {
-//                                GLOBAL_RUNNING = false;
-//                            }
-                        } else {
-                            osx_process_keyboard_message(
-                                &mut keyboard.letter_keys[LetterKeys::Q],
-                                key_down,
-                            );
-                        }
-                    }
+                    'q' | 'Q' => osx_process_keyboard_message(
+                        &mut keyboard.letter_keys[LetterKeys::Q],
+                        key_down,
+                    ),
                     'r' | 'R' => osx_process_keyboard_message(
                         &mut keyboard.letter_keys[LetterKeys::R],
                         key_down,

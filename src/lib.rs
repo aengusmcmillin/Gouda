@@ -33,6 +33,7 @@ pub mod types;
 pub mod gui;
 pub mod mouse_capture;
 pub mod camera;
+pub mod shader_lib;
 
 pub type RenderLayer = String;
 pub type RenderOrder = u32;
@@ -171,6 +172,10 @@ impl<T: GameLogic> Gouda<T> {
             if let Some(gstate) = gstate {
                 gstate.on_state_start(&mut self.ecs);
             }
+        }
+
+        if game_input.keyboard.cmd_down && game_input.keyboard.letter_down(LetterKeys::Q) {
+            self.ecs.push_event(QuitEvent);
         }
 
         (*self.ecs.write_res::<GameInput>()) = game_input;

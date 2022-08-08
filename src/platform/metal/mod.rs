@@ -2,10 +2,15 @@
 
 use metal::*;
 use core_graphics::geometry::CGSize;
+use crate::shader_lib::basic_shader::{BASIC_VERTEX_SHADER, BASIC_FRAGMENT_SHADER};
 use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
 use std::f32;
+use std::mem::size_of;
 use crate::platform::metal::buffers::{IndexBuffer};
+
+use self::buffers::{VertexBuffer, BufferLayout, BufferElement, ShaderDataType};
+use self::shader::Shader;
 
 pub mod drawable;
 pub mod shader;
@@ -51,7 +56,7 @@ fn prepare_render_pass_descriptor(descriptor: &RenderPassDescriptorRef, texture:
 
     color_attachment.set_texture(Some(texture));
     color_attachment.set_load_action(MTLLoadAction::Clear);
-    color_attachment.set_clear_color(MTLClearColor::new(0.2, 0.2, 0.2, 1.0));
+    color_attachment.set_clear_color(MTLClearColor::new(0.43, 0.73, 0.36, 1.0));
     color_attachment.set_store_action(MTLStoreAction::Store);
 }
 
@@ -124,10 +129,37 @@ impl Renderer {
     }
 
     pub fn end_scene(&self, scene: Scene) {
+        // self.draw_triangle(&scene);
+
         scene.encoder.end_encoding();
 
         scene.command_buffer.present_drawable(&scene.drawable);
         scene.command_buffer.commit();
+    }
+
+    pub fn draw_triangle(&self, scene: &Scene) {
+        let buffer_layout = BufferLayout::new(
+            vec![
+                BufferElement::new("position".to_string(), ShaderDataType::Float3),
+                BufferElement::new("color".to_string(), ShaderDataType::Float4)
+            ]
+        );
+        let shader = Shader::new(
+            self, 
+            buffer_layout, 
+            BASIC_VERTEX_SHADER,
+            BASIC_FRAGMENT_SHADER,
+        );
+        let verts: Vec<Vertex> = vec![
+                Vertex::new([0., 1., 0.], [1., 0., 0., 1.]),
+                Vertex::new([-1., -1., 0.], [0., 1., 0., 1.]),
+                Vertex::new([1., -1., 0.], [0., 0., 1., 1.]),
+            ];
+        let num_verts = verts.len() as u64;
+        let vb = VertexBuffer::new(self, 0, verts);
+        shader.bind(scene);
+        vb.bind(scene);
+        scene.draw_triangles(num_verts);
     }
 
     pub fn get_layer(&self) -> &CoreAnimationLayerRef {
@@ -135,4 +167,27 @@ impl Renderer {
     }
 }
 
+pub trait Sizeable<T> {
+    fn size() -> usize {
+        return size_of::<T>()
+    }
+    fn stride() -> usize {
+        return size_of::<T>()
+    }
+}
 
+pub struct Vertex {
+    _pos: Float3,
+    _color: Float4,
+}
+
+impl Vertex {
+    pub fn new(pos: Float3, color: Float4) -> Vertex { return Vertex { _pos: pos, _color: color} }
+}
+
+impl Sizeable<Vertex> for Vertex {}
+
+pub type Float2 = [f32; 2];
+impl Sizeable<Float2> for Float2 {}
+pub type Float3 = [f32; 3];
+pub type Float4 = [f32; 4];

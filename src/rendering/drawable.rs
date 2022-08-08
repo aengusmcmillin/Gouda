@@ -3,6 +3,10 @@ use crate::rendering::buffers::{VertexBuffer, IndexBuffer, VertexConstantBuffer,
 use crate::rendering::{Scene, Renderer};
 use crate::math::{create_transformation_matrix, Mat4x4};
 use crate::rendering::texture::RenderableTexture;
+use crate::shader_lib::quad_shader::{QUAD_VERTEX_SHADER, QUAD_FRAGMENT_SHADER};
+use crate::shader_lib::texture_shader::{TEXTURE_VERTEX_SHADER, TEXTURE_FRAGMENT_SHADER};
+
+use super::buffers::{BufferLayout, BufferElement, ShaderDataType};
 
 #[derive(Debug)]
 pub struct TextureDrawable {
@@ -36,11 +40,18 @@ impl TextureDrawable {
                 0, 1, 2,
             ]);
 
+        let buffer_layout = BufferLayout::new(
+            vec![
+                BufferElement::new("position".to_string(), ShaderDataType::Float4),
+                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+            ]
+        );
         let shader = Shader::new(
             renderer,
-            true,
-            "shaders/textureVertexShader.txt",
-            "shaders/textureFragmentShader.txt");
+            buffer_layout,
+            TEXTURE_VERTEX_SHADER,
+            TEXTURE_FRAGMENT_SHADER
+        );
 
         let position = [0.; 3];
         let scale = [1.; 3];
@@ -141,11 +152,18 @@ impl QuadDrawable {
                 0, 1, 2,
             ]);
 
+        let buffer_layout = BufferLayout::new(
+            vec![
+                BufferElement::new("position".to_string(), ShaderDataType::Float4),
+                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+            ]
+        );
         let shader = Shader::new(
                 renderer,
-                false,
-                "shaders/quadVertexShader.txt",
-                "shaders/quadFragmentShader.txt");
+                buffer_layout,
+                QUAD_VERTEX_SHADER,
+                QUAD_FRAGMENT_SHADER
+            );
 
         let position = [0.; 3];
         let scale = [1.; 3];

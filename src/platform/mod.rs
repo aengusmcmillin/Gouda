@@ -1,7 +1,3 @@
-use crate::window::{GameWindow, WindowProps};
-use crate::rendering::Renderer;
-use std::rc::Rc;
-
 #[cfg(target_os = "macos")]
 pub mod osx;
 

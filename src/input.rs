@@ -67,6 +67,7 @@ pub struct KeyboardInput {
     pub cmd_down: bool,
     pub alt_down: bool,
     pub ctrl_down: bool,
+    pub shift_down: bool,
 }
 
 pub enum AnyKey {
@@ -103,6 +104,7 @@ impl KeyboardInput {
         new_keyboard.cmd_down = old_keyboard.cmd_down;
         new_keyboard.alt_down = old_keyboard.alt_down;
         new_keyboard.ctrl_down = old_keyboard.ctrl_down;
+        new_keyboard.shift_down = old_keyboard.shift_down;
 
         new_keyboard
     }

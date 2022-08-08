@@ -1,11 +1,25 @@
 use std::ops::Mul;
 use std::f32;
 
+#[derive(Debug)]
+pub struct Vec2 {
+    pub x: f32,
+    pub y: f32,
+}
+
+#[derive(Debug)]
+pub struct Vec3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
+
+#[derive(Debug)]
 pub struct Vec4 {
-    pub v1: f32,
-    pub v2: f32,
-    pub v3: f32,
-    pub v4: f32
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32
 }
 
 #[derive(Debug)]

@@ -1,14 +1,14 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
-use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
+use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer, BufferLayout, BufferElement, ShaderDataType};
+use crate::shader_lib::font_shader::{FONT_VERTEX_SHADER, FONT_FRAGMENT_SHADER};
 use std::rc::Rc;
 use crate::rendering::texture::RenderableTexture;
 use crate::rendering::Scene;
 use crate::png::PNG;
 use crate::rendering::Renderer;
 use crate::rendering::shader::Shader;
-
 
 pub struct TextMeshCreator {
 
@@ -107,7 +107,18 @@ impl TextDrawable {
 
         let vertices = VertexBuffer::new(renderer, 0, adjusted_vertices);
 
-        let shader = Shader::new(renderer, true, "shaders/fontVertexShader.txt", "shaders/fontFragmentShader.txt");
+        let buffer_layout = BufferLayout::new(
+            vec![
+                BufferElement::new("position".to_string(), ShaderDataType::Float4),
+                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+            ]
+        );
+        let shader = Shader::new(
+            renderer,
+            buffer_layout,
+            FONT_VERTEX_SHADER,
+            FONT_FRAGMENT_SHADER
+        );
 
         let color = FragmentConstantBuffer::new(renderer, 0, vec!([color[0], color[1], color[2], 0.0]));
 

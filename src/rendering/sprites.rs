@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{png::PNG, ecs::ECS, camera::Camera, TransformComponent, images::spritesheet::Spritesheet};
+use crate::{png::PNG, ecs::ECS, camera::Camera, TransformComponent, images::spritesheet::Spritesheet, math::Vec2};
 
 use super::{Renderer, texture::RenderableTexture, drawable::{TextureDrawable, QuadDrawable}, Scene};
 

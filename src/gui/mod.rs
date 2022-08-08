@@ -1,6 +1,7 @@
+use crate::shader_lib::gui_shader::{GUI_VERTEX_SHADER, GUI_FRAGMENT_SHADER};
 use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
-use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
+use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer, ShaderDataType, BufferLayout, BufferElement};
 use crate::rendering::shader::Shader;
 use crate::math::{Mat4x4, create_transformation_matrix};
 use crate::rendering::drawable::TextureDrawable;
@@ -331,11 +332,17 @@ impl GuiDrawable {
                 0, 1, 2,
             ]);
 
+        let buffer_layout = BufferLayout::new(
+            vec![
+                BufferElement::new("position".to_string(), ShaderDataType::Float4),
+                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+            ]
+        );
         let shader = Shader::new(
             renderer,
-            true,
-            "shaders/guiVertexShader.txt",
-            "shaders/guiFragmentShader.txt");
+            buffer_layout,
+            GUI_VERTEX_SHADER,
+            GUI_FRAGMENT_SHADER);
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());

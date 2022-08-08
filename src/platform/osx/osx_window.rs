@@ -266,21 +266,32 @@ impl GameWindowImpl for OsxWindow {
                             std::str::from_utf8(std::slice::from_raw_parts(bytes, chars.len()))
                                 .unwrap();
                         let u16_char = objc_string.encode_utf16().next().unwrap();
-                        let modifiers = event.modifierFlags();
-                        let is_cmd = modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
-                        let is_alternate =
-                            modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
-                        let is_control =
-                            modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
 
                         osx_process_key(
                             &mut keyboard,
                             u16_char,
                             key_down,
-                            is_alternate,
-                            is_control,
-                            is_cmd,
                         );
+                    }
+                    NSEventType::NSFlagsChanged => {
+                        let mut keyboard = &mut self.input.keyboard;
+
+                        let modifiers = event.modifierFlags();
+                        let is_cmd_down = modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
+                        let is_alternate_down = modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
+                        let is_control_down = modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
+                        let is_shift_down = modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
+                        
+                        let keycode = event.keyCode();
+                        if keycode == 56 {
+                            keyboard.shift_down = is_shift_down;
+                        } else if keycode == 59 {
+                            keyboard.ctrl_down = is_control_down;
+                        } else if keycode == 58 {
+                            keyboard.alt_down = is_alternate_down;
+                        } else if keycode == 55 {
+                            keyboard.cmd_down = is_cmd_down;
+                        }
                     }
                     NSEventType::NSMouseMoved => {
                         let location = self.cocoa_window.mouse_location_outside_of_event_stream();

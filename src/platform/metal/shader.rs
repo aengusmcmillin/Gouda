@@ -1,7 +1,8 @@
 use crate::platform::metal::{Renderer, Scene};
 use metal::*;
-use std::env;
 use std::fs;
+
+use super::buffers::BufferLayout;
 
 #[derive(Debug)]
 pub struct Shader {
@@ -9,10 +10,7 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(gfx: &Renderer, has_textures: bool, vertex_file: &str, fragment_file: &str) -> Shader {
-        let vertex_src = fs::read_to_string(vertex_file).expect("Bad vertex shader filename");
-        let fragment_src = fs::read_to_string(fragment_file).expect("Bad fragment shader filename");
-
+    pub fn new(gfx: &Renderer, buffer_layout: BufferLayout, vertex_src: &str, fragment_src: &str) -> Shader {
         let vert = gfx.device
             .new_library_with_source(&vertex_src, &CompileOptions::new())
             .expect("Failed to compile vertex shader")
@@ -28,24 +26,19 @@ impl Shader {
         pipeline_state_descriptor.set_vertex_function(Some(&vert));
         pipeline_state_descriptor.set_fragment_function(Some(&frag));
 
-        let mut vdesc = VertexDescriptor::new();
-        let mut attr1 = &VertexAttributeDescriptor::new();
-        attr1.set_format(MTLVertexFormat::Float4);
-        attr1.set_offset(0);
-        attr1.set_buffer_index(0);
-        vdesc.attributes().set_object_at(0, Some(attr1));
-        if has_textures {
-            let mut attr2 = &VertexAttributeDescriptor::new();
-            attr2.set_format(MTLVertexFormat::Float2);
-            attr2.set_offset(16);
-            attr2.set_buffer_index(0);
-            vdesc.attributes().set_object_at(1, Some(attr2));
-            vdesc.layouts().object_at(0).unwrap().set_stride(24);
-        } else {
-            vdesc.layouts().object_at(0).unwrap().set_stride(16);
-        }
-        pipeline_state_descriptor.set_vertex_descriptor(Some(&vdesc));
+        let vertex_descriptor = VertexDescriptor::new();
 
+        for (index, attribute) in buffer_layout.elements.iter().enumerate() {
+            let vertex_attribute_descriptor = &VertexAttributeDescriptor::new();
+            vertex_attribute_descriptor.set_format(attribute.data_type.to_metal());
+            vertex_attribute_descriptor.set_buffer_index(0);
+            vertex_attribute_descriptor.set_offset(attribute.offset as u64);
+            vertex_descriptor.attributes().set_object_at(index, Some(vertex_attribute_descriptor));
+        }
+
+        vertex_descriptor.layouts().object_at(0).unwrap().set_stride(buffer_layout.stride as u64);
+
+        pipeline_state_descriptor.set_vertex_descriptor(Some(&vertex_descriptor));
 
         let render_buffer_attachment = pipeline_state_descriptor
             .color_attachments()
@@ -64,6 +57,7 @@ impl Shader {
         let pipeline_state = gfx.device
             .new_render_pipeline_state(&pipeline_state_descriptor)
             .unwrap();
+
         return Shader {
             pipeline_state,
         }
