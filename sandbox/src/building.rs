@@ -154,7 +154,6 @@ impl Mutation for DecrTurretTimerMutation {
 
 pub fn turret_attack_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
-    let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
 
     let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];
     for (_, transform, entity) in ecs.read2::<Monster, TransformComponent>() {

@@ -201,11 +201,9 @@ impl GuiComponent {
         };
         let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b, color.a]);
         let component = GuiComponent {
-            constraints,
             calculated_bounds: bounds,
             corner_radius,
             color,
-            hover_color: None,
             text: Vec::new(),
             images: Vec::new(),
             children: Vec::new(),

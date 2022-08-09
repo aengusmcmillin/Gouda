@@ -3,15 +3,13 @@
 use metal::*;
 use core_graphics::geometry::CGSize;
 use crate::shader_lib::ShaderLibrary;
-use crate::shader_lib::basic_shader::{BASIC_VERTEX_SHADER, BASIC_FRAGMENT_SHADER};
 use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
 use std::f32;
 use std::mem::size_of;
 use crate::platform::metal::buffers::{IndexBuffer};
 
-use self::buffers::{VertexBuffer, BufferLayout, BufferElement, ShaderDataType};
-use self::shader::Shader;
+use self::buffers::{VertexBuffer};
 
 pub mod drawable;
 pub mod shader;
@@ -141,8 +139,6 @@ impl Renderer {
     }
 
     pub fn end_scene(&self, scene: Scene) {
-        self.draw_triangle(&scene);
-
         scene.encoder.end_encoding();
 
         scene.command_buffer.present_drawable(&scene.drawable);

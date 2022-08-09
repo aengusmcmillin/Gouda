@@ -4,9 +4,6 @@ use gouda::rendering::sprites::ColorBoxComponent;
 use crate::Monster;
 use gouda::input::GameInput;
 use crate::spawners::MonsterType::Wolf;
-use gouda::rendering::drawable::QuadDrawable;
-use gouda::rendering::{Renderer};
-use std::rc::Rc;
 
 pub struct ProcessSpawnerMutation {
     entity: Entity,
@@ -32,7 +29,7 @@ pub fn wave_spawner_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = Vec::new();
     let input = ecs.read_res::<GameInput>();
 
-    for (spawner, transform, entity) in ecs.read2::<WaveSpawner, TransformComponent>() {
+    for (_, transform, entity) in ecs.read2::<WaveSpawner, TransformComponent>() {
         mutations.push(Box::new(ProcessSpawnerMutation {entity, dt: input.seconds_to_advance_over_update, x: transform.x, y: transform.y}));
     }
 
@@ -84,11 +81,6 @@ impl WaveSpawner {
     pub fn is_finished(&self) -> bool {
         return self.current_monster_index >= self.num_monsters;
     }
-}
-
-pub fn spawner_blink_system(ecs: &ECS) -> Mutations {
-    let mut mutations = vec![];
-    return mutations;
 }
 
 #[derive(Debug, Clone)]

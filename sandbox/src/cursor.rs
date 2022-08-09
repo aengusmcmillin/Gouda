@@ -4,7 +4,6 @@ use gouda::rendering::{
     Scene};
 use std::rc::Rc;
 use gouda::camera::Camera;
-use crate::tilemap::Tile;
 use gouda::ecs::ECS;
 
 pub struct Cursor {
@@ -56,10 +55,6 @@ impl Cursor {
         self.left_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         self.bottom_drawable.draw_with_projection(&scene, &camera.projection_buffer);
         self.right_drawable.draw_with_projection(&scene, &camera.projection_buffer);
-    }
-
-    pub fn handle_click(&self, tile: &Tile) {
-
     }
 }
 

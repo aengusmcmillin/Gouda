@@ -67,7 +67,7 @@ impl Mutation for GuiHoveredMutation {
 pub fn game_gui_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
     mutations.push(Box::new(UpdateResourceTextMutation {}));
-    for (capture, gui, entity) in ecs.read2::<MouseCaptureArea, GuiComponent>() {
+    for (capture, _, entity) in ecs.read2::<MouseCaptureArea, GuiComponent>() {
         mutations.push(Box::new(GuiHoveredMutation{entity, hovered: capture.is_hovered}));
 
         if capture.clicked_buttons[0] {
@@ -94,11 +94,9 @@ pub struct GameGui {}
 
 impl GameGui {
     pub fn create(ecs: &mut ECS) {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-
         let mouse_layer = ecs.build_entity().add(MouseCaptureLayer {sort_index: 1, capture_areas: vec![]}).add(ActiveCaptureLayer {}).entity();
         let bottom_panel = create_bottom_panel(ecs, mouse_layer);
-        let top_bar = create_top_bar(ecs, mouse_layer);
+        let top_bar = create_top_bar(ecs);
 
         ecs.add_component(&bottom_panel, ActiveGui {});
         ecs.add_component(&top_bar, ActiveGui {});
@@ -106,7 +104,7 @@ impl GameGui {
     }
 }
 
-fn create_top_bar(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
+fn create_top_bar(ecs: &mut ECS) -> Entity {
     const TOP_BAR_PERCENT_HEIGHT: f32 = 0.03;
     let top_bar = GuiComponent::create_hoverable(
         ecs,
@@ -202,7 +200,7 @@ fn create_top_bar(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
 }
 
 fn create_bottom_panel(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
-    let mut bottom_panel_entity = GuiComponent::create(
+    let bottom_panel_entity = GuiComponent::create(
         ecs,
         None,
         None,
@@ -215,7 +213,7 @@ fn create_bottom_panel(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
         0.,
         Color::from_u8(0x22, 0x22, 0x22, 0xFF));
     let bottom_panel = ecs.read::<GuiComponent>(&bottom_panel_entity).unwrap();
-    let mut buttons_box_entity = GuiComponent::create(
+    let buttons_box_entity = GuiComponent::create(
         ecs,
         None,
         Some(bottom_panel.calculated_bounds),
@@ -244,9 +242,9 @@ fn create_bottom_panel(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
         Color::from_u8(0x38, 0x38, 0x38, 0xFF),
     );
     ecs.write::<MouseCaptureLayer>(&mouse_layer).unwrap().capture_areas.push(child1_entity);
-    let mut buttons_box = ecs.write::<GuiComponent>(&buttons_box_entity).unwrap();
+    let buttons_box = ecs.write::<GuiComponent>(&buttons_box_entity).unwrap();
     buttons_box.add_child(child1_entity);
-    let mut bottom_panel = ecs.write::<GuiComponent>(&bottom_panel_entity).unwrap();
+    let bottom_panel = ecs.write::<GuiComponent>(&bottom_panel_entity).unwrap();
     bottom_panel.add_child(buttons_box_entity);
 
     let child1 = ecs.read::<GuiComponent>(&child1_entity).unwrap();

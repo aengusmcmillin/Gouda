@@ -23,7 +23,7 @@ impl Supplies {
         return true;
     }
 
-    pub fn add_gold(&mut self, gold: i32) {
+    pub fn _add_gold(&mut self, gold: i32) {
         self.gold += gold;
     }
 
@@ -31,7 +31,7 @@ impl Supplies {
         self.wood += wood;
     }
 
-    pub fn add_stone(&mut self, stone: i32) {
+    pub fn _add_stone(&mut self, stone: i32) {
         self.stone += stone;
     }
 }

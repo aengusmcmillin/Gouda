@@ -11,7 +11,6 @@ pub struct Chunk {
     length: u32,
     chunk_type: String,
     chunk_data: Vec<u8>,
-    crc: u32,
 }
 
 pub struct PNGHeader {
@@ -74,10 +73,10 @@ impl PNG {
             })
         }
 
-        let mut file = File::open(path);
+        let file = File::open(path);
         if let Ok(mut file) = file {
             let mut c = Vec::new();
-            file.read_to_end(&mut c);
+            file.read_to_end(&mut c).unwrap();
 
             let mut i = 8;
 
@@ -110,8 +109,8 @@ impl PNG {
             let mut decoder = compress::zlib::Decoder::new(data_bytes.as_slice());
             let mut decompressed = Vec::new();
             let result = decoder.read_to_end(&mut decompressed);
-            if let Err(E) = result {
-                println!("Error: {}", E);
+            if let Err(e) = result {
+                println!("Error: {}", e);
             }
 
             let mut result_bytes = vec![];
@@ -216,6 +215,5 @@ fn parse_chunk(c: &Vec<u8>, i: usize) -> Chunk {
         length,
         chunk_type,
         chunk_data: bytes,
-        crc: 0,
     }
 }

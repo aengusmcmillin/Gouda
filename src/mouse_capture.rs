@@ -102,7 +102,7 @@ pub fn mouse_capture_system(ecs: &ECS) -> Mutations {
         !input.mouse.buttons[4].ended_down && input.mouse.buttons[4].half_transition_count > 0,
     ];
 
-    for (layer, _, e) in layers {
+    for (layer, _, _) in layers {
         for area_e in &layer.capture_areas {
             let area = ecs.read::<MouseCaptureArea>(&area_e).unwrap();
             if area.bounds.contains_point(mouse_x, mouse_y) {

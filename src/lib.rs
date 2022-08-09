@@ -5,7 +5,6 @@ use crate::window::{WindowProps, WindowEvent};
 use std::thread::sleep;
 use std::time;
 use std::time::Instant;
-use crate::rendering::drawable::{QuadDrawable};
 use crate::rendering::{Scene, Renderer};
 use std::collections::HashMap;
 use std::rc::Rc;

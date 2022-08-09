@@ -41,10 +41,10 @@ pub struct Bitmap {
 
 impl Bitmap {
     pub fn new(path: &str) -> Option<Bitmap> {
-        let mut file = File::open(path);
+        let file = File::open(path);
         if let Ok(mut file) = file {
             let mut c = Vec::new();
-            file.read_to_end(&mut c);
+            file.read_to_end(&mut c).unwrap();
             let header = BitmapHeader {
                 file_type: u16_from_bytes([c[1], c[0]]),
                 file_size: u32_from_bytes([c[5], c[4], c[3], c[2]]),

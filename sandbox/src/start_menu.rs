@@ -4,25 +4,22 @@ use gouda::mouse_capture::{MouseCaptureLayer, ActiveCaptureLayer, MouseCaptureAr
 use gouda::gui::{GuiComponent, GuiText};
 use gouda::gui::constraints::{GuiConstraints, Constraint};
 use gouda::types::{Color, Bounds};
-use crate::{register_core_systems, LastState, draw_everything, DayGameState, DAY_GAME_STATE};
+use crate::{register_core_systems, LastState, DAY_GAME_STATE};
 use gouda::rendering::Scene;
 use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint};
 use std::rc::Rc;
 use gouda::font::Font;
 use crate::start_menu::StartMenuButtonId::Start;
-use crate::tilemap::{Tilemap, Tile};
+use crate::tilemap::{Tilemap};
 use crate::cursor::Cursor;
 use crate::player::Player;
 use gouda::camera::Camera;
 use crate::main_menu::MainMenu;
-use crate::gui::GameGui;
-use crate::tree::TreeComponent;
 
 pub struct StartMenuScreen {
     pub entity: Entity,
     pub button_layer: Entity,
     pub capture_layer: Entity,
-    active: bool,
 }
 
 pub struct StartEvent;
@@ -98,7 +95,7 @@ impl Mutation for MenuClickMutation {
 
 pub fn start_menu_mouse_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
-    for (capture_area, button, entity) in ecs.read2::<MouseCaptureArea, StartMenuButtonId>() {
+    for (capture_area, button, _) in ecs.read2::<MouseCaptureArea, StartMenuButtonId>() {
         if capture_area.clicked_buttons[0] {
             mutations.push(Box::new(MenuClickMutation {
                 buttonid: *button,
@@ -158,7 +155,7 @@ impl StartMenu {
     pub fn create(ecs: &mut ECS) {
         let main_menu_layer = ecs.build_entity().add(MouseCaptureLayer {sort_index: 2, capture_areas: vec![]}).entity();
         let menu_button_layer = ecs.build_entity().add(MouseCaptureLayer {sort_index: 3, capture_areas: vec![]}).entity();
-        let mut menu_screen_entity = GuiComponent::create(
+        let menu_screen_entity = GuiComponent::create(
             ecs,
             Some(main_menu_layer),
             None,
@@ -176,8 +173,8 @@ impl StartMenu {
         let bounds = menu_screen.calculated_bounds;
         add_menu_button(Start, "Start", menu_button_layer, bounds, 0.5, ecs, menu_screen_entity);
 
-        let menu_screen = ecs.write::<GuiComponent>(&menu_screen_entity).unwrap();
-        ecs.add_res(StartMenuScreen {entity: menu_screen_entity, button_layer: menu_button_layer, capture_layer: main_menu_layer, active: false});
+        ecs.write::<GuiComponent>(&menu_screen_entity).unwrap();
+        ecs.add_res(StartMenuScreen {entity: menu_screen_entity, button_layer: menu_button_layer, capture_layer: main_menu_layer});
     }
 }
 

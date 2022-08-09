@@ -18,7 +18,7 @@ impl Tile {
         Self::create_texture_tile(ecs, image_name, x, y)
     }
 
-    pub fn neighbor(&self, direction: Direction) -> Option<Entity> {
+    pub fn _neighbor(&self, direction: Direction) -> Option<Entity> {
         self.neighbors[direction as usize]
     }
 

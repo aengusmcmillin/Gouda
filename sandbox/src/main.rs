@@ -160,7 +160,7 @@ impl Mutation for CursorVisibilityMutation {
 fn mouse_cursor_system(ecs: &ECS) -> Mutations {
     let mut mutations: Mutations = vec![];
     let mut any_hovered = false;
-    for (tile, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
+    for (_, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
         if mouse_capture.is_hovered {
             mutations.push(Box::new(CursorSetPositionMutation {tile: e}));
             any_hovered = true;
@@ -198,7 +198,7 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
         player.draw(&scene, &camera);
     }
 
-    for (gui, _active, e) in ecs.read2::<GuiComponent, ActiveGui>() {
+    for (gui, _active, _) in ecs.read2::<GuiComponent, ActiveGui>() {
         gui.render(&ecs, &scene);
     }
 }

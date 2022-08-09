@@ -1,12 +1,7 @@
-use crate::rendering::shader::Shader;
 use crate::rendering::buffers::{VertexBuffer, IndexBuffer, VertexConstantBuffer, FragmentConstantBuffer};
 use crate::rendering::{Scene, Renderer};
 use crate::math::{create_transformation_matrix, Mat4x4};
 use crate::rendering::texture::RenderableTexture;
-use crate::shader_lib::quad_shader::{QUAD_VERTEX_SHADER, QUAD_FRAGMENT_SHADER};
-use crate::shader_lib::texture_shader::{TEXTURE_VERTEX_SHADER, TEXTURE_FRAGMENT_SHADER};
-
-use super::buffers::{BufferLayout, BufferElement, ShaderDataType};
 
 #[derive(Debug)]
 pub struct TextureDrawable {
@@ -164,7 +159,7 @@ impl QuadDrawable {
         }
     }
 
-    pub fn translate(&self, renderer: &Renderer, position: [f32; 3], scale: [f32; 3]) {
+    pub fn translate(&self, position: [f32; 3], scale: [f32; 3]) {
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         self.transform_buffer.update_data(transform_mat.to_vec());
     }

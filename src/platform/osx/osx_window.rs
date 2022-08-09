@@ -25,32 +25,11 @@ use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
 use crate::platform::osx::osx_input::{osx_process_key, osx_process_keyboard_message};
 use std::mem;
 use crate::rendering::Renderer;
-use std::rc::Rc;
-
-struct CocoaEventQueue {
-
-}
-
-impl CocoaEventQueue {
-
-    pub fn new() -> CocoaEventQueue {
-        CocoaEventQueue {}
-    }
-
-    pub fn queue_resize_event(&mut self, width: f32, height: f32) {
-
-    }
-
-    pub fn queue_close_event(&mut self) {
-
-    }
-}
 
 pub struct OsxWindow {
     cocoa_window: CocoaWindow,
     props: WindowProps,
     input: GameInput,
-    event_queue: Rc<CocoaEventQueue>,
 }
 
 impl OsxWindow {
@@ -64,8 +43,7 @@ impl OsxWindow {
             },
         };
 
-        let cocoa_event_queue = Rc::new(CocoaEventQueue::new());
-        let mut cocoa_window = show_window(cocoa_event_queue.clone(), &props.title, props.width, props.height);
+        let mut cocoa_window = show_window(&props.title, props.width, props.height);
         cocoa_window.create_view(frame_rect);
 
         let mut input = GameInput::default();
@@ -75,7 +53,6 @@ impl OsxWindow {
             cocoa_window,
             props,
             input,
-            event_queue: cocoa_event_queue,
         }
     }
 
@@ -106,7 +83,7 @@ fn create_menu_bar(title: &String) {
     }
 }
 
-fn show_window(cocoa_ev_queue: Rc<CocoaEventQueue>, title: &String, width: f64, height: f64) -> CocoaWindow {
+fn show_window(title: &String, width: f64, height: f64) -> CocoaWindow {
     unsafe {
         let app_name = NSString::alloc(nil).init_str(title);
         let frame = NSRect::new(NSPoint::new(0., 0.), NSSize::new(width, height));

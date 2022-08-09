@@ -1,14 +1,12 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
-use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer, BufferLayout, BufferElement, ShaderDataType};
-use crate::shader_lib::font_shader::{FONT_VERTEX_SHADER, FONT_FRAGMENT_SHADER};
+use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
 use std::rc::Rc;
 use crate::rendering::texture::RenderableTexture;
 use crate::rendering::Scene;
 use crate::png::PNG;
 use crate::rendering::Renderer;
-use crate::rendering::shader::Shader;
 
 pub struct TextMeshCreator {
 
@@ -126,10 +124,6 @@ impl TextDrawable {
     }
 }
 
-pub struct RenderableFont {
-    characters: HashMap<u32, RenderableCharacter>,
-}
-
 pub struct RenderableCharacter {
 }
 
@@ -158,15 +152,15 @@ impl Font {
 
     pub fn new(renderer: &Renderer, font_file_path: &str, font_png_path: &str) -> Font {
         let font_file = File::open(font_file_path).unwrap();
-        let mut font_file_reader = BufReader::new(font_file);
+        let font_file_reader = BufReader::new(font_file);
 
         let mut font_entries = Vec::new();
         let mut line_iter = font_file_reader.lines().filter_map(|result| result.ok());
 
         let info_line = line_iter.next().unwrap();
         let common_line = line_iter.next().unwrap();
-        let page_line = line_iter.next().unwrap();
-        let chars_line = line_iter.next().unwrap();
+        line_iter.next().unwrap();
+        line_iter.next().unwrap();
 
         let info = collect_elements(&info_line);
         let common = collect_elements(&common_line);

@@ -21,20 +21,20 @@ impl Camera {
             width: 11.,
             aspect: 1.,
         };
-        camera.update_projection_matrix(renderer);
+        camera.update_projection_matrix();
         ecs.add_res(camera);
     }
 
-    pub fn change_width(&mut self, renderer: &Renderer, dw: f32) {
+    pub fn change_width(&mut self, dw: f32) {
         self.width += dw;
-        self.update_projection_matrix(renderer);
+        self.update_projection_matrix();
     }
 
-    pub fn change_pos(&mut self, renderer: &Renderer, dx: f32, dy: f32) {
+    pub fn change_pos(&mut self, dx: f32, dy: f32) {
         self.center[0] += dx;
         self.center[1] += dy;
 
-        self.update_projection_matrix(renderer);
+        self.update_projection_matrix();
     }
 
     pub fn screen_space_to_world_space(&self, screen_x: f32, screen_y: f32) -> [f32; 2] {
@@ -49,7 +49,7 @@ impl Camera {
         return [world_x, world_y];
     }
 
-    fn update_projection_matrix(&mut self, renderer: &Renderer) {
+    fn update_projection_matrix(&mut self) {
         let height = self.width * self.aspect;
 
         let right = self.center[0] + self.width/2.;
