@@ -2,6 +2,7 @@
 
 use metal::*;
 use core_graphics::geometry::CGSize;
+use crate::shader_lib::ShaderLibrary;
 use crate::shader_lib::basic_shader::{BASIC_VERTEX_SHADER, BASIC_FRAGMENT_SHADER};
 use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
@@ -21,6 +22,7 @@ pub struct Scene<'a> {
     encoder: &'a RenderCommandEncoderRef,
     command_buffer: &'a CommandBufferRef,
     drawable: &'a DrawableRef,
+    pub renderer: &'a Renderer,
 }
 
 impl Scene<'_> {
@@ -49,6 +51,10 @@ impl Scene<'_> {
             0
         );
     }
+
+    pub fn bind_shader(&self, shader: String) {
+        self.renderer.shader_lib.as_ref().unwrap().bind_shader(self, shader);
+    }
 }
 
 fn prepare_render_pass_descriptor(descriptor: &RenderPassDescriptorRef, texture: &TextureRef) {
@@ -66,6 +72,7 @@ pub struct Renderer {
     command_queue: CommandQueue,
     width: usize,
     height: usize,
+    pub shader_lib: Option<ShaderLibrary>,
 }
 
 impl Renderer {
@@ -85,13 +92,18 @@ impl Renderer {
 
         let command_queue = device.new_command_queue();
 
-        let res = Renderer {
+
+        let mut res = Renderer {
             device,
             layer,
             command_queue,
             width,
             height,
+            shader_lib: None,
         };
+
+        let shader_lib = ShaderLibrary::construct(&res);
+        res.shader_lib = Some(shader_lib);
         return res;
     }
 
@@ -121,7 +133,7 @@ impl Renderer {
             let command_buffer = self.command_queue.new_command_buffer();
 
             let encoder = command_buffer.new_render_command_encoder(render_pass_descriptor);
-            let scene = Scene {encoder, command_buffer, drawable};
+            let scene = Scene {encoder, command_buffer, drawable, renderer: self};
             return Some(scene);
         } else {
             return None;
@@ -129,7 +141,7 @@ impl Renderer {
     }
 
     pub fn end_scene(&self, scene: Scene) {
-        // self.draw_triangle(&scene);
+        self.draw_triangle(&scene);
 
         scene.encoder.end_encoding();
 
@@ -138,18 +150,6 @@ impl Renderer {
     }
 
     pub fn draw_triangle(&self, scene: &Scene) {
-        let buffer_layout = BufferLayout::new(
-            vec![
-                BufferElement::new("position".to_string(), ShaderDataType::Float3),
-                BufferElement::new("color".to_string(), ShaderDataType::Float4)
-            ]
-        );
-        let shader = Shader::new(
-            self, 
-            buffer_layout, 
-            BASIC_VERTEX_SHADER,
-            BASIC_FRAGMENT_SHADER,
-        );
         let verts: Vec<Vertex> = vec![
                 Vertex::new([0., 1., 0.], [1., 0., 0., 1.]),
                 Vertex::new([-1., -1., 0.], [0., 1., 0., 1.]),
@@ -157,7 +157,7 @@ impl Renderer {
             ];
         let num_verts = verts.len() as u64;
         let vb = VertexBuffer::new(self, 0, verts);
-        shader.bind(scene);
+        scene.bind_shader("basic".to_string());
         vb.bind(scene);
         scene.draw_triangles(num_verts);
     }

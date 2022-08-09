@@ -1,3 +1,21 @@
+use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+
+pub fn texture_shader(renderer: &Renderer) -> Shader {
+    let buffer_layout = BufferLayout::new(
+        vec![
+            BufferElement::new("position".to_string(), ShaderDataType::Float4),
+            BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+        ]
+    );
+    let shader = Shader::new(
+        renderer, 
+        buffer_layout, 
+        TEXTURE_VERTEX_SHADER,
+        TEXTURE_FRAGMENT_SHADER,
+    );
+    return shader;
+}
+
 #[cfg(target_os = "macos")]
 pub const TEXTURE_VERTEX_SHADER: &str = "
 using namespace metal;

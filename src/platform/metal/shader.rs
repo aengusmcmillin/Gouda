@@ -7,6 +7,7 @@ use super::buffers::BufferLayout;
 #[derive(Debug)]
 pub struct Shader {
     pipeline_state: RenderPipelineState,
+    buffer_layout: BufferLayout,
 }
 
 impl Shader {
@@ -60,6 +61,7 @@ impl Shader {
 
         return Shader {
             pipeline_state,
+            buffer_layout,
         }
     }
 

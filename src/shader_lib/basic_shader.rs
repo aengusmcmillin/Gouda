@@ -1,3 +1,21 @@
+use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+
+
+pub fn basic_shader(renderer: &Renderer) -> Shader {
+    let buffer_layout = BufferLayout::new(
+        vec![
+            BufferElement::new("position".to_string(), ShaderDataType::Float3),
+            BufferElement::new("color".to_string(), ShaderDataType::Float4)
+        ]
+    );
+    let shader = Shader::new(
+        renderer, 
+        buffer_layout, 
+        BASIC_VERTEX_SHADER,
+        BASIC_FRAGMENT_SHADER,
+    );
+    return shader;
+}
 
 pub const BASIC_VERTEX_SHADER: &str = "
 using namespace metal;

@@ -13,7 +13,6 @@ pub struct TextureDrawable {
     pub vertex_buffer: VertexBuffer<[f32; 6]>,
     pub index_buffer: IndexBuffer,
     pub transform_buffer: VertexConstantBuffer<f32>,
-    pub shader: Shader,
     pub identity_buffer: VertexConstantBuffer<f32>,
     pub texture: RenderableTexture,
     pub position: [f32; 3],
@@ -40,19 +39,6 @@ impl TextureDrawable {
                 0, 1, 2,
             ]);
 
-        let buffer_layout = BufferLayout::new(
-            vec![
-                BufferElement::new("position".to_string(), ShaderDataType::Float4),
-                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
-            ]
-        );
-        let shader = Shader::new(
-            renderer,
-            buffer_layout,
-            TEXTURE_VERTEX_SHADER,
-            TEXTURE_FRAGMENT_SHADER
-        );
-
         let position = [0.; 3];
         let scale = [1.; 3];
         let rotation = [0.; 3];
@@ -65,7 +51,6 @@ impl TextureDrawable {
             vertex_buffer: vb,
             index_buffer: ib,
             transform_buffer,
-            shader,
             identity_buffer,
             texture,
             position,
@@ -110,7 +95,7 @@ impl TextureDrawable {
     }
 
     fn draw_impl(&self, scene: &Scene) {
-        self.shader.bind(scene);
+        scene.bind_shader("texture".to_string());
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.texture.bind(scene);
@@ -125,7 +110,6 @@ pub struct QuadDrawable {
     pub vertex_buffer: VertexBuffer<[f32; 4]>,
     pub index_buffer: IndexBuffer,
     pub transform_buffer: VertexConstantBuffer<f32>,
-    pub shader: Shader,
     pub color_buffer: FragmentConstantBuffer<f32>,
     pub identity_buffer: VertexConstantBuffer<f32>,
     pub position: [f32; 3],
@@ -152,19 +136,6 @@ impl QuadDrawable {
                 0, 1, 2,
             ]);
 
-        let buffer_layout = BufferLayout::new(
-            vec![
-                BufferElement::new("position".to_string(), ShaderDataType::Float4),
-                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
-            ]
-        );
-        let shader = Shader::new(
-                renderer,
-                buffer_layout,
-                QUAD_VERTEX_SHADER,
-                QUAD_FRAGMENT_SHADER
-            );
-
         let position = [0.; 3];
         let scale = [1.; 3];
         let rotation = [0.; 3];
@@ -186,7 +157,6 @@ impl QuadDrawable {
             index_buffer: ib,
             transform_buffer,
             color_buffer,
-            shader,
             identity_buffer,
             position,
             scale,
@@ -235,7 +205,7 @@ impl QuadDrawable {
     }
 
     fn draw_impl(&self, scene: &Scene) {
-        self.shader.bind(scene);
+        scene.bind_shader("quad".to_string());
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.index_buffer.bind(scene);

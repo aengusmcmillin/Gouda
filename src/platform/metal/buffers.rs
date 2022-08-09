@@ -3,6 +3,7 @@ use std::mem;
 use metal::*;
 use std::marker::PhantomData;
 
+#[derive(Debug)]
 pub enum ShaderDataType {
     Float = 0,
     Float2,
@@ -43,6 +44,7 @@ impl ShaderDataType {
     }
 }
 
+#[derive(Debug)]
 pub struct BufferLayout {
     pub elements: Vec<BufferElement>,
     pub stride: u32,
@@ -66,6 +68,8 @@ impl BufferLayout {
     }
 }
 
+
+#[derive(Debug)]
 pub struct BufferElement {
     pub name: String,
     pub data_type: ShaderDataType,

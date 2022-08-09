@@ -1,3 +1,22 @@
+use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+
+
+pub fn font_shader(renderer: &Renderer) -> Shader {
+    let buffer_layout = BufferLayout::new(
+        vec![
+            BufferElement::new("position".to_string(), ShaderDataType::Float4),
+            BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+        ]
+    );
+    let shader = Shader::new(
+        renderer, 
+        buffer_layout, 
+        FONT_VERTEX_SHADER,
+        FONT_FRAGMENT_SHADER,
+    );
+    return shader;
+}
+
 
 #[cfg(target_os = "macos")]
 pub const FONT_VERTEX_SHADER: &str = "

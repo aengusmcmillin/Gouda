@@ -1,5 +1,5 @@
 extern crate core;
-use crate::utils::{u16_from_bytes, u32_from_bytes};
+use crate::utils::{u32_from_bytes};
 
 
 use std::fs::File;

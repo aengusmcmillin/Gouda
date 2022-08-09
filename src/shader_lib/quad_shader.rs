@@ -1,3 +1,21 @@
+use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+
+
+pub fn quad_shader(renderer: &Renderer) -> Shader {
+    let buffer_layout = BufferLayout::new(
+        vec![
+            BufferElement::new("xy".to_string(), ShaderDataType::Float4),
+        ]
+    );
+    let shader = Shader::new(
+        renderer, 
+        buffer_layout, 
+        QUAD_VERTEX_SHADER,
+        QUAD_FRAGMENT_SHADER,
+    );
+    return shader;
+}
+
 #[cfg(target_os = "macos")]
 pub const QUAD_VERTEX_SHADER: &str = "
 using namespace metal;

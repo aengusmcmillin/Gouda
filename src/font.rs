@@ -25,7 +25,6 @@ pub struct TextDrawable {
     pub font_size: u32,
     pub font: Rc<Font>,
     pub vertices: VertexBuffer<[f32; 6]>,
-    pub shader: Shader,
     pub color: FragmentConstantBuffer<[f32; 4]>,
 }
 
@@ -107,19 +106,6 @@ impl TextDrawable {
 
         let vertices = VertexBuffer::new(renderer, 0, adjusted_vertices);
 
-        let buffer_layout = BufferLayout::new(
-            vec![
-                BufferElement::new("position".to_string(), ShaderDataType::Float4),
-                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
-            ]
-        );
-        let shader = Shader::new(
-            renderer,
-            buffer_layout,
-            FONT_VERTEX_SHADER,
-            FONT_FRAGMENT_SHADER
-        );
-
         let color = FragmentConstantBuffer::new(renderer, 0, vec!([color[0], color[1], color[2], 0.0]));
 
         return TextDrawable {
@@ -127,13 +113,12 @@ impl TextDrawable {
             font_size: font_size as u32,
             font,
             vertices,
-            shader,
             color,
         }
     }
 
     pub fn draw(&self, scene: &Scene) {
-        self.shader.bind(scene);
+        scene.bind_shader("font".to_string());
         self.vertices.bind(scene);
         self.font.texture.bind(scene);
         self.color.bind(scene);

@@ -22,8 +22,6 @@ pub struct ActiveGui {}
 
 #[derive(Debug)]
 pub struct GuiImage {
-    constraints: GuiConstraints,
-    calculated_bounds: Bounds,
     drawable: TextureDrawable,
     visible: bool,
 }
@@ -53,8 +51,6 @@ impl GuiImage {
         drawable.set_scale(size);
 
         let image = GuiImage {
-            constraints,
-            calculated_bounds: bounds,
             drawable,
             visible: true,
         };
@@ -79,7 +75,6 @@ impl GuiImage {
 
 #[derive(Debug)]
 pub struct GuiText {
-    constraints: GuiConstraints,
     calculated_bounds: Bounds,
     color: Color,
     drawable: TextDrawable,
@@ -105,7 +100,6 @@ impl GuiText {
         let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];
         let drawable = TextDrawable::new(renderer,  pos, size, center_x, center_y, font, [color.r, color.g, color.b], text, font_size);
         let text = GuiText {
-            constraints,
             calculated_bounds: bounds,
             color,
             drawable,
@@ -142,11 +136,9 @@ impl GuiText {
 
 #[derive(Debug)]
 pub struct GuiComponent {
-    constraints: GuiConstraints,
     pub calculated_bounds: Bounds,
     corner_radius: f32,
     color: Color,
-    hover_color: Option<Color>,
     children: Vec<Entity>,
     text: Vec<Entity>,
     images: Vec<Entity>,
@@ -172,11 +164,9 @@ impl GuiComponent {
         let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b, color.a]);
         let hover_drawable = Some(GuiDrawable::new(renderer, corner_radius, bounds, [hover_color.r, hover_color.g, hover_color.b, hover_color.a]));
         let component = GuiComponent {
-            constraints,
             calculated_bounds: bounds,
             corner_radius,
             color,
-            hover_color: Some(hover_color),
             text: Vec::new(),
             images: Vec::new(),
             children: Vec::new(),

@@ -1,6 +1,4 @@
-use crate::png::PNG;
 use crate::images::Image;
-use crate::bmp::Bitmap;
 
 pub struct Spritesheet {
     rows: usize,
