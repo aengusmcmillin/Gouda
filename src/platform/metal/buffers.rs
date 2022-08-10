@@ -142,7 +142,7 @@ impl <T> FragmentConstantBuffer<T> {
         scene.encoder.set_fragment_buffer(self.offset, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, _renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data(&self, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }

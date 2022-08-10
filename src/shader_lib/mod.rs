@@ -8,12 +8,14 @@ use self::font_shader::font_shader;
 use self::gui_shader::gui_shader;
 use self::quad_shader::quad_shader;
 use self::texture_shader::texture_shader;
+use self::hex_shader::hex_shader;
 
 pub mod basic_shader;
 pub mod font_shader;
 pub mod gui_shader;
 pub mod quad_shader;
 pub mod texture_shader;
+pub mod hex_shader;
 
 
 #[derive(Debug)]
@@ -33,6 +35,7 @@ impl ShaderLibrary {
         lib.add("gui".to_string(), gui_shader(renderer));
         lib.add("quad".to_string(), quad_shader(renderer));
         lib.add("texture".to_string(), texture_shader(renderer));
+        lib.add("hex".to_string(), hex_shader(renderer));
         return lib;
     }
 

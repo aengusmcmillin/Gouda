@@ -1,7 +1,7 @@
 use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetComponent};
 use gouda::{Gouda, GameLogic, GameState, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameStateId};
-use gouda::rendering::{Scene, Renderer};
+use gouda::rendering::{Scene, Renderer, drawable::ShapeDrawable};
 use tree::create_tree;
 use std::rc::Rc;
 use gouda::input::{LetterKeys, GameInput};
@@ -182,6 +182,10 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
 
     for (location, sprite, _) in ecs.read2::<TransformComponent, SpriteComponent>() {
         sprite.draw(&scene, &camera, location);
+    }
+
+    for (shape, _) in ecs.read1::<ShapeDrawable>() {
+        shape.draw(&scene);
     }
 
     for (location, color_box, _) in ecs.read2::<TransformComponent, ColorBoxComponent>() {
