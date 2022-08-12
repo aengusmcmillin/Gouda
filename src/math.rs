@@ -1,17 +1,32 @@
 use std::ops::Mul;
 use std::f32;
 
+use cgmath::Matrix4;
+
 #[derive(Debug)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32,
 }
 
+impl Vec2 {
+    pub fn new(x: f32, y: f32) -> Self {
+        return Self { x, y }
+    }
+}
+
+
 #[derive(Debug)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+impl Vec3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        return Self { x, y, z }
+    }
 }
 
 #[derive(Debug)]
@@ -34,12 +49,34 @@ impl Mat4x4 {
         }
     }
 
+    pub fn inverse(&self) -> Self {
+        return Mat4x4 {
+            data: [
+                [1., 0., 0., 0.],
+                [0., 1., 0., 0.],
+                [0., 0., 1., 0.],
+                [0., 0., 0., 1.],
+            ]
+        };
+    }
+
     pub fn identity() -> Self {
         return Mat4x4 {
             data: [
                 [1., 0., 0., 0.],
                 [0., 1., 0., 0.],
                 [0., 0., 1., 0.],
+                [0., 0., 0., 1.],
+            ]
+        };
+    }
+
+    pub fn ortho_matrix(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) -> Self {
+        return Mat4x4 {
+            data: [
+                [2. / (right - left), 0., 0., -1. * ((right + left) / (right - left))],
+                [0., 2. / (top - bottom), 0., -1. * ((top + bottom) / (top - bottom))],
+                [0., 0., -2./(far - near), -1. * ((far + near) / (far - near))],
                 [0., 0., 0., 1.],
             ]
         };
@@ -165,6 +202,17 @@ pub fn create_projection_matrix(aspect: f32, fov: f32, zfar: f32, znear: f32) ->
             [0., 0., -1., 0.],
         ]
     };
+}
+
+pub fn translation_matrix(translation: Vec3) -> Mat4x4 {
+    return Mat4x4 {
+        data: [
+            [1., 0., 0., translation.x],
+            [0., 1., 0., translation.y],
+            [0., 0., 1., translation.z],
+            [0., 0., 0., 1.],
+        ]
+    }
 }
 
 pub fn create_transformation_matrix(translate: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Mat4x4 {

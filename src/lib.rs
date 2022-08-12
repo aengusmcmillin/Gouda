@@ -25,6 +25,7 @@ pub mod rendering;
 pub mod math;
 mod utils;
 pub mod images;
+use camera::{CameraT};
 pub use images::bmp as bmp;
 pub use images::png as png;
 pub mod font;
@@ -111,7 +112,8 @@ pub trait GameState {
     fn on_state_stop(&self, ecs: &mut ECS);
     fn render_state(&self, ecs: &ECS, scene: &Scene);
     fn next_state(&self, ecs: &ECS) -> Option<GameStateId>;
-    fn active_layers(&self) -> Vec<RenderLayer>;
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer>;
+    fn camera(&self, ecs: &ECS) -> Box<dyn CameraT>;
 }
 
 pub trait GameLogic {
@@ -222,10 +224,12 @@ impl<T: GameLogic> Gouda<T> {
                 return;
             }
 
+            let game_state = self.game_states.get(&self.active_state.unwrap()).unwrap();
             let renderer = platform.get_renderer();
-            if let Some(scene) = renderer.begin_scene() {
-                self.game_states.get(&self.active_state.unwrap()).unwrap().render_state(&self.ecs, &scene);
-                renderer.end_scene(scene);
+            let camera = game_state.camera(&self.ecs);
+            if let Some(scene) = renderer.begin_scene(camera) {
+                game_state.render_state(&self.ecs, &scene);
+                scene.end();
             }
 
             let next = Instant::now();

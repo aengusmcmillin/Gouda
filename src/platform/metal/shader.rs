@@ -1,7 +1,8 @@
-use crate::platform::metal::{Renderer, Scene};
+use crate::{platform::metal::{Renderer, Scene}, camera::matrix_to_vec};
+use cgmath::Matrix4;
 use metal::*;
 
-use super::buffers::BufferLayout;
+use super::buffers::{BufferLayout, VertexConstantBuffer, FragmentConstantBuffer};
 
 #[derive(Debug)]
 pub struct Shader {
@@ -64,5 +65,15 @@ impl Shader {
 
     pub fn bind(&self, scene: &Scene) {
         scene.encoder.set_render_pipeline_state(&self.pipeline_state);
+    }
+
+    pub fn upload_vertex_uniform_mat4(&self, scene: &Scene, offset: u64, matrix: Matrix4<f32>)  {
+        let buffer = VertexConstantBuffer::new(scene.renderer, offset, matrix_to_vec(matrix));
+        buffer.bind(scene);
+    }
+
+    pub fn upload_fragment_uniform_float4(&self, scene: &Scene, offset: u64, uniform: [f32; 4])  {
+        let buffer = FragmentConstantBuffer::new(scene.renderer, offset, uniform.to_vec());
+        buffer.bind(scene);
     }
 }

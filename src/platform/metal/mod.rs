@@ -1,7 +1,10 @@
 #![cfg(target_os = "macos")]
 
+use cgmath::Matrix4;
 use metal::*;
 use core_graphics::geometry::CGSize;
+use crate::camera::{CameraT};
+use crate::rendering::shapes::ShapeLibrary;
 use crate::shader_lib::ShaderLibrary;
 use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
@@ -11,6 +14,7 @@ use std::mem::size_of;
 use crate::platform::metal::buffers::{IndexBuffer};
 
 use self::buffers::{VertexBuffer};
+use self::shader::Shader;
 
 pub mod drawable;
 pub mod shader;
@@ -22,9 +26,40 @@ pub struct Scene<'a> {
     command_buffer: &'a CommandBufferRef,
     drawable: &'a DrawableRef,
     pub renderer: &'a Renderer,
+    pub camera_view_projection_matrix: Matrix4<f32>
+}
+
+pub trait Renderable {
+    fn bind(&self, scene: &Scene);
+    fn num_indices(&self) -> u64;
+    fn index_buffer(&self) -> &IndexBuffer;
 }
 
 impl Scene<'_> {
+    pub fn end(self) {
+        self.encoder.end_encoding();
+
+        self.command_buffer.present_drawable(&self.drawable);
+        self.command_buffer.commit();
+    }
+
+    pub fn submit(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, color: [f32; 4]) {
+        shader.bind(self);
+        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
+        shader.upload_vertex_uniform_mat4(self, 1, transform);
+        shader.upload_fragment_uniform_float4(self, 0, color);
+
+        renderable.bind(self);
+
+        self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
+    }
+
+    pub fn submit_shape_by_name(&self, shader_name: &str, shape_name: &str, transform: Matrix4<f32>, color: [f32; 4]) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name.to_string()).unwrap();
+        let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name.to_string()).unwrap();
+        self.submit(shader, shape, transform, color);
+    }
+
     pub fn draw_tri_strip(&self, num_verts: u64) {
         self.encoder.draw_primitives(
             MTLPrimitiveType::TriangleStrip,
@@ -82,6 +117,7 @@ pub struct Renderer {
     width: usize,
     height: usize,
     pub shader_lib: Option<ShaderLibrary>,
+    pub shape_lib: Option<ShapeLibrary>,
 }
 
 impl Renderer {
@@ -109,10 +145,14 @@ impl Renderer {
             width,
             height,
             shader_lib: None,
+            shape_lib: None,
         };
 
         let shader_lib = ShaderLibrary::construct(&res);
         res.shader_lib = Some(shader_lib);
+
+        let shape_lib = ShapeLibrary::construct(&res);
+        res.shape_lib = Some(shape_lib);
         return res;
     }
 
@@ -134,7 +174,7 @@ impl Renderer {
         self.height
     }
 
-    pub fn begin_scene(&self) -> Option<Scene> {
+    pub fn begin_scene(&self, camera: Box<dyn CameraT>) -> Option<Scene> {
         if let Some(drawable) = self.layer.next_drawable() {
             let render_pass_descriptor = RenderPassDescriptor::new();
             prepare_render_pass_descriptor(&render_pass_descriptor, drawable.texture());
@@ -142,7 +182,7 @@ impl Renderer {
             let command_buffer = self.command_queue.new_command_buffer();
 
             let encoder = command_buffer.new_render_command_encoder(render_pass_descriptor);
-            let scene = Scene {encoder, command_buffer, drawable, renderer: self};
+            let scene = Scene {encoder, command_buffer, drawable, renderer: self, camera_view_projection_matrix: camera.get_view_projection_matrix()};
             return Some(scene);
         } else {
             return None;
@@ -150,72 +190,12 @@ impl Renderer {
     }
 
     pub fn end_scene(&self, scene: Scene) {
-        // let cx = 0.;
-        // let cy = 0.;
-        // let size = 0.08;
-        // let dw = 2. * size * 0.75;
-        // let dh = (3. as f32).sqrt() * size;
-
-        // for q in 0..10 {
-        //     for r in 0..10 {
-        //         if q % 2 == 0 {
-        //             self.draw_hex(&scene, size, [cx + q as f32 * dw, cy + (r as f32 + 0.5) * dh]);
-        //         } else {
-        //             self.draw_hex(&scene, size, [cx + q as f32 * dw, cy + r as f32 * dh]);
-        //         }
-        //     }
-        // }
-
-        scene.encoder.end_encoding();
-
-        scene.command_buffer.present_drawable(&scene.drawable);
-        scene.command_buffer.commit();
-    }
-
-    pub fn draw_triangle(&self, scene: &Scene) {
-        let verts: Vec<Vertex> = vec![
-                Vertex::new([0., 1., 0.], [1., 0., 0., 1.]),
-                Vertex::new([-1., -1., 0.], [0., 1., 0., 1.]),
-                Vertex::new([1., -1., 0.], [0., 0., 1., 1.]),
-            ];
-        let num_verts = verts.len() as u64;
-        let vb = VertexBuffer::new(self, 0, verts);
-        scene.bind_shader("basic".to_string());
-        vb.bind(scene);
-        scene.draw_triangles(num_verts);
-    }
-
-    pub fn draw_hex(&self, scene: &Scene, size: f32, center: [f32; 2]) {
-        let verts = vec![
-            center,
-            flat_hex_corner(0., center, size),
-            flat_hex_corner(1., center, size),
-            flat_hex_corner(2., center, size),
-            flat_hex_corner(3., center, size),
-            flat_hex_corner(4., center, size),
-            flat_hex_corner(5., center, size),
-        ];
-        let indices = vec![
-            0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 1
-        ];
-        let num_indices = indices.len() as u64;
-        let index_buffer = IndexBuffer::new(self, indices);
-        let vb = VertexBuffer::new(self, 0, verts);
-        scene.bind_shader("hex".to_string());
-        vb.bind(scene);
-        scene.draw_indexed(num_indices, &index_buffer);
+        scene.end();
     }
 
     pub fn get_layer(&self) -> &CoreAnimationLayerRef {
         return self.layer.as_ref();
     }
-}
-
-fn flat_hex_corner(i: f32, center: [f32; 2], size: f32) -> [f32; 2] {
-    let deg = 60. * i;
-    let rad = PI / 180. * deg;
-
-    return [center[0] + 0.95 * size * rad.cos(), center[1] + 0.95 * size * rad.sin()];
 }
 
 pub trait Sizeable<T> {

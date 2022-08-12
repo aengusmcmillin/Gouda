@@ -1,6 +1,73 @@
 use std::rc::Rc;
 
+use cgmath::{Matrix4, ortho, SquareMatrix, Vector3, Vector2, Deg};
+
 use crate::{math::Mat4x4, rendering::{buffers::VertexConstantBuffer, Renderer}, ecs::ECS};
+
+pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
+    return vec![
+        matrix.x.x, matrix.x.y, matrix.x.z, matrix.x.w,
+        matrix.y.x, matrix.y.y, matrix.y.z, matrix.y.w,
+        matrix.z.x, matrix.z.y, matrix.z.z, matrix.z.w,
+        matrix.w.x, matrix.w.y, matrix.w.z, matrix.w.w,
+    ]
+}
+
+pub trait CameraT {
+    fn set_position(&mut self, position: Vector3<f32>);
+    fn set_rotation(&mut self, rotation: f32);
+    fn get_view_projection_matrix(&self) -> Matrix4<f32>;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct OrthographicCamera {
+    projection_matrix: Matrix4<f32>,
+    view_matrix: Matrix4<f32>,
+    view_projection_matrix: Matrix4<f32>,
+
+    pub position: Vector3<f32>,
+    rotation: f32,
+}
+
+impl CameraT for OrthographicCamera {
+    fn set_position(&mut self, position: Vector3<f32>) {
+        self.position = position;
+        self.recalculate();
+    }
+
+    fn set_rotation(&mut self, rotation: f32) {
+        self.rotation = rotation;
+        self.recalculate();
+    }
+
+    fn get_view_projection_matrix(&self) -> Matrix4<f32> {
+        return self.view_projection_matrix
+    }
+}
+
+impl OrthographicCamera {
+    pub fn new(left: f32, right: f32, bottom: f32, top: f32) -> Self {
+        let mut res = Self {
+            projection_matrix: Matrix4::new(1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.) * ortho(left, right, bottom, top, -1., 1.),
+            view_matrix: Matrix4::identity(),
+            view_projection_matrix: Matrix4::identity(),
+            position: Vector3::new(0., 0., 0.),
+            rotation: 0.,
+        };
+        res.recalculate();
+        return res
+    }
+
+    fn recalculate(&mut self) {
+        let transform = Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, self.position.z)) * Matrix4::from_angle_z(Deg(self.rotation));
+        let inverse = transform.invert();
+        if let Some(inverted) = inverse {
+            self.view_matrix = inverted;
+            self.view_projection_matrix = self.projection_matrix * self.view_matrix
+        }
+    }
+}
+
 
 #[derive(Debug)]
 pub struct Camera {

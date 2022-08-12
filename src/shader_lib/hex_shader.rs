@@ -19,12 +19,23 @@ pub fn hex_shader(renderer: &Renderer) -> Shader {
 pub const HEX_VERTEX_SHADER: &str = "
 using namespace metal;
 
+struct ViewProjection {
+    float4x4 vp;
+};
+
+struct ModelTransform {
+    float4x4 transform;
+};
+
 struct VertexIn {
     float2 position [[ attribute(0) ]];
 };
 
-vertex float4 vertex_main(const VertexIn vIn [[ stage_in ]]) {
-    return float4(vIn.position, 0, 1);
+vertex float4 vertex_main(
+    const VertexIn vIn [[ stage_in ]],
+    constant ViewProjection& viewProjection [[buffer(1)]],
+    constant ModelTransform& modelTransform [[buffer(2)]]) {
+    return viewProjection.vp * modelTransform.transform * float4(vIn.position, 0, 1);
 }
 ";
 

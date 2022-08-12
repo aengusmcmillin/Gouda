@@ -10,6 +10,7 @@ enum-map = "*"
 enum-map-derive = "*"
 compress = "0.1.2"
 png = "0.11.0"
+cgmath = "0.18.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2"
