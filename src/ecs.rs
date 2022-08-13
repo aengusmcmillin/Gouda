@@ -14,7 +14,7 @@ pub trait Mutation {
 }
 
 pub type Mutations = Vec<Box<dyn Mutation>>;
-pub type System = dyn Fn(&ECS) -> Mutations;
+pub type System = dyn Fn(&ECS, f32) -> Mutations;
 pub type GameStateId = u32;
 
 pub struct ECS {
@@ -141,10 +141,10 @@ impl ECS {
         return self.components.get_mut::<EntityMap<T>>().unwrap();
     }
 
-    pub fn run_systems(&mut self) {
+    pub fn run_systems(&mut self, dt: f32) {
         let num_systems = self.systems.len();
         for i in 0..num_systems {
-            let mutations = self.systems[i](&self);
+            let mutations = self.systems[i](&self, dt);
             for mutation in mutations {
                 mutation.apply(self);
             }

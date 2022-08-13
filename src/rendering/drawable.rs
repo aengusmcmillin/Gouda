@@ -7,7 +7,7 @@ use crate::rendering::texture::RenderableTexture;
 pub struct ShapeDrawable {
     pub shader_name: String,
     pub shape_name: String,
-    color: [f32; 4]
+    pub color: [f32; 4]
 }
 
 impl ShapeDrawable {

@@ -26,7 +26,7 @@ pub struct OrthographicCamera {
     view_projection_matrix: Matrix4<f32>,
 
     pub position: Vector3<f32>,
-    rotation: f32,
+    pub rotation: f32,
 }
 
 impl CameraT for OrthographicCamera {

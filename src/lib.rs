@@ -2,7 +2,6 @@ use crate::ecs::{ECS, GameStateId};
 use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
 use crate::window::{WindowProps, WindowEvent};
-use std::thread::sleep;
 use std::time;
 use std::time::Instant;
 use crate::rendering::{Scene, Renderer};
@@ -161,7 +160,7 @@ impl<T: GameLogic> Gouda<T> {
         self.game_states.get(&self.active_state.unwrap()).unwrap()
     }
 
-    fn update(&mut self, game_input: GameInput, events: Vec<WindowEvent>) {
+    fn update(&mut self, dt: f32, game_input: GameInput, events: Vec<WindowEvent>) {
         if let Some(state) = self.get_active_state().next_state(&self.ecs) {
             let gstate = self.game_states.get(&self.active_state.unwrap());
             if let Some(gstate) = gstate {
@@ -182,7 +181,7 @@ impl<T: GameLogic> Gouda<T> {
         (*self.ecs.write_res::<GameInput>()) = game_input;
         (*self.ecs.write_res::<Vec<WindowEvent>>()) = events;
 
-        self.ecs.run_systems();
+        self.ecs.run_systems(dt);
         self.game_logic.cleanup_components(&mut self.ecs);
     }
 
@@ -202,6 +201,15 @@ impl<T: GameLogic> Gouda<T> {
         self.setup_game();
 
         loop {
+            let next = Instant::now();
+            let delta = next - now;
+            let target_dur = time::Duration::from_millis(16);
+            if target_dur > delta {
+                continue
+            }
+            let dt = delta.as_millis() as f32 / 1000.;
+            now = next;
+
             self.game_logic.migrate_events(&mut self.ecs);
             let window = platform.get_window();
             let input = window.capture_input();
@@ -219,7 +227,7 @@ impl<T: GameLogic> Gouda<T> {
                     }
                 };
             }
-            self.update(input.clone(), events);
+            self.update(dt, input.clone(), events);
             if self.ecs.events::<QuitEvent>().len() > 0 {
                 return;
             }
@@ -231,16 +239,6 @@ impl<T: GameLogic> Gouda<T> {
                 game_state.render_state(&self.ecs, &scene);
                 scene.end();
             }
-
-            let next = Instant::now();
-            let delta = next - now;
-            let target_dur = time::Duration::from_millis(30);
-            if target_dur > delta {
-                let wait = target_dur - delta;
-                sleep(wait);
-            }
-            let next = Instant::now();
-            now = next;
         }
     }
 }

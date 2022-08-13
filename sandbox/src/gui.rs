@@ -64,7 +64,7 @@ impl Mutation for GuiHoveredMutation {
     }
 }
 
-pub fn game_gui_system(ecs: &ECS) -> Mutations {
+pub fn game_gui_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     mutations.push(Box::new(UpdateResourceTextMutation {}));
     for (capture, _, entity) in ecs.read2::<MouseCaptureArea, GuiComponent>() {

@@ -63,7 +63,7 @@ impl Mutation for MoveMutation {
     }
 }
 
-pub fn player_move_system(ecs: &ECS) -> Mutations {
+pub fn player_move_system(ecs: &ECS, dt: f32) -> Mutations {
     let input = ecs.read_res::<GameInput>();
     let mut mutations: Mutations = Vec::new();
     for (_, ent) in ecs.read1::<Player>() {

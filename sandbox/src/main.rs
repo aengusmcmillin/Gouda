@@ -6,7 +6,7 @@ use tree::create_tree;
 use std::rc::Rc;
 use gouda::input::{LetterKeys, GameInput};
 use gouda::TransformComponent;
-use gouda::camera::Camera;
+use gouda::camera::{Camera, OrthographicCamera};
 
 extern crate rand;
 use rand::{Rng, thread_rng};
@@ -108,7 +108,7 @@ impl Mutation for TreeHarvestMutation {
     }
 }
 
-fn mouse_click_system(ecs: &ECS) -> Mutations {
+fn mouse_click_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = Vec::new();
     for (tile, mouse_capture, tile_e) in ecs.read2::<Tile, MouseCaptureArea>() {
         if mouse_capture.clicked_buttons[0] {
@@ -157,7 +157,7 @@ impl Mutation for CursorVisibilityMutation {
     }
 }
 
-fn mouse_cursor_system(ecs: &ECS) -> Mutations {
+fn mouse_cursor_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     let mut any_hovered = false;
     for (_, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
@@ -182,10 +182,6 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
 
     for (location, sprite, _) in ecs.read2::<TransformComponent, SpriteComponent>() {
         sprite.draw(&scene, &camera, location);
-    }
-
-    for (shape, _) in ecs.read1::<ShapeDrawable>() {
-        shape.draw(&scene);
     }
 
     for (location, color_box, _) in ecs.read2::<TransformComponent, ColorBoxComponent>() {
@@ -222,6 +218,7 @@ impl GameState for MainGameState {
         ecs.add_system(Box::new(turret_attack_system));
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
+        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -240,7 +237,7 @@ impl GameState for MainGameState {
         return None;
     }
 
-    fn active_layers(&self) -> Vec<RenderLayer> {
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -248,6 +245,11 @@ impl GameState for MainGameState {
             String::from("Players"),
             String::from("GUI")
         ];
+    }
+
+    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
+        return Box::new(cam);
     }
 }
 
@@ -268,9 +270,8 @@ impl Mutation for StateCountdownMutation {
     }
 }
 
-fn day_state_countdown(ecs: &ECS) -> Mutations {
-    let input = ecs.read_res::<GameInput>();
-    return vec![Box::new(StateCountdownMutation {dt: input.seconds_to_advance_over_update})];
+fn day_state_countdown(_ecs: &ECS, dt: f32) -> Mutations {
+    return vec![Box::new(StateCountdownMutation {dt: dt})];
 }
 
 fn next_day(ecs: &mut ECS) {
@@ -316,6 +317,7 @@ impl GameState for DayGameState {
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(mouse_cursor_system));
         ecs.add_system(Box::new(day_state_countdown));
+        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
 
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_day(ecs);
@@ -341,7 +343,7 @@ impl GameState for DayGameState {
         }
     }
 
-    fn active_layers(&self) -> Vec<RenderLayer> {
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -349,6 +351,11 @@ impl GameState for DayGameState {
             String::from("Players"),
             String::from("GUI")
         ];
+    }
+
+    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
+        return Box::new(cam);
     }
 }
 
@@ -369,6 +376,7 @@ impl GameState for NightGameState {
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
         ecs.add_system(Box::new(day_state_countdown));
+        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_night(ecs);
         }
@@ -393,7 +401,7 @@ impl GameState for NightGameState {
         }
     }
 
-    fn active_layers(&self) -> Vec<RenderLayer> {
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -401,6 +409,11 @@ impl GameState for NightGameState {
             String::from("Players"),
             String::from("GUI")
         ];
+    }
+
+    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
+        return Box::new(cam);
     }
 }
 
@@ -420,6 +433,7 @@ impl GameState for MainMenuGameState {
         ecs.add_component(&capture_layer, ActiveCaptureLayer {});
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
+        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -448,7 +462,7 @@ impl GameState for MainMenuGameState {
         return None;
     }
 
-    fn active_layers(&self) -> Vec<RenderLayer> {
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -456,6 +470,11 @@ impl GameState for MainMenuGameState {
             String::from("Players"),
             String::from("GUI")
         ];
+    }
+
+    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
+        return Box::new(cam);
     }
 }
 

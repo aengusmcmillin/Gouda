@@ -13,7 +13,7 @@ use crate::start_menu::StartMenuButtonId::Start;
 use crate::tilemap::{Tilemap};
 use crate::cursor::Cursor;
 use crate::player::Player;
-use gouda::camera::Camera;
+use gouda::camera::{Camera, OrthographicCamera};
 use crate::main_menu::MainMenu;
 
 pub struct StartMenuScreen {
@@ -43,6 +43,7 @@ impl GameState for StartMenuGameState {
         ecs.add_component(&capture_layer, ActiveCaptureLayer {});
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
+        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -66,10 +67,15 @@ impl GameState for StartMenuGameState {
         return None;
     }
 
-    fn active_layers(&self) -> Vec<RenderLayer> {
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("GUI")
         ];
+    }
+
+    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
+        return Box::new(cam);
     }
 }
 
@@ -93,7 +99,7 @@ impl Mutation for MenuClickMutation {
     }
 }
 
-pub fn start_menu_mouse_system(ecs: &ECS) -> Mutations {
+pub fn start_menu_mouse_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (capture_area, button, _) in ecs.read2::<MouseCaptureArea, StartMenuButtonId>() {
         if capture_area.clicked_buttons[0] {

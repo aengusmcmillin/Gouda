@@ -181,8 +181,9 @@ impl GuiComponent {
         if let Some(layer) = mouse_layer {
             builder.add(MouseCaptureArea::new(bounds));
 
-            let layer = ecs.write::<MouseCaptureLayer>(&layer).unwrap();
-            layer.capture_areas.push(entity);
+            if let Some(layer) = ecs.write::<MouseCaptureLayer>(&layer) {
+                layer.capture_areas.push(entity);
+            }
         }
         entity
     }
@@ -217,8 +218,9 @@ impl GuiComponent {
         if let Some(layer) = mouse_layer {
             builder.add(MouseCaptureArea::new(bounds));
 
-            let layer = ecs.write::<MouseCaptureLayer>(&layer).unwrap();
-            layer.capture_areas.push(entity);
+            if let Some(layer) = ecs.write::<MouseCaptureLayer>(&layer) {
+                layer.capture_areas.push(entity);
+            }
         }
         entity
     }

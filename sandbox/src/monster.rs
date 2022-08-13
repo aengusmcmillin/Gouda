@@ -26,29 +26,43 @@ impl Monster {
 
 pub struct MonsterMoveMutation {
     monster: Entity,
+    dx: f32,
+    dy: f32,
+    delete: bool,
 }
 
 impl Mutation for MonsterMoveMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let monster = ecs.write::<TransformComponent>(&self.monster).unwrap();
-        if monster.x > 0.03 {
-            monster.change_pos(-0.06, 0.);
-        } else if monster.x < -0.03 {
-            monster.change_pos(0.06, 0.);
-        } else if monster.y > 1.1 {
-            monster.change_pos(0.0, -0.06);
-        } else if monster.y < 0.9 {
-            monster.change_pos(0.0, 0.06);
-        } else {
+        if self.delete {
             ecs.delete_entity(&self.monster);
+            return;
         }
+
+        let monster = ecs.write::<TransformComponent>(&self.monster).unwrap();
+        monster.change_pos(self.dx, self.dy);
     }
 }
 
-pub fn monster_move_system(ecs: &ECS) -> Mutations {
+pub fn monster_move_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = Vec::new();
-    for monster in ecs.get1::<Monster>() {
-        mutations.push(Box::new(MonsterMoveMutation {monster}));
+    for (_, transform, monster) in ecs.read2::<Monster, TransformComponent>() {
+        let mut dx = 0.;
+        let mut dy = 0.;
+        let mut delete = false;
+
+        let monster_speed = 2.;
+        if transform.x > 0.03 {
+            dx = -1. * monster_speed * dt;
+        } else if transform.x < -0.03 {
+            dx = 1. * monster_speed * dt;
+        } else if transform.y > 1.1 {
+            dy = -1. * monster_speed * dt;
+        } else if transform.y < 0.9 {
+            dy = 1. * monster_speed * dt;
+        } else {
+            delete = true;
+        }
+        mutations.push(Box::new(MonsterMoveMutation {monster, dx, dy, delete}));
     }
     return mutations;
 }
@@ -69,7 +83,7 @@ impl Mutation for MonsterDamageMutation {
     }
 }
 
-pub fn monster_damage_system(ecs: &ECS) -> Mutations {
+pub fn monster_damage_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (_, damage, entity) in ecs.read2::<Monster, DamageDealt>() {
         mutations.push(Box::new(MonsterDamageMutation {monster: entity, damage: damage.damage}));
