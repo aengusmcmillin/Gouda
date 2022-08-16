@@ -8,7 +8,7 @@ pub fn create_tree(ecs: &mut ECS, tile: Entity) {
 
     let sprite = SpriteComponent::new(ecs, "bitmap/tree.png".to_string());
     let tile = ecs.read::<Tile>(&tile).unwrap();
-    let loc = TransformComponent::builder().location(tile.x as f32, tile.y as f32).scale(0.4, 0.4).build();
+    let loc = TransformComponent::builder().position(tile.x as f32, tile.y as f32).scale(0.4, 0.4).build();
     let tree = TreeComponent {
         wood: 10,
     };

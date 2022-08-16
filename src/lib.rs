@@ -24,7 +24,8 @@ pub mod rendering;
 pub mod math;
 mod utils;
 pub mod images;
-use camera::{CameraT};
+use camera::{Camera};
+use cgmath::{Matrix4, Vector3, Deg, Vector2};
 pub use images::bmp as bmp;
 pub use images::png as png;
 pub mod font;
@@ -39,70 +40,67 @@ pub type RenderOrder = u32;
 
 pub struct QuitEvent;
 
+
 #[derive(Debug, Clone, Copy)]
 pub struct TransformComponent {
-    pub x: f32,
-    pub y: f32,
-    pub scale_x: f32,
-    pub scale_y: f32,
-    pub rot_x: f32,
-    pub rot_y: f32,
+    pub position: Vector2<f32>,
+    pub rotation: Vector2<f32>,
+    pub scale: Vector2<f32>,
 }
 
 impl TransformComponent {
     pub fn change_pos(&mut self, dx: f32, dy: f32) {
-        //let deg = (dy / dx).atan() / (std::f32::consts::PI / 180.);
-        self.x += dx;
-        self.y += dy;
+        self.position = self.position + Vector2::new(dx, dy);
     }
 
     pub fn builder() -> TransformComponentBuilder {
         TransformComponentBuilder::new()
     }
+
+    pub fn transform_matrix(&self) -> Matrix4<f32> {
+        return Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, 0.)) * 
+            Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, 1.) *
+            Matrix4::from_angle_x(Deg(self.rotation.x)) *
+            Matrix4::from_angle_y(Deg(self.rotation.y))
+    }
 }
 
-#[derive(Default)]
 pub struct TransformComponentBuilder {
-    pub x: f32,
-    pub y: f32,
-    pub scale_x: f32,
-    pub scale_y: f32,
-    pub rot_x: f32,
-    pub rot_y: f32,
+    pub position: Vector2<f32>,
+    pub rotation: Vector2<f32>,
+    pub scale: Vector2<f32>,
 }
 
 impl TransformComponentBuilder {
     pub fn new() -> TransformComponentBuilder {
         TransformComponentBuilder {
-            x: 0.,
-            y: 0.,
-            scale_x: 1.,
-            scale_y: 1.,
-            rot_x: 0.,
-            rot_y: 0.,
+            position: Vector2::new(0., 0.),
+            rotation: Vector2::new(0., 0.),
+            scale: Vector2::new(1., 1.),
         }
     }
 
-    pub fn location(mut self, x: f32, y: f32) -> TransformComponentBuilder {
-        self.x = x;
-        self.y = y;
+    pub fn position(mut self, x: f32, y: f32) -> TransformComponentBuilder {
+        self.position = Vector2::new(x, y);
         self
     }
 
     pub fn scale(mut self, scale_x: f32, scale_y: f32) -> TransformComponentBuilder {
-        self.scale_x = scale_x;
-        self.scale_y = scale_y;
+        self.scale = Vector2::new(scale_x, scale_y);
         self
     }
 
     pub fn rotation(mut self, rot_x: f32, rot_y: f32) -> TransformComponentBuilder {
-        self.rot_x = rot_x;
-        self.rot_y = rot_y;
+        self.rotation = Vector2::new(rot_x, rot_y);
         self
     }
 
     pub fn build(self) -> TransformComponent {
-        TransformComponent { x: self.x, y: self.y, scale_x: self.scale_x, scale_y: self.scale_y, rot_x: self.rot_x, rot_y: self.rot_y }
+        TransformComponent {
+            position: self.position,
+            scale: self.scale,
+            rotation: self.rotation
+        }
     }
 }
 
@@ -112,7 +110,7 @@ pub trait GameState {
     fn render_state(&self, ecs: &ECS, scene: &Scene);
     fn next_state(&self, ecs: &ECS) -> Option<GameStateId>;
     fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer>;
-    fn camera(&self, ecs: &ECS) -> Box<dyn CameraT>;
+    fn camera(&self, ecs: &ECS) -> Box<dyn Camera>;
 }
 
 pub trait GameLogic {

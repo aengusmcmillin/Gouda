@@ -1,7 +1,6 @@
 use crate::platform::metal::{Renderer, Scene};
 use std::mem;
 use metal::*;
-use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub enum ShaderDataType {
@@ -123,18 +122,16 @@ impl IndexBuffer {
 }
 
 #[derive(Debug)]
-pub struct FragmentConstantBuffer<T> {
+pub struct FragmentConstantBuffer {
     data: Buffer,
     offset: u64,
-    phantom: PhantomData<T>,
 }
 
-impl <T> FragmentConstantBuffer<T> {
-    pub fn new(renderer: &Renderer, offset: u64, data: Vec<T>) -> FragmentConstantBuffer<T> {
+impl FragmentConstantBuffer {
+    pub fn new<T>(renderer: &Renderer, offset: u64, data: Vec<T>) -> FragmentConstantBuffer {
         return FragmentConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
-            phantom: PhantomData,
         }
     }
 
@@ -142,24 +139,22 @@ impl <T> FragmentConstantBuffer<T> {
         scene.encoder.set_fragment_buffer(self.offset, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, data: Vec<T>) {
+    pub fn update_data<T>(&self, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }
 
 #[derive(Debug)]
-pub struct VertexConstantBuffer<T> {
+pub struct VertexConstantBuffer {
     data: Buffer,
     offset: u64,
-    phantom: PhantomData<T>,
 }
 
-impl <T> VertexConstantBuffer<T> {
-    pub fn new(renderer: &Renderer, offset: u64, data: Vec<T>) -> VertexConstantBuffer<T> {
+impl VertexConstantBuffer{
+    pub fn new<T>(renderer: &Renderer, offset: u64, data: Vec<T>) -> VertexConstantBuffer {
         return VertexConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
-            phantom: PhantomData,
         }
     }
 
@@ -171,24 +166,22 @@ impl <T> VertexConstantBuffer<T> {
         scene.encoder.set_vertex_buffer(self.offset + 1, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, data: Vec<T>) {
+    pub fn update_data<T>(&self, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }
 
 #[derive(Debug)]
-pub struct VertexBuffer<T> {
+pub struct VertexBuffer {
     data: Buffer,
     offset: u64,
-    phantom: PhantomData<T>,
 }
 
-impl <T> VertexBuffer <T> {
-    pub fn new(renderer: &Renderer, offset: u64, position_data: Vec<T>) -> VertexBuffer<T> {
+impl VertexBuffer {
+    pub fn new<T>(renderer: &Renderer, offset: u64, position_data: Vec<T>) -> VertexBuffer {
         return VertexBuffer {
             offset,
             data: create_buffer(renderer, position_data),
-            phantom: PhantomData,
         }
     }
 
@@ -200,7 +193,7 @@ impl <T> VertexBuffer <T> {
         scene.encoder.set_vertex_buffer(self.offset, Some(&self.data), 0);
     }
 
-    pub fn update_data(&self, _renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&self, _renderer: &Renderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }

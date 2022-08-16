@@ -1,3 +1,5 @@
+use cgmath::{Matrix4, Vector3};
+
 use crate::shader_lib::gui_shader::{GUI_VERTEX_SHADER, GUI_FRAGMENT_SHADER};
 use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
@@ -22,8 +24,9 @@ pub struct ActiveGui {}
 
 #[derive(Debug)]
 pub struct GuiImage {
-    drawable: TextureDrawable,
+    drawable: RenderableTexture,
     visible: bool,
+    transform: Matrix4<f32>
 }
 
 impl GuiImage {
@@ -44,15 +47,14 @@ impl GuiImage {
         let h = renderer.get_height() as f32;
         let pos = [(bounds.x as f32) / (w as f32 / 2.) - 1.0, (bounds.y as f32) / (h as f32 / 2.) - 1.0, 1.0];
         let size = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
-        let renderable_texture=  RenderableTexture::new(renderer, &image);
+        let drawable =  RenderableTexture::new(renderer, &image);
 
-        let mut drawable = TextureDrawable::new(true, renderer, renderable_texture);
-        drawable.set_position(pos);
-        drawable.set_scale(size);
+        let transform = Matrix4::from_translation(Vector3::new(pos[0], pos[1], pos[2])) * Matrix4::from_nonuniform_scale(size[0], size[1], size[2]);
 
         let image = GuiImage {
             drawable,
             visible: true,
+            transform
         };
 
         ecs.build_entity().add(image).entity()
@@ -68,7 +70,7 @@ impl GuiImage {
 
     pub fn render(&self, scene: &Scene) {
         if self.visible {
-            self.drawable.draw(scene);
+            scene.submit_texture(&self.drawable, self.transform);
         }
     }
 }
@@ -287,14 +289,13 @@ impl GuiComponent {
 
 #[derive(Debug)]
 pub struct GuiDrawable {
-    pub vertex_buffer: VertexBuffer<f32>,
+    pub vertex_buffer: VertexBuffer,
     pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexConstantBuffer<f32>,
-    pub shader: Shader,
-    pub color_buffer: FragmentConstantBuffer<f32>,
-    pub shape_buffer: FragmentConstantBuffer<f32>,
-    pub radius_buffer: FragmentConstantBuffer<f32>,
-    pub identity_buffer: VertexConstantBuffer<f32>,
+    pub transform_buffer: VertexConstantBuffer,
+    pub color_buffer: FragmentConstantBuffer,
+    pub shape_buffer: FragmentConstantBuffer,
+    pub radius_buffer: FragmentConstantBuffer,
+    pub identity_buffer: VertexConstantBuffer,
 }
 
 impl GuiDrawable {
@@ -309,10 +310,10 @@ impl GuiDrawable {
             renderer,
             0,
             vec![
-                0., 0., 0., 1., 0., 1.,
-                2., 0., 0., 1., 1., 1.,
-                2., 2., 0., 1., 1., 0.,
-                0., 2., 0., 1., 0., 0.,
+                [0., 0., 0., 1., 0., 1.],
+                [2., 0., 0., 1., 1., 1.],
+                [2., 2., 0., 1., 1., 0.],
+                [0., 2., 0., 1., 0., 0.],
             ]);
 
         let ib = IndexBuffer::new(
@@ -322,26 +323,15 @@ impl GuiDrawable {
                 0, 1, 2,
             ]);
 
-        let buffer_layout = BufferLayout::new(
-            vec![
-                BufferElement::new("position".to_string(), ShaderDataType::Float4),
-                BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
-            ]
-        );
-        let shader = Shader::new(
-            renderer,
-            buffer_layout,
-            GUI_VERTEX_SHADER,
-            GUI_FRAGMENT_SHADER);
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
         let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
+        let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
 
         let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2], color[3]]);
         let shape_buffer = FragmentConstantBuffer::new(renderer, 1, vec![scale[0], scale[1]]);
         let radius_buffer = FragmentConstantBuffer::new(renderer, 2, vec![radius]);
 
-        let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
         return Self {
             vertex_buffer: vb,
             index_buffer: ib,
@@ -349,17 +339,15 @@ impl GuiDrawable {
             color_buffer,
             shape_buffer,
             radius_buffer,
-            shader,
             identity_buffer,
         }
     }
 
     pub fn draw(&self, scene: &Scene) {
-        self.shader.bind(scene);
+        scene.bind_shader("gui".to_string());
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.identity_buffer.bind(scene);
-        self.index_buffer.bind(scene);
         self.color_buffer.bind(&scene);
         self.shape_buffer.bind(&scene);
         self.radius_buffer.bind(&scene);

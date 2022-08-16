@@ -32,7 +32,7 @@ impl Tile {
             y: y - 3,
             neighbors: [None; 4],
         };
-        let transform = TransformComponent::builder().location((x - 5) as f32, (y - 3) as f32).scale(0.5, 0.5).build();
+        let transform = TransformComponent::builder().position((x - 5) as f32, (y - 3) as f32).scale(0.5, 0.5).build();
         ecs.build_entity()
            .add(tile)
            .add(sprite)

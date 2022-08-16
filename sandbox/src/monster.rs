@@ -1,5 +1,5 @@
 use gouda::TransformComponent;
-use gouda::rendering::sprites::ColorBoxComponent;
+use gouda::rendering::drawable::ShapeDrawable;
 use gouda::ecs::{ECS, Entity, Mutation, Mutations};
 use crate::building::DamageDealt;
 
@@ -10,9 +10,10 @@ pub struct Monster {
 
 impl Monster {
     pub fn create(ecs: &mut ECS, x_pos: f32, y_pos: f32) {
-        let drawable = ColorBoxComponent::new(ecs, [0.7, 0.2, 0.2]);
-        let transform = TransformComponent::builder().location(x_pos, y_pos).scale(0.4, 0.4).build();
-        ecs.build_entity().add(Monster {health: 2}).add(drawable).add(transform);
+        let color = [0.7, 0.2, 0.2, 1.];
+        let shape = ShapeDrawable::new("quad".to_string(), "quad".to_string(), color);
+        let transform = TransformComponent::builder().position(x_pos, y_pos).scale(0.4, 0.4).build();
+        ecs.build_entity().add(Monster {health: 2}).add(shape).add(transform);
     }
 
     pub fn take_damage(&mut self, damage: u32) {
@@ -51,13 +52,13 @@ pub fn monster_move_system(ecs: &ECS, dt: f32) -> Mutations {
         let mut delete = false;
 
         let monster_speed = 2.;
-        if transform.x > 0.03 {
+        if transform.position.x > 0.03 {
             dx = -1. * monster_speed * dt;
-        } else if transform.x < -0.03 {
+        } else if transform.position.x < -0.03 {
             dx = 1. * monster_speed * dt;
-        } else if transform.y > 1.1 {
+        } else if transform.position.y > 1.1 {
             dy = -1. * monster_speed * dt;
-        } else if transform.y < 0.9 {
+        } else if transform.position.y < 0.9 {
             dy = 1. * monster_speed * dt;
         } else {
             delete = true;

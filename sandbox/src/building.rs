@@ -18,7 +18,7 @@ impl Turret {
     pub fn create(ecs: &mut ECS, tile: Entity) {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
-        let location = TransformComponent {x: tile.x as f32, y: tile.y as f32, scale_x: 0.4, scale_y: 0.4, rot_x: 0., rot_y: 0.};
+        let location = TransformComponent::builder().position(tile.x as f32, tile.y as f32).scale(0.4, 0.4).build();
         let turret = Turret {
             selected: false,
             fire_cooldown: 1.,
@@ -46,7 +46,7 @@ impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
         let sprite = SpriteComponent::new(ecs, "bitmap/arrow.png".to_string());
         ecs.build_entity()
-        .add(TransformComponent::builder().location(x, y).scale(0.3, 0.1).build())
+        .add(TransformComponent::builder().position(x, y).scale(0.3, 0.1).build())
         .add(sprite)
         .add(Arrow {target, speed: 5., damage: 1});
     }
@@ -101,7 +101,7 @@ pub fn arrow_move_system(ecs: &ECS, dt: f32) -> Mutations {
     for (arrow, arrow_location, entity) in ecs.read2::<Arrow, TransformComponent>() {
         let target = ecs.read::<TransformComponent>(&arrow.target);
         if let Some(monster) = target {
-            let v = (monster.x - arrow_location.x, monster.y - arrow_location.y);
+            let v = (monster.position.x - arrow_location.position.x, monster.position.y - arrow_location.position.y);
             let dist = (v.0 * v.0 + v.1 * v.1).sqrt();
             if dist < 0.5 {
                 mutations.push(Box::new(ArrowCollisionMutation {
@@ -133,7 +133,7 @@ pub struct FireArrowMutation {
 impl Mutation for FireArrowMutation {
     fn apply(&self, ecs: &mut ECS) {
         let turret_loc = ecs.read::<TransformComponent>(&self.turret).unwrap();
-        let (x, y) = (turret_loc.x, turret_loc.y);
+        let (x, y) = (turret_loc.position.x, turret_loc.position.y);
         let turret = ecs.write::<Turret>(&self.turret).unwrap();
         turret.fire_timer = turret.fire_cooldown;
         Arrow::create(ecs, self.target, x, y);
@@ -157,14 +157,14 @@ pub fn turret_attack_system(ecs: &ECS, dt: f32) -> Mutations {
 
     let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];
     for (_, transform, entity) in ecs.read2::<Monster, TransformComponent>() {
-        monster_positions.push((entity, transform.x, transform.y));
+        monster_positions.push((entity, transform.position.x, transform.position.y));
     }
 
     let input = ecs.read_res::<GameInput>();
     for (turret, loc, e) in ecs.read2::<Turret, TransformComponent>() {
         let mut closest: Option<(Entity, f32)> = None;
         for (monster, x, y) in &monster_positions {
-            let (x, y) = (loc.x - x, loc.y - y);
+            let (x, y) = (loc.position.x - x, loc.position.y - y);
             let dist = (x * x + y * y).sqrt();
 
             if let Some((_, closest_dist)) = closest {

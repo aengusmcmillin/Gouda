@@ -6,7 +6,6 @@ use gouda::{rendering::{
 use std::rc::Rc;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};
-use gouda::camera::Camera;
 use crate::tilemap::{Tilemap};
 
 #[derive(Debug)]
@@ -24,7 +23,7 @@ impl Player {
         let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8]);
 
         let tile = ecs.read_res::<Tilemap>().tile_at_pos(1, 2);
-        let transform = TransformComponent::builder().location(-4., -1.).scale(0.3, 0.3).build();
+        let transform = TransformComponent::builder().position(-4., -1.).scale(0.3, 0.3).build();
 
         ecs.build_entity()
             .add(Player {selected_drawable, current_tile: tile, is_selected: false})
@@ -32,9 +31,9 @@ impl Player {
             .add(spritesheet);
     }
 
-    pub fn draw(&self, scene: &Scene, camera: &Camera) {
+    pub fn draw(&self, scene: &Scene) {
         if self.is_selected {
-            self.selected_drawable.draw_with_projection(&scene, &camera.projection_buffer);
+            self.selected_drawable.draw(scene);
         }
     }
 }

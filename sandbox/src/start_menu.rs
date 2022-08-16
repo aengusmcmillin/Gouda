@@ -73,7 +73,7 @@ impl GameState for StartMenuGameState {
         ];
     }
 
-    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
         let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
         return Box::new(cam);
     }
@@ -90,7 +90,6 @@ impl Mutation for MenuClickMutation {
                 Tilemap::create(ecs);
                 Cursor::create(ecs);
                 Player::create(ecs);
-                Camera::create(ecs);
 
                 MainMenu::create(ecs);
                 ecs.push_event(StartEvent)

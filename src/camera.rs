@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use cgmath::{Matrix4, ortho, SquareMatrix, Vector3, Vector2, Deg};
+use cgmath::{Matrix4, ortho, SquareMatrix, Vector3, Deg};
 
 use crate::{math::Mat4x4, rendering::{buffers::VertexConstantBuffer, Renderer}, ecs::ECS};
 
@@ -13,7 +13,7 @@ pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
     ]
 }
 
-pub trait CameraT {
+pub trait Camera {
     fn set_position(&mut self, position: Vector3<f32>);
     fn set_rotation(&mut self, rotation: f32);
     fn get_view_projection_matrix(&self) -> Matrix4<f32>;
@@ -29,7 +29,7 @@ pub struct OrthographicCamera {
     pub rotation: f32,
 }
 
-impl CameraT for OrthographicCamera {
+impl Camera for OrthographicCamera {
     fn set_position(&mut self, position: Vector3<f32>) {
         self.position = position;
         self.recalculate();
@@ -70,18 +70,18 @@ impl OrthographicCamera {
 
 
 #[derive(Debug)]
-pub struct Camera {
+pub struct NormCamera {
     pub projection_matrix: Mat4x4,
-    pub projection_buffer: VertexConstantBuffer<f32>,
+    pub projection_buffer: VertexConstantBuffer,
     center: [f32; 2],
     width: f32,
     aspect: f32,
 }
 
-impl Camera {
+impl NormCamera {
     pub fn create(ecs: &mut ECS)  {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let mut camera = Camera {
+        let mut camera = NormCamera {
             projection_matrix: Mat4x4::identity(),
             projection_buffer: VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec()),
             center: [0., 0.],

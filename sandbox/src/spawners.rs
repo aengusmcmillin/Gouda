@@ -1,6 +1,6 @@
 use gouda::TransformComponent;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
-use gouda::rendering::sprites::ColorBoxComponent;
+use gouda::rendering::drawable::ShapeDrawable;
 use crate::Monster;
 use gouda::input::GameInput;
 use crate::spawners::MonsterType::Wolf;
@@ -30,7 +30,7 @@ pub fn wave_spawner_system(ecs: &ECS, dt: f32) -> Mutations {
     let input = ecs.read_res::<GameInput>();
 
     for (_, transform, entity) in ecs.read2::<WaveSpawner, TransformComponent>() {
-        mutations.push(Box::new(ProcessSpawnerMutation {entity, dt: input.seconds_to_advance_over_update, x: transform.x, y: transform.y}));
+        mutations.push(Box::new(ProcessSpawnerMutation {entity, dt: input.seconds_to_advance_over_update, x: transform.position.x, y: transform.position.y}));
     }
 
     return mutations;
@@ -48,9 +48,9 @@ pub struct WaveSpawner {
 impl WaveSpawner {
     pub fn create(ecs: &mut ECS, spec: WaveSpec, x: f32, y: f32, spawn_cd: f32) {
         let num_monsters = spec.monsters.len();
-        let color_box = ColorBoxComponent::new(ecs, [0.8, 0.8, 0.2]);
+        let color_box = ShapeDrawable::new("quad".to_string(), "quad".to_string(), [0.8, 0.8, 0.2, 1.]);
         let transform = TransformComponent::builder()
-            .location(x, y)
+            .position(x, y)
             .scale(0.2, 0.2)
             .build();
         let spawner = WaveSpawner {

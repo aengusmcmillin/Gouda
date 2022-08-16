@@ -8,7 +8,7 @@ use super::{buffers::{VertexBuffer, IndexBuffer}, Renderer, Scene};
 pub type Vertex2d = [f32; 2];
 
 pub struct Shape2d {
-    vertex_buffer: VertexBuffer<Vertex2d>,
+    vertex_buffer: VertexBuffer,
     index_buffer: IndexBuffer,
     num_indices: u64,
 }
@@ -50,13 +50,34 @@ impl Shape2d {
         return Shape2d { vertex_buffer: vb, index_buffer: ib, num_indices: 6 }
     }
 
+    pub fn texture_quad(renderer: &Renderer) -> Shape2d {
+        let vb = VertexBuffer::new(
+            renderer,
+            0,
+            vec![
+                [-1., -1., 0., 1., 0., 1.], // bottom left
+                [1., -1., 0., 1., 1., 1.], // bottom right
+                [1., 1., 0., 1., 1., 0.], // top right
+                [-1., 1., 0., 1., 0., 0.], // top left
+            ]);
+
+        let ib = IndexBuffer::new(
+            renderer,
+            vec![
+                0, 3, 2,
+                0, 1, 2,
+            ]);
+
+        return Shape2d { vertex_buffer: vb, index_buffer: ib, num_indices: 6 }
+    }
+
     pub fn hex(renderer: &Renderer) -> Shape2d {
 
         fn flat_hex_corner(i: f32) -> [f32; 2] {
             let deg = 60. * i;
             let rad = PI / 180. * deg;
         
-            return [0.08 * rad.cos(), 0.08 * rad.sin()];
+            return [rad.cos(), rad.sin()];
         }
         
         let verts = vec![
@@ -88,6 +109,7 @@ pub struct ShapeLibrary {
     shapes2d: HashMap<String, Shape2d>
 }
 
+
 impl ShapeLibrary {
     pub fn new() -> ShapeLibrary {
         return ShapeLibrary { shapes2d: HashMap::new() };
@@ -95,12 +117,14 @@ impl ShapeLibrary {
 
     pub fn construct(renderer: &Renderer) -> ShapeLibrary {
         let mut lib = ShapeLibrary::new();
-        lib.add2d_shape("square".to_string(), Shape2d::square(renderer));
-        lib.add2d_shape("hex".to_string(), Shape2d::hex(renderer));
+        lib.add_2d_shape("square".to_string(), Shape2d::square(renderer));
+        lib.add_2d_shape("quad".to_string(), Shape2d::square(renderer));
+        lib.add_2d_shape("hex".to_string(), Shape2d::hex(renderer));
+        lib.add_2d_shape("texture".to_string(), Shape2d::texture_quad(renderer));
         return lib;
     }
 
-    pub fn add2d_shape(&mut self, name: String, shape2d: Shape2d) {
+    pub fn add_2d_shape(&mut self, name: String, shape2d: Shape2d) {
         self.shapes2d.insert(name, shape2d);
     }
 

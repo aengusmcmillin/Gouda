@@ -1,3 +1,4 @@
+use cgmath::Vector2;
 use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetComponent};
 use gouda::{Gouda, GameLogic, GameState, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameStateId};
@@ -66,8 +67,7 @@ pub struct TurretSelectMutation {
 impl Mutation for TurretSelectMutation {
     fn apply(&self, ecs: &mut ECS) {
         let mut loc = *ecs.read::<TransformComponent>(&self.turret_e).unwrap();
-        loc.scale_x = 3.0;
-        loc.scale_y = 3.0;
+        loc.scale = Vector2::new(3.0, 3.0);
         let range_sprite = SpriteComponent::new(ecs, "bitmap/range_indicator.png".to_string());
         let range_indicator = Some(ecs.build_entity().add(range_sprite).add(loc).entity());
         let turret = ecs.write::<Turret>(&self.turret_e).unwrap();
@@ -117,13 +117,13 @@ fn mouse_click_system(ecs: &ECS, dt: f32) -> Mutations {
                 mutations.push(Box::new(CreateTurretMutation{tile_e}));
             } else {
                 for (turret, loc, e) in ecs.read2::<Turret, TransformComponent>() {
-                    if loc.x == tile.x as f32 && loc.y == tile.y as f32 && !turret.selected {
+                    if loc.position.x == tile.x as f32 && loc.position.y == tile.y as f32 && !turret.selected {
                         mutations.push(Box::new(TurretSelectMutation{turret_e: e}));
                     }
                 }
 
                 for (_, location, e) in ecs.read2::<TreeComponent, TransformComponent>() {
-                    if location.x == tile.x as f32 && location.y == tile.y as f32 {
+                    if location.position.x == tile.x as f32 && location.position.y == tile.y as f32 {
                         mutations.push(Box::new(TreeHarvestMutation {tree: e}))
                     }
                 }
@@ -177,30 +177,32 @@ fn register_core_systems(ecs: &mut ECS) {
 }
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
-    let camera = ecs.read_res::<Camera>();
-
 
     for (location, sprite, _) in ecs.read2::<TransformComponent, SpriteComponent>() {
-        sprite.draw(&scene, &camera, location);
+        sprite.draw(&scene, location);
     }
 
-    for (location, color_box, _) in ecs.read2::<TransformComponent, ColorBoxComponent>() {
-        color_box.draw(&scene, &camera, location);
-    }
+    // for (location, color_box, _) in ecs.read2::<TransformComponent, ColorBoxComponent>() {
+    //     color_box.draw(&scene, location);
+    // }
 
-    for (location, spritesheet, _) in ecs.read2::<TransformComponent, SpriteSheetComponent>() {
-        spritesheet.draw(&scene, &camera, location);
-    }
+    // for (location, spritesheet, _) in ecs.read2::<TransformComponent, SpriteSheetComponent>() {
+    //     spritesheet.draw(&scene, location);
+    // }
 
-    ecs.read_res::<Cursor>().draw(&scene, &camera);
+    // for (shape, transform, _) in ecs.read2::<ShapeDrawable, TransformComponent>() {
+    //     scene.submit_shape_by_name(&shape.shader_name, &shape.shape_name, transform.transform_matrix(), shape.color);
+    // }
 
-    for (player, _) in ecs.read1::<Player>() {
-        player.draw(&scene, &camera);
-    }
+    // ecs.read_res::<Cursor>().draw(&scene);
 
-    for (gui, _active, _) in ecs.read2::<GuiComponent, ActiveGui>() {
-        gui.render(&ecs, &scene);
-    }
+    // for (player, _) in ecs.read1::<Player>() {
+    //     player.draw(&scene);
+    // }
+
+    // for (gui, _active, _) in ecs.read2::<GuiComponent, ActiveGui>() {
+    //     gui.render(&ecs, &scene);
+    // }
 }
 
 pub const MAIN_GAME_STATE: GameStateId = 0;
@@ -247,7 +249,7 @@ impl GameState for MainGameState {
         ];
     }
 
-    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
         let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
         return Box::new(cam);
     }
@@ -353,7 +355,7 @@ impl GameState for DayGameState {
         ];
     }
 
-    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
         let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
         return Box::new(cam);
     }
@@ -411,7 +413,7 @@ impl GameState for NightGameState {
         ];
     }
 
-    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
         let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
         return Box::new(cam);
     }
@@ -472,7 +474,7 @@ impl GameState for MainMenuGameState {
         ];
     }
 
-    fn camera(&self, ecs: &ECS) -> Box<dyn gouda::camera::CameraT> {
+    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
         let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
         return Box::new(cam);
     }

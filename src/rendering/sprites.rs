@@ -1,31 +1,29 @@
 use std::rc::Rc;
 
-use crate::{png::PNG, ecs::ECS, camera::Camera, TransformComponent, images::spritesheet::Spritesheet};
+use crate::{png::PNG, ecs::ECS, TransformComponent, images::spritesheet::Spritesheet};
 
-use super::{Renderer, texture::RenderableTexture, drawable::{TextureDrawable, QuadDrawable}, Scene};
+use super::{Renderer, texture::RenderableTexture, Scene};
 
 #[derive(Debug)]
 pub struct SpriteComponent {
-    texture_drawable: TextureDrawable,
+    texture: RenderableTexture,
 }
 
 impl SpriteComponent {
     pub fn new(ecs: &mut ECS, sprite_name: String) -> SpriteComponent {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let texture = RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
-        let texture_drawable = TextureDrawable::new(false, renderer, texture);
-        return SpriteComponent {texture_drawable}
+        return SpriteComponent {texture}
     }
 
-    pub fn draw(&self, scene: &Scene, camera: &Camera, location: &TransformComponent) {
-        self.texture_drawable.apply_transform([location.x, location.y, 0.], [location.scale_x, location.scale_y, 1.0], [location.rot_x, location.rot_y, 0.]);
-        self.texture_drawable.draw_with_projection(scene, &camera.projection_buffer);
+    pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
+        scene.submit_texture(&self.texture, location.transform_matrix())
     }
 }
 
 #[derive(Debug)]
 pub struct SpriteSheetComponent {
-    texture_drawables: Vec<TextureDrawable>,
+    textures: Vec<RenderableTexture>,
     pub active: usize,
 }
 
@@ -40,26 +38,24 @@ impl SpriteSheetComponent {
         for i in 0..rows {
             for j in 0..columns {
                 let texture = RenderableTexture::new(renderer, &sheet.sprite(j, i));
-                let texture_drawable = TextureDrawable::new(false, renderer, texture);
-                all_textures.push(texture_drawable);
+                all_textures.push(texture);
             }
         }
         return SpriteSheetComponent {
-            texture_drawables: all_textures,
+            textures: all_textures,
             active: 0,
         }
     }
 
-    pub fn draw(&self, scene: &Scene, camera: &Camera, location: &TransformComponent) {
-        let texture_drawable = self.texture_drawables.get(self.active).unwrap();
-        texture_drawable.apply_transform([location.x, location.y, 0.], [location.scale_x, location.scale_y, 1.0], [location.rot_x, location.rot_y, 0.]);
-        texture_drawable.draw_with_projection(scene, &camera.projection_buffer);
+    pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
+        let texture = self.textures.get(self.active).unwrap();
+        scene.submit_texture(&texture, location.transform_matrix())
     }
 }
 
 #[derive(Debug)]
 pub struct SpriteListComponent {
-    texture_drawables: Vec<TextureDrawable>,
+    textures: Vec<RenderableTexture>,
     active: usize,
 }
 
@@ -69,36 +65,30 @@ impl SpriteListComponent {
         for sprite_name in sprite_names {
             let renderer = ecs.read_res::<Rc<Renderer>>();
             let texture = RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
-            let texture_drawable = TextureDrawable::new(false, renderer, texture);
-            all_textures.push(texture_drawable);
+            all_textures.push(texture);
         }
-        return SpriteListComponent {texture_drawables: all_textures, active: 0}
+        return SpriteListComponent {textures: all_textures, active: 0}
     }
 
-    pub fn draw(&self, scene: &Scene, camera: &Camera, location: &TransformComponent) {
-        let texture_drawable = self.texture_drawables.get(self.active).unwrap();
-        texture_drawable.apply_transform([location.x, location.y, 0.], [location.scale_x, location.scale_y, 1.0], [location.rot_x, location.rot_y, 0.]);
-        texture_drawable.draw_with_projection(scene, &camera.projection_buffer);
+    pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
+        let texture = self.textures.get(self.active).unwrap();
+        scene.submit_texture(&texture, location.transform_matrix())
     }
 }
 
 #[derive(Debug)]
 pub struct ColorBoxComponent {
-    quad_drawable: QuadDrawable,
+    color: [f32; 4],
 }
 
 impl ColorBoxComponent {
 
     pub fn new(ecs: &mut ECS, color: [f32; 3]) -> ColorBoxComponent {
-
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let quad_drawable = QuadDrawable::new(false, renderer, color);
-        return ColorBoxComponent { quad_drawable: quad_drawable };
+        return ColorBoxComponent { color: [color[0], color[1], color[2], 1.] };
     }
 
-    pub fn draw(&self, scene: &Scene, camera: &Camera, location: &TransformComponent) {
-        self.quad_drawable.apply_transform([location.x, location.y, 0.], [location.scale_x, location.scale_y, 1.0], [location.rot_x, location.rot_y, 0.]);
-        self.quad_drawable.draw_with_projection(scene, &camera.projection_buffer);
+    pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
+        scene.submit_shape_by_name("quad", "quad", location.transform_matrix(), self.color)
     }
 
 }

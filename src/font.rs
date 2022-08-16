@@ -13,8 +13,8 @@ pub struct TextMeshCreator {
 }
 
 pub struct TextMeshData {
-    pub positions: VertexBuffer<f32>,
-    pub texture_coords: VertexBuffer<f32>,
+    pub positions: VertexBuffer,
+    pub texture_coords: VertexBuffer
 }
 
 #[derive(Debug)]
@@ -22,8 +22,8 @@ pub struct TextDrawable {
     pub text: String,
     pub font_size: u32,
     pub font: Rc<Font>,
-    pub vertices: VertexBuffer<[f32; 6]>,
-    pub color: FragmentConstantBuffer<[f32; 4]>,
+    pub vertices: VertexBuffer,
+    pub color: FragmentConstantBuffer,
 }
 
 impl TextDrawable {

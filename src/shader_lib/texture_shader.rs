@@ -20,8 +20,12 @@ pub fn texture_shader(renderer: &Renderer) -> Shader {
 pub const TEXTURE_VERTEX_SHADER: &str = "
 using namespace metal;
 
-struct VertexUniforms {
-    float4x4 mat;
+struct ViewProjection {
+    float4x4 vp;
+};
+
+struct ModelTransform {
+    float4x4 transform;
 };
 
 struct VertexOut {
@@ -34,14 +38,12 @@ struct VertexIn {
     float2 texCoord   [[attribute(1)]];
 };
 
-vertex VertexOut vertex_main(VertexIn in [[stage_in]],
-                                 constant VertexUniforms &transformation [[buffer(1)]],
-                                 constant VertexUniforms &projection [[buffer(2)]],
-                                 uint vid [[vertex_id]])
-{
+vertex VertexOut vertex_main(VertexIn vIn [[stage_in]],
+                                constant ViewProjection& viewProjection [[buffer(1)]],
+                                constant ModelTransform& modelTransform [[buffer(2)]]) {
     VertexOut VertexOut;
-    VertexOut.position = in.position * transformation.mat * projection.mat;
-    VertexOut.texCoord = in.texCoord;
+    VertexOut.position = viewProjection.vp * modelTransform.transform * float4(vIn.position);
+    VertexOut.texCoord = vIn.texCoord;
     return VertexOut;
 }
 ";

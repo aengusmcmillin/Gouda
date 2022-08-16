@@ -1,8 +1,6 @@
 use std::ops::Mul;
 use std::f32;
 
-use cgmath::Matrix4;
-
 #[derive(Debug)]
 pub struct Vec2 {
     pub x: f32,

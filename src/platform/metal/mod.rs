@@ -3,18 +3,17 @@
 use cgmath::Matrix4;
 use metal::*;
 use core_graphics::geometry::CGSize;
-use crate::camera::{CameraT};
+use crate::camera::{Camera};
 use crate::rendering::shapes::ShapeLibrary;
 use crate::shader_lib::ShaderLibrary;
 use crate::window::{GameWindowImpl};
 use crate::platform::osx::osx_window::OsxWindow;
 use std::f32;
-use std::f32::consts::PI;
 use std::mem::size_of;
 use crate::platform::metal::buffers::{IndexBuffer};
 
-use self::buffers::{VertexBuffer};
 use self::shader::Shader;
+use self::texture::RenderableTexture;
 
 pub mod drawable;
 pub mod shader;
@@ -58,6 +57,19 @@ impl Scene<'_> {
         let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name.to_string()).unwrap();
         let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name.to_string()).unwrap();
         self.submit(shader, shape, transform, color);
+    }
+
+    pub fn submit_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get("texture".to_string()).unwrap();
+        let shape = self.renderer.shape_lib.as_ref().unwrap().get("texture".to_string()).unwrap();
+        texture.bind(self);
+        shader.bind(self);
+        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
+        shader.upload_vertex_uniform_mat4(self, 1, transform);
+
+        shape.bind(self);
+
+        self.draw_indexed(shape.num_indices(), shape.index_buffer());
     }
 
     pub fn draw_tri_strip(&self, num_verts: u64) {
@@ -174,7 +186,7 @@ impl Renderer {
         self.height
     }
 
-    pub fn begin_scene(&self, camera: Box<dyn CameraT>) -> Option<Scene> {
+    pub fn begin_scene(&self, camera: Box<dyn Camera>) -> Option<Scene> {
         if let Some(drawable) = self.layer.next_drawable() {
             let render_pass_descriptor = RenderPassDescriptor::new();
             prepare_render_pass_descriptor(&render_pass_descriptor, drawable.texture());
@@ -207,18 +219,7 @@ pub trait Sizeable<T> {
     }
 }
 
-pub struct Vertex {
-    _pos: Float3,
-    _color: Float4,
-}
-
-impl Vertex {
-    pub fn new(pos: Float3, color: Float4) -> Vertex { return Vertex { _pos: pos, _color: color} }
-}
-
-impl Sizeable<Vertex> for Vertex {}
-
 pub type Float2 = [f32; 2];
 impl Sizeable<Float2> for Float2 {}
-pub type Float3 = [f32; 3];
-pub type Float4 = [f32; 4];
+// pub type Float3 = [f32; 3];
+// pub type Float4 = [f32; 4];

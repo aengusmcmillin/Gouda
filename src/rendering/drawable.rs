@@ -22,10 +22,10 @@ impl ShapeDrawable {
 
 #[derive(Debug)]
 pub struct TextureDrawable {
-    pub vertex_buffer: VertexBuffer<[f32; 6]>,
+    pub vertex_buffer: VertexBuffer,
     pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexConstantBuffer<f32>,
-    pub identity_buffer: VertexConstantBuffer<f32>,
+    pub transform_buffer: VertexConstantBuffer,
+    pub identity_buffer: VertexConstantBuffer,
     pub texture: RenderableTexture,
     pub position: [f32; 3],
     pub scale: [f32; 3],
@@ -96,7 +96,7 @@ impl TextureDrawable {
         self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
-    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer<f32>) {
+    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer) {
         camera_projection.bind_to_offset(scene, 1);
         self.draw_impl(scene);
     }
@@ -119,11 +119,11 @@ impl TextureDrawable {
 
 #[derive(Debug)]
 pub struct QuadDrawable {
-    pub vertex_buffer: VertexBuffer<[f32; 4]>,
+    pub vertex_buffer: VertexBuffer,
     pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexConstantBuffer<f32>,
-    pub color_buffer: FragmentConstantBuffer<f32>,
-    pub identity_buffer: VertexConstantBuffer<f32>,
+    pub transform_buffer: VertexConstantBuffer,
+    pub color_buffer: FragmentConstantBuffer,
+    pub identity_buffer: VertexConstantBuffer,
     pub position: [f32; 3],
     pub scale: [f32; 3],
     pub rotation: [f32; 3],
@@ -206,7 +206,7 @@ impl QuadDrawable {
         self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
-    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer<f32>) {
+    pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer) {
         camera_projection.bind_to_offset(scene, 1);
         self.draw_impl(scene);
     }

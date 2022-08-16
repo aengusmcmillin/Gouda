@@ -22,8 +22,13 @@ pub fn gui_shader(renderer: &Renderer) -> Shader {
 pub const GUI_VERTEX_SHADER: &str = "
 using namespace metal;
 
-struct VertexUniforms {
-    float4x4 mat;
+
+struct ViewProjection {
+    float4x4 vp;
+};
+
+struct ModelTransform {
+    float4x4 transform;
 };
 
 struct VertexOut {
@@ -36,12 +41,12 @@ struct VertexIn {
     float2 texCoord   [[attribute(1)]];
 };
 
-vertex VertexOut vertex_main(VertexIn in [[stage_in]],
-                                 constant VertexUniforms &transformation [[buffer(1)]],
-                                 constant VertexUniforms &projection [[buffer(2)]])
+vertex VertexOut vertex_main(const VertexIn in [[stage_in]],
+                                 constant ViewProjection &projection [[buffer(1)]],
+                                 constant ModelTransform &transform [[buffer(2)]])
 {
     VertexOut VertexOut;
-    VertexOut.position = in.position * transformation.mat * projection.mat;
+    VertexOut.position = in.position * projection.vp * transform.transform;
     VertexOut.texCoord = in.texCoord;
     return VertexOut;
 }
