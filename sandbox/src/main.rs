@@ -178,9 +178,9 @@ fn register_core_systems(ecs: &mut ECS) {
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
 
-    for (location, sprite, _) in ecs.read2::<TransformComponent, SpriteComponent>() {
-        sprite.draw(&scene, location);
-    }
+    // for (location, sprite, _) in ecs.read2::<TransformComponent, SpriteComponent>() {
+    //     sprite.draw(&scene, location);
+    // }
 
     // for (location, color_box, _) in ecs.read2::<TransformComponent, ColorBoxComponent>() {
     //     color_box.draw(&scene, location);
@@ -194,7 +194,7 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
     //     scene.submit_shape_by_name(&shape.shader_name, &shape.shape_name, transform.transform_matrix(), shape.color);
     // }
 
-    // ecs.read_res::<Cursor>().draw(&scene);
+    ecs.read_res::<Cursor>().draw(&scene);
 
     // for (player, _) in ecs.read1::<Player>() {
     //     player.draw(&scene);

@@ -118,7 +118,7 @@ fn add_menu_button(button_id: StartMenuButtonId, text: &str, menu_layer: Entity,
         Some(bounds),
         GuiConstraints::new(
             Constraint::CenterConstraint,
-            RelativeConstraint {size: y},
+            Constraint::CenterConstraint,
             RelativeConstraint {size: 0.6},
             RelativeConstraint {size: 0.12},
         ),

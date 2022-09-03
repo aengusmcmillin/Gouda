@@ -1,12 +1,9 @@
 use cgmath::{Matrix4, Vector3};
 
-use crate::shader_lib::gui_shader::{GUI_VERTEX_SHADER, GUI_FRAGMENT_SHADER};
 use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
 use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer, ShaderDataType, BufferLayout, BufferElement};
-use crate::rendering::shader::Shader;
-use crate::math::{Mat4x4, create_transformation_matrix};
-use crate::rendering::drawable::TextureDrawable;
+use crate::math::create_transformation_matrix;
 use crate::font::{TextDrawable, Font};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;
@@ -295,25 +292,24 @@ pub struct GuiDrawable {
     pub color_buffer: FragmentConstantBuffer,
     pub shape_buffer: FragmentConstantBuffer,
     pub radius_buffer: FragmentConstantBuffer,
-    pub identity_buffer: VertexConstantBuffer,
 }
 
 impl GuiDrawable {
     pub fn new(renderer: &Renderer, radius: f32, bounds: Bounds, color: [f32; 4]) -> Self {
         let w = renderer.get_width() as f32;
         let h = renderer.get_height() as f32;
-        let position = [(bounds.x as f32) / (w as f32 / 2.) - 1.0, (bounds.y as f32) / (h as f32 / 2.) - 1.0, 1.0];
+        let position = [(bounds.x as f32) / (w as f32 / 2.) - 1., (bounds.y as f32) / (h as f32 / 2.) - 1., 0.0];
         let scale = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
         let radius = radius / w;
 
-        let vb = VertexBuffer::new(
+        let vb = VertexBuffer::new::<[f32; 2]>(
             renderer,
             0,
             vec![
-                [0., 0., 0., 1., 0., 1.],
-                [2., 0., 0., 1., 1., 1.],
-                [2., 2., 0., 1., 1., 0.],
-                [0., 2., 0., 1., 0., 0.],
+                [0., 0.], // bottom left
+                [2., 0.], // bottom right
+                [2., 2.], // top right
+                [0., 2.], // top left
             ]);
 
         let ib = IndexBuffer::new(
@@ -325,8 +321,7 @@ impl GuiDrawable {
 
 
         let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
-        let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
+        let transform_buffer = VertexConstantBuffer::new::<f32>(renderer, 0, transform_mat.raw_data().to_vec());
 
         let color_buffer = FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2], color[3]]);
         let shape_buffer = FragmentConstantBuffer::new(renderer, 1, vec![scale[0], scale[1]]);
@@ -339,7 +334,6 @@ impl GuiDrawable {
             color_buffer,
             shape_buffer,
             radius_buffer,
-            identity_buffer,
         }
     }
 
@@ -347,7 +341,6 @@ impl GuiDrawable {
         scene.bind_shader("gui".to_string());
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
-        self.identity_buffer.bind(scene);
         self.color_buffer.bind(&scene);
         self.shape_buffer.bind(&scene);
         self.radius_buffer.bind(&scene);

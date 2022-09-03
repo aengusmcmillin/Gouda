@@ -39,10 +39,10 @@ impl Cursor {
         if !self.visible {
             return;
         }
-        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.42, 0.02, 0.4)) + Matrix4::from_translation(Vector3::new(0., 0.4, 0.)), self.color);
-        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.02, 0.42, 0.4)) + Matrix4::from_translation(Vector3::new(-0.4, 0., 0.)), self.color);
-        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.42, 0.02, 0.4)) + Matrix4::from_translation(Vector3::new(0., 0.4, 0.)), self.color);
-        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.02, 0.42, 0.4)) + Matrix4::from_translation(Vector3::new(0., 0.4, 0.)), self.color);
+        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.42, 0.02, 1.)) + Matrix4::from_translation(Vector3::new(0., 0.4, 0.)), self.color);
+        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.02, 0.42, 1.)) + Matrix4::from_translation(Vector3::new(-0.4, 0., 0.)), self.color);
+        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.42, 0.02, 1.)) + Matrix4::from_translation(Vector3::new(0., 0.4, 0.)), self.color);
+        scene.submit_shape_by_name("quad", "quad", (self.transform * Matrix4::from_nonuniform_scale(0.02, 0.42, 1.)) + Matrix4::from_translation(Vector3::new(0., 0.4, 0.)), self.color);
     }
 }
 

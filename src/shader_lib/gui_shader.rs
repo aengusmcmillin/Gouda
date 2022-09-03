@@ -4,8 +4,7 @@ use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, Sh
 pub fn gui_shader(renderer: &Renderer) -> Shader {
     let buffer_layout = BufferLayout::new(
         vec![
-            BufferElement::new("position".to_string(), ShaderDataType::Float4),
-            BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+            BufferElement::new("position".to_string(), ShaderDataType::Float2),
         ]
     );
     let shader = Shader::new(
@@ -22,11 +21,6 @@ pub fn gui_shader(renderer: &Renderer) -> Shader {
 pub const GUI_VERTEX_SHADER: &str = "
 using namespace metal;
 
-
-struct ViewProjection {
-    float4x4 vp;
-};
-
 struct ModelTransform {
     float4x4 transform;
 };
@@ -37,17 +31,15 @@ struct VertexOut {
 };
 
 struct VertexIn {
-    float4 position   [[attribute(0)]];
-    float2 texCoord   [[attribute(1)]];
+    float2 position [[attribute(0)]];
 };
 
 vertex VertexOut vertex_main(const VertexIn in [[stage_in]],
-                                 constant ViewProjection &projection [[buffer(1)]],
-                                 constant ModelTransform &transform [[buffer(2)]])
+                                 constant ModelTransform &transform [[buffer(1)]])
 {
     VertexOut VertexOut;
-    VertexOut.position = in.position * projection.vp * transform.transform;
-    VertexOut.texCoord = in.texCoord;
+    VertexOut.position = transform.transform * float4(in.position, 0.0, 1.0);
+    VertexOut.texCoord = float2((in.position.x) / 2.0, 1.0 - (in.position.y / 2.0));
     return VertexOut;
 }
 ";

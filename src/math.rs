@@ -122,10 +122,10 @@ impl Mat4x4 {
 
     pub fn raw_data(&self) -> [f32; 16] {
         return [
-            self.data[0][0], self.data[0][1], self.data[0][2], self.data[0][3],
-            self.data[1][0], self.data[1][1], self.data[1][2], self.data[1][3],
-            self.data[2][0], self.data[2][1], self.data[2][2], self.data[2][3],
-            self.data[3][0], self.data[3][1], self.data[3][2], self.data[3][3],
+            self.data[0][0], self.data[1][0], self.data[2][0], self.data[3][0],
+            self.data[0][1], self.data[1][1], self.data[2][1], self.data[3][1],
+            self.data[0][2], self.data[1][2], self.data[2][2], self.data[3][2],
+            self.data[0][3], self.data[1][3], self.data[2][3], self.data[3][3],
         ];
     }
 

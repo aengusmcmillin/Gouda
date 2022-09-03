@@ -51,7 +51,7 @@ impl Shape2d {
     }
 
     pub fn texture_quad(renderer: &Renderer) -> Shape2d {
-        let vb = VertexBuffer::new(
+        let vb = VertexBuffer::new::<[f32; 6]>(
             renderer,
             0,
             vec![
