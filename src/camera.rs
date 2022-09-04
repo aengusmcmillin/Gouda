@@ -69,71 +69,71 @@ impl OrthographicCamera {
 }
 
 
-#[derive(Debug)]
-pub struct NormCamera {
-    pub projection_matrix: Mat4x4,
-    pub projection_buffer: VertexConstantBuffer,
-    center: [f32; 2],
-    width: f32,
-    aspect: f32,
-}
+// #[derive(Debug)]
+// pub struct NormCamera {
+//     pub projection_matrix: Mat4x4,
+//     pub projection_buffer: VertexConstantBuffer,
+//     center: [f32; 2],
+//     width: f32,
+//     aspect: f32,
+// }
 
-impl NormCamera {
-    pub fn create(ecs: &mut ECS)  {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let mut camera = NormCamera {
-            projection_matrix: Mat4x4::identity(),
-            projection_buffer: VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec()),
-            center: [0., 0.],
-            width: 11.,
-            aspect: 1.,
-        };
-        camera.update_projection_matrix();
-        ecs.add_res(camera);
-    }
+// impl NormCamera {
+//     pub fn create(ecs: &mut ECS)  {
+//         let renderer = ecs.read_res::<Rc<Renderer>>();
+//         let mut camera = NormCamera {
+//             projection_matrix: Mat4x4::identity(),
+//             projection_buffer: VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec()),
+//             center: [0., 0.],
+//             width: 11.,
+//             aspect: 1.,
+//         };
+//         camera.update_projection_matrix();
+//         ecs.add_res(camera);
+//     }
 
-    pub fn change_width(&mut self, dw: f32) {
-        self.width += dw;
-        self.update_projection_matrix();
-    }
+//     pub fn change_width(&mut self, dw: f32) {
+//         self.width += dw;
+//         self.update_projection_matrix();
+//     }
 
-    pub fn change_pos(&mut self, dx: f32, dy: f32) {
-        self.center[0] += dx;
-        self.center[1] += dy;
+//     pub fn change_pos(&mut self, dx: f32, dy: f32) {
+//         self.center[0] += dx;
+//         self.center[1] += dy;
 
-        self.update_projection_matrix();
-    }
+//         self.update_projection_matrix();
+//     }
 
-    pub fn screen_space_to_world_space(&self, screen_x: f32, screen_y: f32) -> [f32; 2] {
-        let height = self.width * self.aspect;
-        let right = self.center[0] + self.width/2.;
-        let left = self.center[0] - self.width/2.;
-        let top = self.center[1] + height/2.;
-        let bottom = self.center[1] - height/2.;
+//     pub fn screen_space_to_world_space(&self, screen_x: f32, screen_y: f32) -> [f32; 2] {
+//         let height = self.width * self.aspect;
+//         let right = self.center[0] + self.width/2.;
+//         let left = self.center[0] - self.width/2.;
+//         let top = self.center[1] + height/2.;
+//         let bottom = self.center[1] - height/2.;
 
-        let world_x = (screen_x + (right + left)/(right - left))  * (right - left) / 2.;
-        let world_y = (screen_y + (top + bottom)/(top - bottom))  * (top - bottom) / 2.;
-        return [world_x, world_y];
-    }
+//         let world_x = (screen_x + (right + left)/(right - left))  * (right - left) / 2.;
+//         let world_y = (screen_y + (top + bottom)/(top - bottom))  * (top - bottom) / 2.;
+//         return [world_x, world_y];
+//     }
 
-    fn update_projection_matrix(&mut self) {
-        let height = self.width * self.aspect;
+//     fn update_projection_matrix(&mut self) {
+//         let height = self.width * self.aspect;
 
-        let right = self.center[0] + self.width/2.;
-        let left = self.center[0] - self.width/2.;
-        let top = self.center[1] + height/2.;
-        let bottom = self.center[1] - height/2.;
+//         let right = self.center[0] + self.width/2.;
+//         let left = self.center[0] - self.width/2.;
+//         let top = self.center[1] + height/2.;
+//         let bottom = self.center[1] - height/2.;
 
-        let projection = Mat4x4::new(
-            [
-                [2./(right - left), 0., 0., -1. * (right + left)/(right - left)],
-                [0., 2./(top - bottom), 0., -1. * (top + bottom)/(top - bottom)],
-                [0., 0., 1., 1.],
-                [0., 0., 0., 1.],
-            ]
-        );
+//         let projection = Mat4x4::new(
+//             [
+//                 [2./(right - left), 0., 0., -1. * (right + left)/(right - left)],
+//                 [0., 2./(top - bottom), 0., -1. * (top + bottom)/(top - bottom)],
+//                 [0., 0., 1., 1.],
+//                 [0., 0., 0., 1.],
+//             ]
+//         );
 
-        self.projection_buffer.update_data(projection.to_vec());
-        self.projection_matrix = projection;
-    }
-}
+//         self.projection_buffer.update_data(projection.to_vec());
+//         self.projection_matrix = projection;
+//     }
+// }

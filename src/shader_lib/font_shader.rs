@@ -1,16 +1,19 @@
-use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::rendering::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
 
+
+pub fn font_shader_layout() -> BufferLayout {
+    return BufferLayout::new(
+        vec![
+            BufferElement::new("POSITION", ShaderDataType::Float4),
+            BufferElement::new("TEXCOORD", ShaderDataType::Float2)
+        ]
+    )
+}
 
 pub fn font_shader(renderer: &Renderer) -> Shader {
-    let buffer_layout = BufferLayout::new(
-        vec![
-            BufferElement::new("position".to_string(), ShaderDataType::Float4),
-            BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
-        ]
-    );
     let shader = Shader::new(
         renderer, 
-        buffer_layout, 
+        font_shader_layout(), 
         FONT_VERTEX_SHADER,
         FONT_FRAGMENT_SHADER,
     );
@@ -44,11 +47,11 @@ vertex VertexOut vertex_main(VertexIn in [[stage_in]])
 #[cfg(target_os = "windows")]
 pub const FONT_VERTEX_SHADER: &str = "
 struct VSOut {
-    float2 texCoord : TEXCOORD;
     float4 position : SV_POSITION;
+    float2 texCoord : TEXCOORD;
 };
 
-VSOut main(float4 position : Position, float2 tex : TexCoord)
+VSOut VSMain(float4 position : Position, float2 tex : TexCoord)
 {
     VSOut vso;
     vso.position = float4(position.x, position.y, 0.0f, 1.0f);
@@ -88,7 +91,7 @@ Texture2D tex;
 
 SamplerState splr;
 
-float4 main(float2 tc : TEXCOORD) : SV_Target
+float4 PSMain(float2 tc : TEXCOORD) : SV_Target
 {
     float alpha = tex.Sample(splr, tc)[2];
     return float4(color[0], color[1], color[2], alpha);

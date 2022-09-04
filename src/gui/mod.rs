@@ -1,8 +1,9 @@
 use cgmath::{Matrix4, Vector3};
 
+use crate::shader_lib::gui_shader::gui_shader_layout;
 use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
-use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer, ShaderDataType, BufferLayout, BufferElement};
+use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::math::create_transformation_matrix;
 use crate::font::{TextDrawable, Font};
 use std::rc::Rc;
@@ -10,7 +11,7 @@ use crate::gui::constraints::GuiConstraints;
 use crate::ecs::{ECS, Entity};
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
 use crate::images::Image;
-use crate::platform::metal::texture::RenderableTexture;
+use crate::rendering::texture::RenderableTexture;
 
 pub mod constraints;
 pub mod button;
@@ -304,6 +305,7 @@ impl GuiDrawable {
 
         let vb = VertexBuffer::new::<[f32; 2]>(
             renderer,
+            gui_shader_layout(),
             0,
             vec![
                 [0., 0.], // bottom left

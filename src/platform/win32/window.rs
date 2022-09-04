@@ -124,6 +124,10 @@ impl GameWindowImpl for Window {
     fn get_height(&self) -> usize {
         return self.props.height as usize;
     }
+
+    fn capture_events(&mut self) -> Vec<crate::window::WindowEvent> {
+        return vec![];
+    }
 }
 
 unsafe extern "system" fn win32_handle_proc(
@@ -195,7 +199,7 @@ fn create_window(class_name: &str, title: &str, width: u32, height: u32) -> Opti
         hInstance: handle_instance,
         lpszClassName: class_name.as_ptr(),
         hIcon: null_mut(),
-        hCursor: null_mut(),
+        hCursor: unsafe {LoadCursorW(handle_instance, MAKEINTRESOURCEW(230))},
         hbrBackground: null_mut(),
         lpszMenuName: null_mut(),
     };

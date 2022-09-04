@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
 use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
+use crate::shader_lib::font_shader::font_shader_layout;
 use std::rc::Rc;
 use crate::rendering::texture::RenderableTexture;
 use crate::rendering::Scene;
@@ -102,7 +103,7 @@ impl TextDrawable {
             adjusted_vertices.push([x, y, 0.0, 1.0, u / 512., v / 512.]);
         }
 
-        let vertices = VertexBuffer::new(renderer, 0, adjusted_vertices);
+        let vertices = VertexBuffer::new(renderer, font_shader_layout(), 0, adjusted_vertices);
 
         let color = FragmentConstantBuffer::new(renderer, 0, vec!([color[0], color[1], color[2], 0.0]));
 

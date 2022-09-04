@@ -1,6 +1,7 @@
 pub mod drawable;
 pub mod sprites;
 pub mod shapes;
+pub mod buffers2;
 
 #[cfg(target_os = "macos")]
 pub use crate::platform::metal::Renderer as Renderer;
@@ -14,12 +15,12 @@ pub use crate::platform::metal::shader as shader;
 pub use crate::platform::metal::texture as texture;
 
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d::Renderer as Renderer;
+pub use crate::platform::d3d11::Renderer as Renderer;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d::Scene as Scene;
+pub use crate::platform::d3d11::Scene as Scene;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d::buffers as buffers;
+pub use crate::platform::d3d11::buffers as buffers;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d::shader as shader;
+pub use crate::platform::d3d11::shader as shader;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d::texture as texture;
+pub use crate::platform::d3d11::texture as texture;

@@ -1,22 +1,21 @@
+use crate::rendering::buffers2::{BufferLayout, ShaderDataType};
 pub use crate::rendering::{Renderer, Scene};
 use winapi::um::d3d11::*;
 use std::mem;
 use std::ptr::null_mut;
-use crate::platform::d3d::Vertex;
 use winapi::shared::winerror::FAILED;
 use std::mem::size_of;
-use winapi::_core::marker::PhantomData;
 use winapi::shared::dxgiformat::*;
 
 #[derive(Debug)]
-pub struct VertexBuffer<T> {
+pub struct VertexBuffer {
     buffer: *mut ID3D11Buffer,
     offset: u32,
-    phantom: PhantomData<T>,
+    layout: BufferLayout,
 }
 
-impl <T> VertexBuffer<T> {
-    pub fn new(renderer: &Renderer, offset: u32, data: Vec<T>) -> VertexBuffer<T> {
+impl VertexBuffer {
+    pub fn new<T>(renderer: &Renderer, layout: BufferLayout, offset: u32, data: Vec<T>) -> VertexBuffer {
         unsafe {
             let vertex_buffer_desc = D3D11_BUFFER_DESC {
                 ByteWidth: (size_of::<T>() * data.len()) as u32,
@@ -37,7 +36,7 @@ impl <T> VertexBuffer<T> {
             if FAILED(result) {
                 panic!("Failed to create vertex buffer");
             }
-            VertexBuffer {buffer: buffer_ptr, offset, phantom: PhantomData}
+            VertexBuffer {buffer: buffer_ptr, offset, layout: layout}
         }
     }
 
@@ -47,23 +46,23 @@ impl <T> VertexBuffer<T> {
 
     pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
         unsafe {
-            (*scene.device_context).IASetVertexBuffers(0, 1, &self.buffer, &(size_of::<T>() as u32), &offset);
+            (*scene.device_context).IASetVertexBuffers(0, 1, &self.buffer, &(self.layout.stride), &offset);
         }
     }
 }
 
 #[derive(Debug)]
-struct ConstantBuffer<T> {
+struct ConstantBuffer {
     buffer: *mut ID3D11Buffer,
-    phantom: PhantomData<T>,
 }
 
-impl <T> ConstantBuffer<T> {
-    pub fn new(renderer: &Renderer, data: Vec<T>) -> ConstantBuffer<T> {
-        println!("Creating constant buffer");
+impl ConstantBuffer {
+    pub fn new<T>(renderer: &Renderer, data: Vec<T>) -> ConstantBuffer {
         unsafe {
+            let len = size_of::<T>() * data.len();
+            let width = ((len / 16) + 1) * 16;
             let constant_buffer_desc = D3D11_BUFFER_DESC {
-                ByteWidth: (size_of::<T>() * data.len()) as u32,
+                ByteWidth: width as u32,
                 Usage: D3D11_USAGE_DYNAMIC,
                 BindFlags: D3D11_BIND_CONSTANT_BUFFER,
                 CPUAccessFlags: D3D11_CPU_ACCESS_WRITE,
@@ -83,12 +82,11 @@ impl <T> ConstantBuffer<T> {
             }
             return ConstantBuffer {
                 buffer: buffer_ptr,
-                phantom: PhantomData,
             }
         }
     }
 
-    pub fn update_data(&self, renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&self, renderer: &Renderer, data: Vec<T>) {
         let mut msr = D3D11_MAPPED_SUBRESOURCE {
             pData: null_mut(),
             RowPitch: 0,
@@ -106,17 +104,17 @@ impl <T> ConstantBuffer<T> {
 }
 
 #[derive(Debug)]
-pub struct VertexConstantBuffer<T> {
-    buffer: ConstantBuffer<T>,
+pub struct VertexConstantBuffer {
+    buffer: ConstantBuffer,
     offset: u32,
 }
 
-impl <T> VertexConstantBuffer<T> {
-    pub fn new(renderer: &Renderer, offset: u32, data: Vec<T>) -> VertexConstantBuffer<T> {
+impl VertexConstantBuffer {
+    pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> VertexConstantBuffer {
         VertexConstantBuffer {buffer: ConstantBuffer::new(renderer, data), offset}
     }
 
-    pub fn update_data(&self, renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&self, renderer: &Renderer, data: Vec<T>) {
         self.buffer.update_data(renderer, data);
     }
 
@@ -132,20 +130,20 @@ impl <T> VertexConstantBuffer<T> {
 }
 
 #[derive(Debug)]
-pub struct FragmentConstantBuffer<T> {
-    buffer: ConstantBuffer<T>,
+pub struct FragmentConstantBuffer {
+    buffer: ConstantBuffer,
     offset: u32,
 }
 
-impl <T> FragmentConstantBuffer<T> {
-    pub fn new(renderer: &Renderer, offset: u32, data: Vec<T>) -> FragmentConstantBuffer<T> {
+impl FragmentConstantBuffer {
+    pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> FragmentConstantBuffer {
         FragmentConstantBuffer {
             buffer: ConstantBuffer::new(renderer, data),
             offset,
         }
     }
 
-    pub fn update_data(&mut self, renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&mut self, renderer: &Renderer, data: Vec<T>) {
         self.buffer.update_data(renderer, data);
     }
 

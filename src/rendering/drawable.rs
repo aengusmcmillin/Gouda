@@ -2,6 +2,8 @@ use crate::rendering::buffers::{VertexBuffer, IndexBuffer, VertexConstantBuffer,
 use crate::rendering::{Scene, Renderer};
 use crate::math::{create_transformation_matrix, Mat4x4};
 use crate::rendering::texture::RenderableTexture;
+use crate::shader_lib::basic_shader::{basic_shader_layout};
+use crate::shader_lib::font_shader::font_shader_layout;
 
 #[derive(Debug)]
 pub struct ShapeDrawable {
@@ -36,6 +38,7 @@ impl TextureDrawable {
     pub fn new(_is_gui: bool, renderer: &Renderer, texture: RenderableTexture) -> Self {
         let vb = VertexBuffer::new(
             renderer,
+            font_shader_layout(),
             0,
             vec![
                 [-1., -1., 0., 1., 0., 1.], // bottom left
@@ -71,30 +74,6 @@ impl TextureDrawable {
         }
     }
 
-    pub fn set_position(&mut self, position: [f32; 3]) {
-        self.position = position;
-        self.update_transform();
-    }
-
-    pub fn set_scale(&mut self, scale: [f32; 3]) {
-        self.scale = scale;
-        self.update_transform();
-    }
-
-    pub fn set_rotation(&mut self, rotation: [f32; 3]) {
-        self.rotation = rotation;
-        self.update_transform();
-    }
-
-    pub fn apply_transform(&self, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) {
-        let transform_mat = create_transformation_matrix(position, rotation, scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
-    }
-
-    fn update_transform(&self) {
-        let transform_mat = create_transformation_matrix(self.position, self.rotation, self.scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
-    }
 
     pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer) {
         camera_projection.bind_to_offset(scene, 1);
@@ -133,6 +112,7 @@ impl QuadDrawable {
     pub fn new(is_gui: bool, renderer: &Renderer, color: [f32; 3]) -> Self {
         let vb = VertexBuffer::new(
             renderer,
+            basic_shader_layout(),
             0,
             vec![
                 [-1., -1., 0., 1.], // bottom left
@@ -174,36 +154,6 @@ impl QuadDrawable {
             scale,
             rotation
         }
-    }
-
-    pub fn translate(&self, position: [f32; 3], scale: [f32; 3]) {
-        let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
-    }
-
-    pub fn set_position(&mut self, position: [f32; 3]) {
-        self.position = position;
-        self.update_transform();
-    }
-
-    pub fn set_scale(&mut self, scale: [f32; 3]) {
-        self.scale = scale;
-        self.update_transform();
-    }
-
-    pub fn set_rotation(&mut self, rotation: [f32; 3]) {
-        self.rotation = rotation;
-        self.update_transform();
-    }
-
-    pub fn apply_transform(&self, position: [f32; 3], scale: [f32; 3], rotation: [f32; 3]) {
-        let transform_mat = create_transformation_matrix(position, rotation, scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
-    }
-
-    fn update_transform(&self) {
-        let transform_mat = create_transformation_matrix(self.position, self.rotation, self.scale);
-        self.transform_buffer.update_data(transform_mat.to_vec());
     }
 
     pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer) {

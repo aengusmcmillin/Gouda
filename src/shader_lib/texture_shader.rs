@@ -1,10 +1,10 @@
-use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::rendering::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
 
 pub fn texture_shader(renderer: &Renderer) -> Shader {
     let buffer_layout = BufferLayout::new(
         vec![
-            BufferElement::new("position".to_string(), ShaderDataType::Float4),
-            BufferElement::new("texCoord".to_string(), ShaderDataType::Float2)
+            BufferElement::new("position", ShaderDataType::Float4),
+            BufferElement::new("texCoord", ShaderDataType::Float2)
         ]
     );
     let shader = Shader::new(
@@ -65,7 +65,7 @@ cbuffer CBuf2
     matrix projection;
 };
 
-VSOut main(float4 pos : Position, float2 tex : TexCoord)
+VSOut VSMain(float4 pos : Position, float2 tex : TexCoord)
 {
     VSOut vso;
     vso.position = mul(mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation), projection);
@@ -99,7 +99,7 @@ Texture2D tex;
 
 SamplerState splr;
 
-float4 main(float2 tc : TEXCOORD) : SV_Target
+float4 PSMain(float2 tc : TEXCOORD) : SV_Target
 {
     return tex.Sample(splr, tc);
 }

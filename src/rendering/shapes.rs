@@ -1,6 +1,7 @@
 use std::{collections::HashMap, f32::consts::PI};
 
-use crate::platform::metal::Renderable;
+
+use crate::{platform::d3d11::Renderable, rendering::buffers2::{BufferLayout, BufferElement}, shader_lib::basic_shader::{basic_shader_layout}};
 
 use super::{buffers::{VertexBuffer, IndexBuffer}, Renderer, Scene};
 
@@ -32,6 +33,7 @@ impl Shape2d {
     pub fn square(renderer: &Renderer) -> Shape2d {
         let vb = VertexBuffer::new(
             renderer,
+            basic_shader_layout(),
             0,
             vec![
                 [-1., -1.], // bottom left
@@ -53,6 +55,7 @@ impl Shape2d {
     pub fn texture_quad(renderer: &Renderer) -> Shape2d {
         let vb = VertexBuffer::new::<[f32; 6]>(
             renderer,
+            basic_shader_layout(),
             0,
             vec![
                 [-1., -1., 0., 1., 0., 1.], // bottom left
@@ -95,6 +98,7 @@ impl Shape2d {
         let num_indices = indices.len();
         let vb = VertexBuffer::new(
             renderer,
+            basic_shader_layout(),
             0,
             verts);
 

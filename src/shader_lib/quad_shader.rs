@@ -1,10 +1,10 @@
-use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::rendering::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
 
 
 pub fn quad_shader(renderer: &Renderer) -> Shader {
     let buffer_layout = BufferLayout::new(
         vec![
-            BufferElement::new("xy".to_string(), ShaderDataType::Float4),
+            BufferElement::new("POSITION", ShaderDataType::Float4),
         ]
     );
     let shader = Shader::new(
@@ -49,7 +49,7 @@ cbuffer CBuf2
     matrix projection;
 };
 
-float4 main(float4 pos : POSITION) : SV_POSITION
+float4 VSMain(float4 pos : POSITION) : SV_POSITION
 {
     return mul(mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation), projection);
 }
@@ -72,7 +72,7 @@ cbuffer CBuf
     float4 color;
 };
 
-float4 main() : SV_TARGET
+float4 PSMain() : SV_TARGET
 {
     return float4(color[0], color[1], color[2], color[3]);
 }

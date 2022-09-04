@@ -11,7 +11,7 @@ pub mod metal;
 pub mod win32;
 
 #[cfg(target_os = "windows")]
-pub mod d3d;
+pub mod d3d11;
 
 #[cfg(target_os = "windows")]
 pub use win32::Win32PlatformLayer as PlatformLayer;

@@ -1,15 +1,17 @@
-use crate::rendering::{shader::Shader, buffers::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::rendering::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
 
+pub fn gui_shader_layout() -> BufferLayout {
+    return BufferLayout::new(
+        vec![
+            BufferElement::new("position", ShaderDataType::Float2),
+        ]
+    )
+}
 
 pub fn gui_shader(renderer: &Renderer) -> Shader {
-    let buffer_layout = BufferLayout::new(
-        vec![
-            BufferElement::new("position".to_string(), ShaderDataType::Float2),
-        ]
-    );
     let shader = Shader::new(
         renderer, 
-        buffer_layout, 
+        gui_shader_layout(), 
         GUI_VERTEX_SHADER,
         GUI_FRAGMENT_SHADER,
     );
@@ -56,7 +58,7 @@ cbuffer CBuf2
     matrix projection;
 };
 
-float4 main(float4 pos : POSITION) : SV_POSITION
+float4 VSMain(float2 pos : POSITION) : SV_POSITION
 {
     return mul(mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation), projection);
 }
@@ -107,7 +109,7 @@ cbuffer CBuf
     float4 color;
 };
 
-float4 main() : SV_TARGET
+float4 PSMain(float4 color : COLOR) : SV_TARGET
 {
     return float4(color[0], color[1], color[2], color[3]);
 }

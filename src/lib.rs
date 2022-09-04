@@ -219,7 +219,7 @@ impl<T: GameLogic> Gouda<T> {
                     }
                     WindowEvent::ResizeEvent { width, height } => {
                         self.ecs.remove_res::<Rc<Renderer>>();
-                        platform.get_mut_renderer().resize(*width, *height);
+                        // platform.get_mut_renderer().resize(*width, *height);
                         let renderer = platform.get_renderer();
                         self.ecs.add_res(renderer.clone());
                     }
