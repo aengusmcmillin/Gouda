@@ -24,20 +24,20 @@ impl Tile {
 
     fn create_texture_tile(ecs: &mut ECS, image_name: String, x: usize, y: usize) -> Entity {
         let sprite = SpriteComponent::new(ecs, image_name);
-        let x = x as i32;
-        let y = y as i32;
+        let x = (x as i32 - 5);
+        let y = (y as i32 - 3);
         let tile = Tile {
             occupied: false,
-            x: x - 5,
-            y: y - 3,
+            x: x,
+            y: y,
             neighbors: [None; 4],
         };
-        let transform = TransformComponent::builder().position((x - 5) as f32, (y - 3) as f32).scale(0.5, 0.5).build();
+        let transform = TransformComponent::builder().position((x) as f32, (y) as f32).scale(1.0, 1.0).build();
         ecs.build_entity()
            .add(tile)
            .add(sprite)
            .add(transform)
-           .add(MouseCaptureArea::new(Bounds{x: x as i32 * 80, y: y as i32 * 80 + 160, w: 80, h: 80}))
+           .add(MouseCaptureArea::new(false, Bounds{x: x  as f32- 0.5, y: y as f32 - 0.5, w: 1., h: 1.}))
            .entity()
     }
 

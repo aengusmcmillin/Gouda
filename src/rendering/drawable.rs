@@ -7,13 +7,13 @@ use crate::shader_lib::font_shader::font_shader_layout;
 
 #[derive(Debug)]
 pub struct ShapeDrawable {
-    pub shader_name: String,
-    pub shape_name: String,
+    pub shader_name: &'static str,
+    pub shape_name: &'static str,
     pub color: [f32; 4]
 }
 
 impl ShapeDrawable {
-    pub fn new(shader_name: String, shape_name: String, color: [f32; 4]) -> ShapeDrawable {
+    pub fn new(shader_name: &'static str, shape_name: &'static str, color: [f32; 4]) -> ShapeDrawable {
         return ShapeDrawable { shader_name, shape_name, color };
     }
 
@@ -86,7 +86,7 @@ impl TextureDrawable {
     }
 
     fn draw_impl(&self, scene: &Scene) {
-        scene.bind_shader("texture".to_string());
+        scene.bind_shader("texture");
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.texture.bind(scene);
@@ -167,7 +167,7 @@ impl QuadDrawable {
     }
 
     fn draw_impl(&self, scene: &Scene) {
-        scene.bind_shader("quad".to_string());
+        scene.bind_shader("quad");
         self.vertex_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.index_buffer.bind(scene);

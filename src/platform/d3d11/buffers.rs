@@ -149,7 +149,7 @@ impl FragmentConstantBuffer {
 
     pub fn bind(&self, scene: &Scene) {
         unsafe {
-            (*scene.device_context).PSSetConstantBuffers(0, 1, &self.buffer.buffer);
+            (*scene.device_context).PSSetConstantBuffers(self.offset, 1, &self.buffer.buffer);
         }
     }
 }

@@ -8,7 +8,6 @@ use winapi::um::d3d11::*;
 use winapi::Interface;
 use winapi::_core::ptr::null_mut;
 use std::mem;
-use winapi::shared::minwindef::UINT;
 use winapi::shared::windef::{HWND};
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
@@ -133,6 +132,26 @@ impl Renderer {
             let device = Box::from_raw(device_ptr);
             let device_context = Box::from_raw(device_context_ptr);
 
+
+            let mut blend_state_desc: D3D11_BLEND_DESC = mem::zeroed();
+            blend_state_desc.RenderTarget[0].BlendEnable = 1;
+            blend_state_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+            blend_state_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+            blend_state_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+            blend_state_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+            blend_state_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+            blend_state_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            blend_state_desc.RenderTarget[0].RenderTargetWriteMask = 0x0f;
+            let blend_state: Box<ID3D11BlendState> = Box::new(mem::zeroed());
+            let mut blend_state_ptr: *mut ID3D11BlendState = Box::into_raw(blend_state);
+            let result = (*device).CreateBlendState(mem::transmute(&blend_state_desc), mem::transmute(&mut blend_state_ptr));
+            if FAILED(result) {
+                println!("FAILED {:x}", result);
+            }
+
+            let blend_factor = [1.; 4];
+            (*device_context).OMSetBlendState(blend_state_ptr, &blend_factor, 0xFFFFFFFF);
+
             let mut back_buffer: Box<ID3D11Resource> = Box::new(mem::zeroed());
             let mut back_buffer_ptr: *mut ID3D11Resource = Box::into_raw(back_buffer);
             (*swap_chain).GetBuffer(0, &ID3D11Resource::uuidof(), mem::transmute(&mut back_buffer_ptr));
@@ -173,7 +192,7 @@ impl Renderer {
         };
 
         unsafe {
-            (*scene.device_context).ClearRenderTargetView(scene.render_target, &[0.0, 0.0, 0., 1.]);
+            (*scene.device_context).ClearRenderTargetView(scene.render_target, &[0.43, 0.73, 0.36, 1.0]);
             (*scene.device_context).OMSetRenderTargets(1, &self.render_target, null_mut());
             let viewport = D3D11_VIEWPORT {
                 TopLeftX: 0.0,
@@ -231,15 +250,23 @@ impl Scene<'_> {
         self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
     }
 
-    pub fn submit_shape_by_name(&self, shader_name: &str, shape_name: &str, transform: Matrix4<f32>, color: [f32; 4]) {
-        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name.to_string()).unwrap();
-        let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name.to_string()).unwrap();
-        self.submit(shader, shape, transform, color);
+    pub fn submit_shape_by_name(&self, shader_name: &'static str, shape_name: &'static str, transform: Matrix4<f32>, color: [f32; 4]) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name).unwrap();
+        let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name).unwrap();
+        
+        shader.bind(self);
+        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
+        shader.upload_vertex_uniform_mat4(self, 1, transform);
+        shader.upload_fragment_uniform_float4(self, 0, color);
+
+        shape.bind(self);
+
+        self.draw_indexed(shape.num_indices(), shape.index_buffer());
     }
 
     pub fn submit_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
-        let shader = self.renderer.shader_lib.as_ref().unwrap().get("texture".to_string()).unwrap();
-        let shape = self.renderer.shape_lib.as_ref().unwrap().get("texture".to_string()).unwrap();
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get("texture").unwrap();
+        let shape = self.renderer.shape_lib.as_ref().unwrap().get("texture").unwrap();
         texture.bind(self);
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
@@ -250,7 +277,7 @@ impl Scene<'_> {
         self.draw_indexed(shape.num_indices(), shape.index_buffer());
     }
 
-    pub fn bind_shader(&self, shader: String) {
+    pub fn bind_shader(&self, shader: &'static str) {
         self.renderer.shader_lib.as_ref().unwrap().bind_shader(self, shader);
     }
 

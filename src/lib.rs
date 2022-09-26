@@ -29,6 +29,7 @@ use cgmath::{Matrix4, Vector3, Deg, Vector2};
 pub use images::bmp as bmp;
 pub use images::png as png;
 pub mod font;
+pub mod font_library;
 pub mod types;
 pub mod gui;
 pub mod mouse_capture;

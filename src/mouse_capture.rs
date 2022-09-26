@@ -1,3 +1,6 @@
+use cgmath::{SquareMatrix, Vector4};
+
+use crate::camera::{OrthographicCamera, Camera};
 use crate::ecs::{Mutations, ECS, Entity, Mutation};
 use crate::input::GameInput;
 use crate::types::Bounds;
@@ -14,6 +17,7 @@ pub struct MouseCaptureLayer {
 #[derive(Debug)]
 pub struct MouseCaptureArea {
     pub is_hovered: bool,
+    pub is_gui: bool,
     pub down_buttons: [bool; 5],
     pub clicked_buttons: [bool; 5],
     pub released_buttons: [bool; 5],
@@ -21,9 +25,10 @@ pub struct MouseCaptureArea {
 }
 
 impl MouseCaptureArea {
-    pub fn new(bounds: Bounds) -> MouseCaptureArea {
+    pub fn new(is_gui: bool, bounds: Bounds) -> MouseCaptureArea {
         MouseCaptureArea {
             is_hovered: false,
+            is_gui: is_gui,
             down_buttons: [false; 5],
             clicked_buttons: [false; 5],
             released_buttons: [false; 5],
@@ -133,12 +138,23 @@ impl Mutation for ClearOthersMutation {
 
 
 pub fn mouse_capture_system(ecs: &ECS, dt: f32) -> Mutations {
+    let camera = ecs.read1::<OrthographicCamera>()[0].0;
+
     let mut layers = ecs.read2::<MouseCaptureLayer, ActiveCaptureLayer>();
     layers.sort_by(|a, b| b.0.sort_index.cmp(&a.0.sort_index));
+
 
     let input = ecs.read_res::<GameInput>();
     let mouse_x = input.mouse.x;
     let mouse_y = 900 - input.mouse.y;
+    let screen_mouse_x = mouse_x as f32 / 450. - 1.;
+    let screen_mouse_y = mouse_y as f32 / 450. - 1.;
+    let mut mouse_world_pos = camera.get_view_projection_matrix().invert().unwrap() * Vector4::new(screen_mouse_x, screen_mouse_y, 0., 1.);
+    mouse_world_pos.w = 1.0 / mouse_world_pos.w;
+    mouse_world_pos.x /= mouse_world_pos.w;
+    mouse_world_pos.y /= mouse_world_pos.w;
+    mouse_world_pos.z /= mouse_world_pos.w;
+
     let down_buttons = [
         input.mouse.buttons[0].ended_down,
         input.mouse.buttons[1].ended_down,
@@ -165,7 +181,12 @@ pub fn mouse_capture_system(ecs: &ECS, dt: f32) -> Mutations {
         for area_e in &layer.capture_areas {
             let area = ecs.read::<MouseCaptureArea>(&area_e);
             if let Some(area) = area {
-                if area.bounds.contains_point(mouse_x, mouse_y) {
+                let (x, y) = if area.is_gui {
+                    (mouse_x as f32, mouse_y as f32)
+                } else {
+                    (mouse_world_pos.x, mouse_world_pos.y)
+                };
+                if area.bounds.contains_point(x, y) {
                     return vec![
                         Box::new(MouseCaptureMutation {area: area_e.clone(), down_buttons, clicked_buttons, released_buttons}), 
                         Box::new(ClearOthersMutation {excluded: Some(area_e.clone())})
@@ -175,7 +196,7 @@ pub fn mouse_capture_system(ecs: &ECS, dt: f32) -> Mutations {
 
             let hex_area = ecs.read::<HexMouseCaptureArea>(&area_e);
             if let Some(hex_area) = hex_area {
-                if hex_area.overlaps_mouse([mouse_x as f32, mouse_y as f32]) {
+                if hex_area.overlaps_mouse([mouse_world_pos.x as f32, mouse_world_pos.y as f32]) {
                     return vec![
                         Box::new(MouseCaptureMutation {area: area_e.clone(), down_buttons, clicked_buttons, released_buttons}), 
                         Box::new(ClearOthersMutation {excluded: Some(area_e.clone())})

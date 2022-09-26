@@ -220,7 +220,7 @@ impl GameState for MainGameState {
         ecs.add_system(Box::new(turret_attack_system));
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
-        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
+        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -319,7 +319,7 @@ impl GameState for DayGameState {
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(mouse_cursor_system));
         ecs.add_system(Box::new(day_state_countdown));
-        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
+        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
 
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_day(ecs);
@@ -378,7 +378,7 @@ impl GameState for NightGameState {
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
         ecs.add_system(Box::new(day_state_countdown));
-        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
+        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_night(ecs);
         }
@@ -435,7 +435,7 @@ impl GameState for MainMenuGameState {
         ecs.add_component(&capture_layer, ActiveCaptureLayer {});
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
-        ecs.build_entity().add(OrthographicCamera::new(-1., 1., -1., 1.));
+        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {

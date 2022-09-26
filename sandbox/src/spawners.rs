@@ -48,7 +48,7 @@ pub struct WaveSpawner {
 impl WaveSpawner {
     pub fn create(ecs: &mut ECS, spec: WaveSpec, x: f32, y: f32, spawn_cd: f32) {
         let num_monsters = spec.monsters.len();
-        let color_box = ShapeDrawable::new("quad".to_string(), "quad".to_string(), [0.8, 0.8, 0.2, 1.]);
+        let color_box = ShapeDrawable::new("quad", "quad", [0.8, 0.8, 0.2, 1.]);
         let transform = TransformComponent::builder()
             .position(x, y)
             .scale(0.2, 0.2)

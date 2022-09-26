@@ -1,7 +1,7 @@
 use std::{collections::HashMap, f32::consts::PI};
 
 
-use crate::{platform::d3d11::Renderable, rendering::buffers2::{BufferLayout, BufferElement}, shader_lib::basic_shader::{basic_shader_layout}};
+use crate::{platform::d3d11::Renderable, rendering::buffers2::{BufferLayout, BufferElement}, shader_lib::{basic_shader::{basic_shader_layout}, texture_shader::texture_shader_layout, quad_shader::quad_shader_layout}};
 
 use super::{buffers::{VertexBuffer, IndexBuffer}, Renderer, Scene};
 
@@ -17,6 +17,7 @@ pub struct Shape2d {
 impl Renderable for Shape2d {
     fn bind(&self, scene: &Scene) {
         self.vertex_buffer.bind(scene);
+        self.index_buffer.bind(scene);
     }
 
     fn num_indices(&self) -> u64 {
@@ -31,15 +32,15 @@ impl Renderable for Shape2d {
 
 impl Shape2d {
     pub fn square(renderer: &Renderer) -> Shape2d {
-        let vb = VertexBuffer::new(
+        let vb = VertexBuffer::new::<[f32; 2]>(
             renderer,
-            basic_shader_layout(),
+            quad_shader_layout(),
             0,
             vec![
-                [-1., -1.], // bottom left
-                [1., -1.], // bottom right
-                [1., 1.], // top right
-                [-1., 1.], // top left
+                [-0.5, -0.5], // bottom left
+                [0.5, -0.5], // bottom right
+                [0.5, 0.5], // top right
+                [-0.5, 0.5], // top left
             ]);
 
         let ib = IndexBuffer::new(
@@ -55,13 +56,13 @@ impl Shape2d {
     pub fn texture_quad(renderer: &Renderer) -> Shape2d {
         let vb = VertexBuffer::new::<[f32; 6]>(
             renderer,
-            basic_shader_layout(),
+            texture_shader_layout(),
             0,
             vec![
-                [-1., -1., 0., 1., 0., 1.], // bottom left
-                [1., -1., 0., 1., 1., 1.], // bottom right
-                [1., 1., 0., 1., 1., 0.], // top right
-                [-1., 1., 0., 1., 0., 0.], // top left
+                [-0.5, -0.5, 0., 1., 0., 1.], // bottom left
+                [0.5, -0.5, 0., 1., 1., 1.], // bottom right
+                [0.5, 0.5, 0., 1., 1., 0.], // top right
+                [-0.5, 0.5, 0., 1., 0., 0.], // top left
             ]);
 
         let ib = IndexBuffer::new(
@@ -110,7 +111,7 @@ impl Shape2d {
 }
 
 pub struct ShapeLibrary {
-    shapes2d: HashMap<String, Shape2d>
+    shapes2d: HashMap<&'static str, Shape2d>
 }
 
 
@@ -121,18 +122,18 @@ impl ShapeLibrary {
 
     pub fn construct(renderer: &Renderer) -> ShapeLibrary {
         let mut lib = ShapeLibrary::new();
-        lib.add_2d_shape("square".to_string(), Shape2d::square(renderer));
-        lib.add_2d_shape("quad".to_string(), Shape2d::square(renderer));
-        lib.add_2d_shape("hex".to_string(), Shape2d::hex(renderer));
-        lib.add_2d_shape("texture".to_string(), Shape2d::texture_quad(renderer));
+        lib.add_2d_shape("square", Shape2d::square(renderer));
+        lib.add_2d_shape("quad", Shape2d::square(renderer));
+        lib.add_2d_shape("hex", Shape2d::hex(renderer));
+        lib.add_2d_shape("texture", Shape2d::texture_quad(renderer));
         return lib;
     }
 
-    pub fn add_2d_shape(&mut self, name: String, shape2d: Shape2d) {
+    pub fn add_2d_shape(&mut self, name: &'static str, shape2d: Shape2d) {
         self.shapes2d.insert(name, shape2d);
     }
 
-    pub fn get(&self, name: String) -> Option<&Shape2d> {
+    pub fn get(&self, name: &'static str) -> Option<&Shape2d> {
         return self.shapes2d.get(&name);
     }
 

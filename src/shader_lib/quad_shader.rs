@@ -1,15 +1,18 @@
 use crate::rendering::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
 
+pub fn quad_shader_layout() -> BufferLayout {
+    return BufferLayout::new(
+        vec![
+            BufferElement::new("POSITION", ShaderDataType::Float2),
+        ]
+    )
+}
+
 
 pub fn quad_shader(renderer: &Renderer) -> Shader {
-    let buffer_layout = BufferLayout::new(
-        vec![
-            BufferElement::new("POSITION", ShaderDataType::Float4),
-        ]
-    );
     let shader = Shader::new(
         renderer, 
-        buffer_layout, 
+        quad_shader_layout(), 
         QUAD_VERTEX_SHADER,
         QUAD_FRAGMENT_SHADER,
     );
@@ -25,12 +28,12 @@ struct VertexUniforms {
 };
 
 struct VertexIn {
-    float4 xy   [[attribute(0)]];
+    float2 xy   [[attribute(0)]];
 };
 
 vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
-                                 constant VertexUniforms &transformation [[buffer(1)]],
-                                 constant VertexUniforms &projection [[buffer(2)]],
+                                 constant ViewProjection &viewProjection [[buffer(1)]],
+                                 constant ModelTransform &modelTransform [[buffer(2)]],
                                  uint vid [[vertex_id]])
 {
     return float4(in[vid].xy) * transformation.mat * projection.mat;
@@ -39,19 +42,25 @@ vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
 
 #[cfg(target_os = "windows")]
 pub const QUAD_VERTEX_SHADER: &str = "
-cbuffer CBuf
-{
-    matrix transformation;
+struct VSOut {
+    float4 position : SV_POSITION;
 };
-
-cbuffer CBuf2
+cbuffer CBuf1
 {
     matrix projection;
 };
 
-float4 VSMain(float4 pos : POSITION) : SV_POSITION
+cbuffer CBuf2
 {
-    return mul(mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation), projection);
+    matrix transformation;
+};
+
+VSOut VSMain(float2 pos : Position)
+{
+    VSOut vso;
+    float4x4 worldViewProj = mul(projection, transformation);
+    vso.position = mul(worldViewProj, float4(pos.x, pos.y, 0.0f, 1.0f));
+    return vso;
 }
 ";
 
@@ -72,7 +81,7 @@ cbuffer CBuf
     float4 color;
 };
 
-float4 PSMain() : SV_TARGET
+float4 PSMain() : SV_Target
 {
     return float4(color[0], color[1], color[2], color[3]);
 }

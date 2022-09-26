@@ -61,6 +61,17 @@ impl PNG {
         }
     }
 
+    pub fn from_buffer(buf: &[u8]) -> Option<PNG> {
+        let decoder = png::Decoder::new(buf);
+        let (info, mut reader) = decoder.read_info().unwrap();
+        let mut buf = vec![0; info.buffer_size()];
+        reader.next_frame(&mut buf).unwrap();
+        return Some(PNG {
+            header_chunk: PNGHeader { width: info.width, height: info.height },
+            data: buf,
+        })
+    }
+
     pub fn from_file(path: &str) -> Option<PNG> {
         if true {
             let decoder = png::Decoder::new(File::open(path).unwrap());

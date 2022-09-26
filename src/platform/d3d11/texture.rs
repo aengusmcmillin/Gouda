@@ -24,7 +24,7 @@ impl RenderableTexture {
             Height: image.height as u32,
             MipLevels: 1,
             ArraySize: 1,
-            Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+            Format: DXGI_FORMAT_R8G8B8A8_UNORM,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0
@@ -55,7 +55,7 @@ impl RenderableTexture {
             let mut shader_desc: D3D11_SHADER_RESOURCE_VIEW_DESC_u = mem::zeroed();
             shader_desc.Texture2D_mut().MipLevels = 1;
             let mut resource_view_desc = D3D11_SHADER_RESOURCE_VIEW_DESC {
-                Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+                Format: DXGI_FORMAT_R8G8B8A8_UNORM,
                 ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
                 u: shader_desc,
             };
@@ -90,7 +90,7 @@ impl RenderableTexture {
             Height: png.header_chunk.height,
             MipLevels: 1,
             ArraySize: 1,
-            Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+            Format: DXGI_FORMAT_R8G8B8A8_UNORM,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0

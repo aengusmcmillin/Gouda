@@ -36,9 +36,9 @@ impl GuiImage {
                 constraints.calculate_bounds(parent_bounds)
             }
             None => {
-                let w = renderer.get_width() as i32;
-                let h = renderer.get_height() as i32;
-                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
+                let w = renderer.get_width() as f32;
+                let h = renderer.get_height() as f32;
+                constraints.calculate_bounds(Bounds {x: 0., y: 0., w, h})
             }
         };
         let w = renderer.get_width() as f32;
@@ -91,9 +91,9 @@ impl GuiText {
                 constraints.calculate_bounds(parent_bounds)
             }
             None => {
-                let w = renderer.get_width() as i32;
-                let h = renderer.get_height() as i32;
-                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
+                let w = renderer.get_width() as f32;
+                let h = renderer.get_height() as f32;
+                constraints.calculate_bounds(Bounds {x: 0., y: 0., w, h})
             }
         };
         let pos = [(bounds.x as f32) / 450. - 1., (bounds.y as f32) / 450. - 1.];
@@ -156,9 +156,9 @@ impl GuiComponent {
                 constraints.calculate_bounds(parent_bounds)
             }
             None => {
-                let w = renderer.get_width() as i32;
-                let h = renderer.get_height() as i32;
-                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
+                let w = renderer.get_width() as f32;
+                let h = renderer.get_height() as f32;
+                constraints.calculate_bounds(Bounds {x: 0., y: 0., w, h})
             }
         };
         let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b, color.a]);
@@ -179,7 +179,7 @@ impl GuiComponent {
         let mut builder = ecs.build_entity().add(component);
         let entity = builder.entity();
         if let Some(layer) = mouse_layer {
-            builder.add(MouseCaptureArea::new(bounds));
+            builder.add(MouseCaptureArea::new(true, bounds));
 
             if let Some(layer) = ecs.write::<MouseCaptureLayer>(&layer) {
                 layer.capture_areas.push(entity);
@@ -195,9 +195,9 @@ impl GuiComponent {
                 constraints.calculate_bounds(parent_bounds)
             }
             None => {
-                let w = renderer.get_width() as i32;
-                let h = renderer.get_height() as i32;
-                constraints.calculate_bounds(Bounds {x: 0, y: 0, w, h})
+                let w = renderer.get_width() as f32;
+                let h = renderer.get_height() as f32;
+                constraints.calculate_bounds(Bounds {x: 0., y: 0., w, h})
             }
         };
         let drawable = GuiDrawable::new(renderer, corner_radius, bounds, [color.r, color.g, color.b, color.a]);
@@ -216,7 +216,7 @@ impl GuiComponent {
         let mut builder = ecs.build_entity().add(component);
         let entity = builder.entity();
         if let Some(layer) = mouse_layer {
-            builder.add(MouseCaptureArea::new(bounds));
+            builder.add(MouseCaptureArea::new(true, bounds));
 
             if let Some(layer) = ecs.write::<MouseCaptureLayer>(&layer) {
                 layer.capture_areas.push(entity);
@@ -340,8 +340,9 @@ impl GuiDrawable {
     }
 
     pub fn draw(&self, scene: &Scene) {
-        scene.bind_shader("gui".to_string());
+        scene.bind_shader("gui");
         self.vertex_buffer.bind(scene);
+        self.index_buffer.bind(scene);
         self.transform_buffer.bind(scene);
         self.color_buffer.bind(&scene);
         self.shape_buffer.bind(&scene);

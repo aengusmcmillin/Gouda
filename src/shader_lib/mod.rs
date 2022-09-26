@@ -20,7 +20,7 @@ pub mod hex_shader;
 
 #[derive(Debug)]
 pub struct ShaderLibrary {
-    shaders: HashMap<String, Shader>
+    shaders: HashMap<&'static str, Shader>
 }
 
 impl ShaderLibrary {
@@ -30,24 +30,24 @@ impl ShaderLibrary {
 
     pub fn construct(renderer: &Renderer) -> ShaderLibrary {
         let mut lib = ShaderLibrary::new();
-        lib.add("basic".to_string(), basic_shader(renderer));
-        lib.add("font".to_string(), font_shader(renderer));
-        lib.add("gui".to_string(), gui_shader(renderer));
-        lib.add("quad".to_string(), quad_shader(renderer));
-        lib.add("texture".to_string(), texture_shader(renderer));
-        lib.add("hex".to_string(), hex_shader(renderer));
+        lib.add("basic", basic_shader(renderer));
+        lib.add("font", font_shader(renderer));
+        lib.add("gui", gui_shader(renderer));
+        lib.add("quad", quad_shader(renderer));
+        lib.add("texture", texture_shader(renderer));
+        lib.add("hex", hex_shader(renderer));
         return lib;
     }
 
-    pub fn add(&mut self, name: String, shader: Shader) {
+    pub fn add(&mut self, name: &'static str, shader: Shader) {
         self.shaders.insert(name, shader);
     }
 
-    pub fn get(&self, name: String) -> Option<&Shader> {
+    pub fn get(&self, name: &'static str) -> Option<&Shader> {
         return self.shaders.get(&name);
     }
 
-    pub fn bind_shader(&self, scene: &Scene, name: String) {
+    pub fn bind_shader(&self, scene: &Scene, name: &'static str) {
         self.get(name).unwrap().bind(scene);
     }
 }

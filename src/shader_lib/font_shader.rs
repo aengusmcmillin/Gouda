@@ -87,13 +87,18 @@ cbuffer CBuf
     float4 color;
 };
 
+struct VSOut {
+    float4 position : SV_POSITION;
+    float2 texCoord : TEXCOORD;
+};
+
 Texture2D tex;
 
 SamplerState splr;
 
-float4 PSMain(float2 tc : TEXCOORD) : SV_Target
+float4 PSMain(VSOut vOut) : SV_Target
 {
-    float alpha = tex.Sample(splr, tc)[2];
+    float alpha = tex.Sample(splr, vOut.texCoord)[2];
     return float4(color[0], color[1], color[2], alpha);
 }
 ";

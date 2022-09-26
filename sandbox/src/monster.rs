@@ -11,8 +11,8 @@ pub struct Monster {
 impl Monster {
     pub fn create(ecs: &mut ECS, x_pos: f32, y_pos: f32) {
         let color = [0.7, 0.2, 0.2, 1.];
-        let shape = ShapeDrawable::new("quad".to_string(), "quad".to_string(), color);
-        let transform = TransformComponent::builder().position(x_pos, y_pos).scale(0.4, 0.4).build();
+        let shape = ShapeDrawable::new("quad", "quad", color);
+        let transform = TransformComponent::builder().position(x_pos, y_pos).scale(0.8, 0.8).build();
         ecs.build_entity().add(Monster {health: 2}).add(shape).add(transform);
     }
 

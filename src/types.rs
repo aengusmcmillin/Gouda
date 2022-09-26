@@ -30,14 +30,14 @@ impl Color {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Bounds {
-    pub x: i32,
-    pub y: i32,
-    pub w: i32,
-    pub h: i32,
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32,
 }
 
 impl Bounds {
-    pub fn contains_point(&self, x: i32, y: i32) -> bool {
+    pub fn contains_point(&self, x: f32, y: f32) -> bool {
         x >= self.x && x <= self.x + self.w && y >= self.y && y <= self.y + self.h
     }
 }

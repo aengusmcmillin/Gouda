@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
+use std::str::Lines;
 use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
 use crate::shader_lib::font_shader::font_shader_layout;
 use std::rc::Rc;
@@ -117,7 +118,7 @@ impl TextDrawable {
     }
 
     pub fn draw(&self, scene: &Scene) {
-        scene.bind_shader("font".to_string());
+        scene.bind_shader("font");
         self.vertices.bind(scene);
         self.font.texture.bind(scene);
         self.color.bind(scene);
@@ -150,24 +151,18 @@ fn collect_elements(line: &String) -> HashMap<String, String> {
 }
 
 impl Font {
-
-    pub fn new(renderer: &Renderer, font_file_path: &str, font_png_path: &str) -> Font {
-        let font_file = File::open(font_file_path).unwrap();
-        let font_file_reader = BufReader::new(font_file);
-
+    fn new_impl(texture: RenderableTexture, line_iter: &mut dyn Iterator<Item = String>) -> Font {
         let mut font_entries = Vec::new();
-        let mut line_iter = font_file_reader.lines().filter_map(|result| result.ok());
-
         let info_line = line_iter.next().unwrap();
         let common_line = line_iter.next().unwrap();
         line_iter.next().unwrap();
         line_iter.next().unwrap();
 
-        let info = collect_elements(&info_line);
-        let common = collect_elements(&common_line);
+        let info = collect_elements(&info_line.to_string());
+        let common = collect_elements(&common_line.to_string());
 
         while let Some(line) = line_iter.next() {
-            font_entries.push(collect_elements(&line));
+            font_entries.push(collect_elements(&line.to_string()));
         }
 
         let mut characters = HashMap::new();
@@ -185,9 +180,6 @@ impl Font {
             characters.insert(character.id, character);
         }
 
-        let texture = PNG::from_file(font_png_path).unwrap().image();
-        let texture = RenderableTexture::new(renderer, &texture);
-
         Font {
             texture,
             characters,
@@ -195,6 +187,25 @@ impl Font {
             size: info.get("size").unwrap().to_string().parse::<i32>().unwrap() as f32,
             line_height: common.get("lineHeight").unwrap().to_string().parse::<i32>().unwrap() as f32,
         }
+    }
+
+    pub fn new_from_contents(renderer: &Renderer, font_img: &[u8], font_file: &str) -> Font {
+        let texture = PNG::from_buffer(font_img).unwrap().image();
+        let texture = RenderableTexture::new(renderer, &texture);
+
+        let mut line_iter = font_file.lines().map(|item| item.to_string());
+        return Font::new_impl(texture, &mut line_iter);
+    }
+
+    pub fn new(renderer: &Renderer, font_file_path: &str, font_png_path: &str) -> Font {
+        let font_file = File::open(font_file_path).unwrap();
+        let font_file_reader = BufReader::new(font_file);
+        
+        let texture = PNG::from_file(font_png_path).unwrap().image();
+        let texture = RenderableTexture::new(renderer, &texture);
+
+        let mut line_iter = font_file_reader.lines().filter_map(|result| result.ok());
+        return Font::new_impl(texture, &mut line_iter);
     }
 }
 

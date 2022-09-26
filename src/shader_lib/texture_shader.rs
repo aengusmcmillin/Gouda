@@ -1,15 +1,19 @@
 use crate::rendering::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
 
-pub fn texture_shader(renderer: &Renderer) -> Shader {
-    let buffer_layout = BufferLayout::new(
+
+pub fn texture_shader_layout() -> BufferLayout {
+    return BufferLayout::new(
         vec![
             BufferElement::new("position", ShaderDataType::Float4),
             BufferElement::new("texCoord", ShaderDataType::Float2)
         ]
-    );
+    )
+}
+
+pub fn texture_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
         renderer, 
-        buffer_layout, 
+        texture_shader_layout(), 
         TEXTURE_VERTEX_SHADER,
         TEXTURE_FRAGMENT_SHADER,
     );
@@ -57,18 +61,19 @@ struct VSOut {
 
 cbuffer CBuf1
 {
-    matrix transformation;
+    matrix projection;
 };
 
 cbuffer CBuf2
 {
-    matrix projection;
+    matrix transformation;
 };
 
 VSOut VSMain(float4 pos : Position, float2 tex : TexCoord)
 {
     VSOut vso;
-    vso.position = mul(mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation), projection);
+    float4x4 worldViewProj = mul(projection, transformation);
+    vso.position = mul(worldViewProj, float4(pos.x, pos.y, 0.0f, 1.0f));
     vso.texCoord = tex;
     return vso;
 }

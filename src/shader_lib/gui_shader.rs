@@ -48,19 +48,21 @@ vertex VertexOut vertex_main(const VertexIn in [[stage_in]],
 
 #[cfg(target_os = "windows")]
 pub const GUI_VERTEX_SHADER: &str = "
-cbuffer CBuf
-{
-    matrix transformation;
+struct VertexOut {
+    float4 position : SV_POSITION;
+    float2 texCoord : TEXCOORD;
 };
 
-cbuffer CBuf2
-{
-    matrix projection;
+cbuffer ModelTransform {
+    matrix transform;
 };
 
-float4 VSMain(float2 pos : POSITION) : SV_POSITION
+VertexOut VSMain(float2 position : Position)
 {
-    return mul(mul(float4(pos.x, pos.y, 0.0f, 1.0f), transformation), projection);
+    VertexOut VertexOut;
+    VertexOut.position = mul(transform, float4(position.x, position.y, 0.0, 1.0));
+    VertexOut.texCoord = float2((position.x) / 2.0, 1.0 - (position.y / 2.0));
+    return VertexOut;
 }
 ";
 
@@ -109,8 +111,46 @@ cbuffer CBuf
     float4 color;
 };
 
-float4 PSMain(float4 color : COLOR) : SV_TARGET
+cbuffer CBuf2
 {
-    return float4(color[0], color[1], color[2], color[3]);
+    float2 dimensions;
+};
+
+cbuffer CBuf3
+{
+    float radius;
+}
+
+struct VertexOut {
+    float4 position : SV_POSITION;
+    float2 texCoord : TEXCOORD;
+};
+
+float square(float val)
+{
+    return val * val;
+}
+
+float calc_rounded_corners(float2 coord, float radius, float width, float height)
+{
+    if (radius <= 0.0) {
+        return 1.0;
+    }
+    float cornerSmooth = 0.002;
+
+    float2 pixelPos = coord * float2(width, height);
+    float2 minCorner = float2(radius, radius);
+    float2 maxCorner = float2(width - radius, height - radius);
+
+    float2 cornerPoint = clamp(pixelPos, minCorner, maxCorner);
+    float lowerBound = square(radius - cornerSmooth);
+    float upperBound = square(radius + cornerSmooth);
+    return smoothstep(upperBound, lowerBound, square(distance(pixelPos, cornerPoint)));
+}
+
+float4 PSMain(VertexOut interpolated) : SV_TARGET
+{
+    float alpha = calc_rounded_corners(interpolated.texCoord, radius, dimensions.x, dimensions.y) * color[3];
+    return float4(color[0], color[1], color[2], alpha);
 }
 ";

@@ -18,7 +18,7 @@ impl Turret {
     pub fn create(ecs: &mut ECS, tile: Entity) {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
-        let location = TransformComponent::builder().position(tile.x as f32, tile.y as f32).scale(0.4, 0.4).build();
+        let location = TransformComponent::builder().position(tile.x as f32, tile.y as f32).scale(0.7, 0.7).build();
         let turret = Turret {
             selected: false,
             fire_cooldown: 1.,
