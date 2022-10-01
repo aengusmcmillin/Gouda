@@ -31,6 +31,28 @@ impl Renderable for Shape2d {
 
 
 impl Shape2d {
+    
+    pub fn gui(renderer: &Renderer) -> Shape2d {
+        let vb = VertexBuffer::new::<[f32; 2]>(
+            renderer,
+            quad_shader_layout(),
+            0,
+            vec![
+                [0., 0.], // bottom left
+                [2., 0.], // bottom right
+                [2., 2.], // top right
+                [0., 2.], // top left
+            ]);
+
+        let ib = IndexBuffer::new(
+            renderer,
+            vec![
+                0, 3, 2,
+                0, 1, 2,
+            ]);
+
+        return Shape2d { vertex_buffer: vb, index_buffer: ib, num_indices: 6 }
+    }
     pub fn square(renderer: &Renderer) -> Shape2d {
         let vb = VertexBuffer::new::<[f32; 2]>(
             renderer,
@@ -123,6 +145,7 @@ impl ShapeLibrary {
     pub fn construct(renderer: &Renderer) -> ShapeLibrary {
         let mut lib = ShapeLibrary::new();
         lib.add_2d_shape("square", Shape2d::square(renderer));
+        lib.add_2d_shape("gui", Shape2d::gui(renderer));
         lib.add_2d_shape("quad", Shape2d::square(renderer));
         lib.add_2d_shape("hex", Shape2d::hex(renderer));
         lib.add_2d_shape("texture", Shape2d::texture_quad(renderer));

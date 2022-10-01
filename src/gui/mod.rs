@@ -68,7 +68,7 @@ impl GuiImage {
 
     pub fn render(&self, scene: &Scene) {
         if self.visible {
-            scene.submit_texture(&self.drawable, self.transform);
+            scene.submit_gui_texture(&self.drawable, self.transform);
         }
     }
 }

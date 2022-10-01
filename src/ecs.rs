@@ -24,6 +24,7 @@ pub struct ECS {
     systems: Vec<Box<System>>,
     queued_events: AnyMap,
     processing_events: AnyMap,
+    cleanup_closures: Vec<fn(&mut ECS)>,
 }
 
 macro_rules! impl_read {
@@ -138,7 +139,12 @@ impl ECS {
     fn register_component_type<T: 'static + Debug>(&mut self) -> &mut EntityMap<T> {
         let e: EntityMap<T> = EntityMap::new();
         self.components.insert(e);
+        self.attach_cleanup(|ecs: &mut ECS| ecs.cleanup_components::<T>());
         return self.components.get_mut::<EntityMap<T>>().unwrap();
+    }
+
+    fn attach_cleanup(&mut self, cleanup_closure: fn (&mut ECS)) {
+        self.cleanup_closures.push(cleanup_closure);
     }
 
     pub fn run_systems(&mut self, dt: f32) {
@@ -149,6 +155,13 @@ impl ECS {
                 mutation.apply(self);
             }
         }
+        self.cleanup_all_components();
+    }
+
+    fn cleanup_all_components(&mut self) {
+        let closures = self.cleanup_closures.clone();
+        let iter = closures.iter();
+        iter.for_each(|closure| closure(self));
     }
 
     pub fn new_entity(&mut self) -> Entity {
@@ -283,6 +296,7 @@ impl ECS {
             systems: Vec::new(),
             queued_events: AnyMap::new(),
             processing_events: AnyMap::new(),
+            cleanup_closures: Vec::new(),
         }
     }
 }

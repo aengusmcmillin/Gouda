@@ -43,7 +43,7 @@ impl GameState for StartMenuGameState {
         ecs.add_component(&capture_layer, ActiveCaptureLayer {});
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
-        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
+        ecs.build_entity().add(OrthographicCamera::new(-8., 8., -8., 8.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {

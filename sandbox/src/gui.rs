@@ -220,8 +220,8 @@ fn create_bottom_panel(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
         GuiConstraints::new(
             Constraint::CenterConstraint,
             Constraint::CenterConstraint,
-            Constraint::PixelConstraint {size: -15},
-            Constraint::PixelConstraint {size: -15},
+            Constraint::PixelConstraint {size: -35},
+            Constraint::PixelConstraint {size: -35},
         ),
         2.,
         Color::from_u8(0x88, 0x88, 0x88, 0xFF));

@@ -1,6 +1,7 @@
 #![cfg(target_os = "windows")]
 
 use cgmath::Matrix4;
+use cgmath::SquareMatrix;
 use winapi::shared::dxgi::*;
 use winapi::shared::dxgiformat::*;
 use winapi::shared::dxgitype::*;
@@ -13,6 +14,7 @@ use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
 
 use crate::camera::Camera;
+use crate::font_library::FontLibrary;
 use crate::rendering::shapes::ShapeLibrary;
 use crate::shader_lib::ShaderLibrary;
 
@@ -46,6 +48,7 @@ pub struct Renderer {
     render_target: *mut ID3D11RenderTargetView,
     pub shader_lib: Option<ShaderLibrary>,
     pub shape_lib: Option<ShapeLibrary>,
+    pub font_lib: Option<FontLibrary>,
 }
 
 impl Renderer {
@@ -171,12 +174,16 @@ impl Renderer {
                 render_target: Box::into_raw(render_target),
                 shader_lib: None,
                 shape_lib: None,
+                font_lib: None,
             };
             let shader_lib = ShaderLibrary::construct(&res);
             res.shader_lib = Some(shader_lib);
 
             let shape_lib = ShapeLibrary::construct(&res);
             res.shape_lib = Some(shape_lib);
+
+            let font_lib = FontLibrary::construct(&res);
+            res.font_lib = Some(font_lib);
             return Ok(res)
         }
 
@@ -239,7 +246,7 @@ impl Scene<'_> {
         }
     }
 
-    pub fn submit(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, color: [f32; 4]) {
+    fn submit_impl(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, projection: Matrix4<f32>, color: [f32; 4]) {
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
         shader.upload_vertex_uniform_mat4(self, 1, transform);
@@ -250,31 +257,43 @@ impl Scene<'_> {
         self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
     }
 
+    pub fn submit(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, color: [f32; 4]) {
+        self.submit_impl(shader, renderable, transform, self.camera_view_projection_matrix, color);
+    }
+
+    pub fn submit_shape_gui(&self, shader_name: &'static str, shape_name: &'static str, transform: Matrix4<f32>, color: [f32; 4]) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name).unwrap();
+        let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name).unwrap();
+
+        self.submit_impl(shader, shape, transform, self.camera_view_projection_matrix, color);
+    }
+
     pub fn submit_shape_by_name(&self, shader_name: &'static str, shape_name: &'static str, transform: Matrix4<f32>, color: [f32; 4]) {
         let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name).unwrap();
         let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name).unwrap();
-        
+
+        self.submit_impl(shader, shape, transform, Matrix4::identity(), color);
+    }
+
+    fn submit_texture_with_projection(&self, texture: &RenderableTexture, transform: Matrix4<f32>, projection: Matrix4<f32>) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get("texture").unwrap();
+        let shape = self.renderer.shape_lib.as_ref().unwrap().get("texture").unwrap();
+        texture.bind(self);
         shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
+        shader.upload_vertex_uniform_mat4(self, 0, projection);
         shader.upload_vertex_uniform_mat4(self, 1, transform);
-        shader.upload_fragment_uniform_float4(self, 0, color);
 
         shape.bind(self);
 
         self.draw_indexed(shape.num_indices(), shape.index_buffer());
     }
 
+    pub fn submit_gui_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
+        self.submit_texture_with_projection(texture, transform, Matrix4::identity())
+    }
+
     pub fn submit_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
-        let shader = self.renderer.shader_lib.as_ref().unwrap().get("texture").unwrap();
-        let shape = self.renderer.shape_lib.as_ref().unwrap().get("texture").unwrap();
-        texture.bind(self);
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
-        shader.upload_vertex_uniform_mat4(self, 1, transform);
-
-        shape.bind(self);
-
-        self.draw_indexed(shape.num_indices(), shape.index_buffer());
+        self.submit_texture_with_projection(texture, transform, self.camera_view_projection_matrix)
     }
 
     pub fn bind_shader(&self, shader: &'static str) {

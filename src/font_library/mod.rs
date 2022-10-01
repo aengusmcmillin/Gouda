@@ -11,6 +11,7 @@ impl FontLibrary {
     pub fn new() -> FontLibrary {
         return FontLibrary { fonts: HashMap::new() }
     }
+
     pub fn construct(renderer: &Renderer) -> FontLibrary {
         let mut library = FontLibrary::new();
         let segoe_bmp = include_bytes!("segoe.png");
@@ -31,4 +32,7 @@ impl FontLibrary {
         self.fonts.insert(name, font);
     }
 
+    pub fn get(&self, name: &'static str) -> Option<&Font> {
+        return self.fonts.get(name);
+    }
 }

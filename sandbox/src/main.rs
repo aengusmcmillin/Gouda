@@ -220,7 +220,7 @@ impl GameState for MainGameState {
         ecs.add_system(Box::new(turret_attack_system));
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
-        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
+        ecs.build_entity().add(OrthographicCamera::new(-6., 6., -6., 6.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -319,7 +319,7 @@ impl GameState for DayGameState {
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(mouse_cursor_system));
         ecs.add_system(Box::new(day_state_countdown));
-        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
+        ecs.build_entity().add(OrthographicCamera::new(-6., 6., -6., 6.));
 
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_day(ecs);
@@ -378,7 +378,7 @@ impl GameState for NightGameState {
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
         ecs.add_system(Box::new(day_state_countdown));
-        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
+        ecs.build_entity().add(OrthographicCamera::new(-6., 6., -6., 6.));
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_night(ecs);
         }
@@ -435,7 +435,7 @@ impl GameState for MainMenuGameState {
         ecs.add_component(&capture_layer, ActiveCaptureLayer {});
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
-        ecs.build_entity().add(OrthographicCamera::new(-5., 5., -5., 5.));
+        ecs.build_entity().add(OrthographicCamera::new(-6., 6., -6., 6.));
     }
 
     fn on_state_stop(&self, ecs: &mut ECS) {
@@ -497,31 +497,6 @@ impl GameLogic for Game {
         }
     }
 
-    fn cleanup_components(&self, ecs: &mut ECS) {
-        ecs.cleanup_components::<Tile>();
-        ecs.cleanup_components::<Player>();
-        ecs.cleanup_components::<Monster>();
-        ecs.cleanup_components::<WaveSpawner>();
-        ecs.cleanup_components::<SpriteComponent>();
-        ecs.cleanup_components::<TransformComponent>();
-        ecs.cleanup_components::<GuiComponent>();
-        ecs.cleanup_components::<GuiText>();
-        ecs.cleanup_components::<GuiImage>();
-        ecs.cleanup_components::<ActiveGui>();
-        ecs.cleanup_components::<MouseCaptureArea>();
-        ecs.cleanup_components::<MouseCaptureLayer>();
-        ecs.cleanup_components::<ActiveCaptureLayer>();
-        ecs.cleanup_components::<Turret>();
-        ecs.cleanup_components::<TreeComponent>();
-        ecs.cleanup_components::<Arrow>();
-        ecs.cleanup_components::<DamageDealt>();
-        ecs.cleanup_components::<StageText>();
-        ecs.cleanup_components::<GoldText>();
-        ecs.cleanup_components::<WoodText>();
-        ecs.cleanup_components::<StoneText>();
-        ecs.cleanup_components::<StartMenuButtonId>();
-    }
-
     fn register_events(&self, ecs: &mut ECS) {
         ecs.register_event_type::<ResumeEvent>();
         ecs.register_event_type::<SaveEvent>();
@@ -554,8 +529,7 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let font = Font::new(renderer, "bitmap/segoe.fnt", "bitmap/segoe.png");
-        ecs.add_res(Rc::new(font));
+        let font = renderer.font_lib.as_ref().unwrap().get("segoe");
 
         ecs.add_res(StateTimer{countdown_s: 0.});
 

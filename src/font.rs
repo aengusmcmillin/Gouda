@@ -23,13 +23,14 @@ pub struct TextMeshData {
 pub struct TextDrawable {
     pub text: String,
     pub font_size: u32,
-    pub font: Rc<Font>,
+    pub font: &'static str,
     pub vertices: VertexBuffer,
     pub color: FragmentConstantBuffer,
 }
 
 impl TextDrawable {
-    pub fn new(renderer: &Renderer, position: [f32; 2], size: [f32; 2], center_x: bool, center_y: bool, font: Rc<Font>, color: [f32; 3], text: String, font_size: f32) -> Self {
+    pub fn new(renderer: &Renderer, position: [f32; 2], size: [f32; 2], center_x: bool, center_y: bool, font_name: &'static str, color: [f32; 3], text: String, font_size: f32) -> Self {
+        let font = renderer.font_lib.as_ref().unwrap().get(font_name).unwrap();
         let mut vertices = vec![];
 
         let scaling = 1./font.base_size * font_size / font.size;
@@ -111,7 +112,7 @@ impl TextDrawable {
         return TextDrawable {
             text,
             font_size: font_size as u32,
-            font,
+            font: font_name,
             vertices,
             color,
         }

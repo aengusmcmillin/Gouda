@@ -116,7 +116,6 @@ pub trait GameState {
 
 pub trait GameLogic {
     fn window_props(&self) -> WindowProps;
-    fn cleanup_components(&self, ecs: &mut ECS);
     fn register_events(&self, ecs: &mut ECS);
     fn migrate_events(&self, ecs: &mut ECS);
     fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>>;
@@ -181,7 +180,6 @@ impl<T: GameLogic> Gouda<T> {
         (*self.ecs.write_res::<Vec<WindowEvent>>()) = events;
 
         self.ecs.run_systems(dt);
-        self.game_logic.cleanup_components(&mut self.ecs);
     }
 
     pub fn run(&mut self) {
