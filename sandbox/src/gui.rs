@@ -12,33 +12,29 @@ use crate::supplies::Supplies;
 
 pub fn change_stage_text(ecs: &mut ECS, text: &str) {
     let e = ecs.get2::<StageText, GuiText>().first().unwrap().clone();
-    let font = ecs.read_res::<Rc<Font>>().clone();
     let renderer = ecs.read_res::<Rc<Renderer>>().clone();
-    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, String::from(text), font);
+    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, String::from(text), "segoe");
 }
 
 pub fn change_gold_text(ecs: &mut ECS) {
     let e = ecs.get2::<GoldText, GuiText>().first().unwrap().clone();
-    let font = ecs.read_res::<Rc<Font>>().clone();
     let renderer = ecs.read_res::<Rc<Renderer>>().clone();
     let gold = ecs.read_res::<Supplies>().gold;
-    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, format!("GOLD: {}", gold), font);
+    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, format!("GOLD: {}", gold), "segoe");
 }
 
 pub fn change_wood_text(ecs: &mut ECS) {
     let e = ecs.get2::<WoodText, GuiText>().first().unwrap().clone();
-    let font = ecs.read_res::<Rc<Font>>().clone();
     let renderer = ecs.read_res::<Rc<Renderer>>().clone();
     let gold = ecs.read_res::<Supplies>().wood;
-    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, format!("WOOD: {}", gold), font);
+    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, format!("WOOD: {}", gold), "segoe");
 }
 
 pub fn change_stone_text(ecs: &mut ECS) {
     let e = ecs.get2::<StoneText, GuiText>().first().unwrap().clone();
-    let font = ecs.read_res::<Rc<Font>>().clone();
     let renderer = ecs.read_res::<Rc<Renderer>>().clone();
     let gold = ecs.read_res::<Supplies>().stone;
-    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, format!("STONE: {}", gold), font);
+    ecs.write::<GuiText>(&e).unwrap().change_text(&renderer, format!("STONE: {}", gold), "segoe");
 }
 
 pub struct UpdateResourceTextMutation {
@@ -121,12 +117,11 @@ fn create_top_bar(ecs: &mut ECS) -> Entity {
     Color::from_u8(0x55, 0x55, 0x55, 0xFF));
 
     let bounds = ecs.read::<GuiComponent>(&top_bar).unwrap().calculated_bounds;
-    let font = ecs.read_res::<Rc<Font>>().clone();
     let gold_text = GuiText::create(
         ecs,
         Some(bounds),
         String::from("GOLD:"),
-        font.clone(),
+        "segoe",
         false,
         true,
         16.,
@@ -142,7 +137,7 @@ fn create_top_bar(ecs: &mut ECS) -> Entity {
         ecs,
         Some(bounds),
         String::from("WOOD:"),
-        font.clone(),
+        "segoe",
         false,
         true,
         16.,
@@ -158,7 +153,7 @@ fn create_top_bar(ecs: &mut ECS) -> Entity {
         ecs,
         Some(bounds),
         String::from("STONE:"),
-        font.clone(),
+        "segoe",
         false,
         true,
         16.,
@@ -174,7 +169,7 @@ fn create_top_bar(ecs: &mut ECS) -> Entity {
         ecs,
         Some(bounds),
         String::from("Stage"),
-        font.clone(),
+        "segoe",
         true,
         true,
         16.,
@@ -220,8 +215,8 @@ fn create_bottom_panel(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
         GuiConstraints::new(
             Constraint::CenterConstraint,
             Constraint::CenterConstraint,
-            Constraint::PixelConstraint {size: -35},
-            Constraint::PixelConstraint {size: -35},
+            Constraint::PixelConstraint {size: -15},
+            Constraint::PixelConstraint {size: -15},
         ),
         2.,
         Color::from_u8(0x88, 0x88, 0x88, 0xFF));

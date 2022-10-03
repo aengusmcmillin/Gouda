@@ -1,7 +1,7 @@
 use cgmath::Vector2;
 use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetComponent};
-use gouda::{Gouda, GameLogic, GameState, RenderLayer, QuitEvent};
-use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameStateId};
+use gouda::{Gouda, GameLogic, GameScene, RenderLayer, QuitEvent};
+use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameSceneId};
 use gouda::rendering::{Scene, Renderer, drawable::ShapeDrawable};
 use tree::create_tree;
 use std::rc::Rc;
@@ -24,9 +24,10 @@ use std::collections::HashMap;
 use gouda::window::{WindowProps, WindowEvent};
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
 use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
-use crate::start_menu::{StartMenu, START_MENU_GAME_STATE, StartMenuButtonId, StartMenuGameState, StartEvent};
+use crate::start_menu::{StartMenu, START_MENU_SCENE, StartMenuButtonId, StartMenuScene, StartEvent};
 use crate::supplies::Supplies;
 use crate::tree::TreeComponent;
+use crate::turret::{TurretSelectMutation, TurretDeselectMutation, CreateTurretMutation};
 
 mod tree;
 mod start_menu;
@@ -43,57 +44,7 @@ mod hearth;
 mod gui;
 mod main_menu;
 mod supplies;
-
-pub struct CreateTurretMutation {
-    tile_e: Entity,
-}
-
-impl Mutation for CreateTurretMutation {
-    fn apply(&self, ecs: &mut ECS) {
-        if ecs.write_res::<Supplies>().spend_supplies(0, 5, 0) {
-            Turret::create(ecs, self.tile_e);
-
-            ecs.write::<Tile>(&self.tile_e).unwrap().occupied = true;
-        } else {
-
-        }
-    }
-}
-
-pub struct TurretSelectMutation {
-    turret_e: Entity,
-}
-
-impl Mutation for TurretSelectMutation {
-    fn apply(&self, ecs: &mut ECS) {
-        let mut loc = *ecs.read::<TransformComponent>(&self.turret_e).unwrap();
-        loc.scale = Vector2::new(3.0, 3.0);
-        let range_sprite = SpriteComponent::new(ecs, "bitmap/range_indicator.png".to_string());
-        let range_indicator = Some(ecs.build_entity().add(range_sprite).add(loc).entity());
-        let turret = ecs.write::<Turret>(&self.turret_e).unwrap();
-        turret.selected = true;
-        turret.range_indicator = range_indicator;
-    }
-}
-
-pub struct TurretDeselectMutation {
-}
-
-impl Mutation for TurretDeselectMutation {
-    fn apply(&self, ecs: &mut ECS) {
-        let turrets = ecs.get1::<Turret>();
-        for turret in &turrets {
-            let turret = ecs.write::<Turret>(&turret).unwrap();
-            turret.selected = false;
-            let indicator = turret.range_indicator;
-            if let Some(e) = indicator {
-                println!("Deletintg indicator");
-                turret.range_indicator = None;
-                ecs.delete_entity(&e);
-            }
-        }
-    }
-}
+mod turret;
 
 pub struct TreeHarvestMutation {
     tree: Entity,
@@ -205,13 +156,13 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
     }
 }
 
-pub const MAIN_GAME_STATE: GameStateId = 0;
+pub const MAIN_GAME_SCENE: GameSceneId = 0;
 
-pub struct MainGameState {
+pub struct MainGameScene {
 }
 
-impl GameState for MainGameState {
-    fn on_state_start(&self, ecs: &mut ECS) {
+impl GameScene for MainGameScene {
+    fn on_scene_start(&self, ecs: &mut ECS) {
         register_core_systems(ecs);
         ecs.add_system(Box::new(wave_spawner_system));
         ecs.add_system(Box::new(monster_move_system));
@@ -223,18 +174,18 @@ impl GameState for MainGameState {
         ecs.build_entity().add(OrthographicCamera::new(-6., 6., -6., 6.));
     }
 
-    fn on_state_stop(&self, ecs: &mut ECS) {
-        ecs.add_res(LastState(MAIN_GAME_STATE));
+    fn on_scene_stop(&self, ecs: &mut ECS) {
+        ecs.add_res(LastScene(MAIN_GAME_SCENE));
     }
 
-    fn render_state(&self, ecs: &ECS, scene: &Scene) {
+    fn render_scene(&self, ecs: &ECS, scene: &Scene) {
         draw_everything(ecs, scene);
     }
 
-    fn next_state(&self, ecs: &ECS) -> Option<u32> {
+    fn next_scene(&self, ecs: &ECS) -> Option<u32> {
         let input = ecs.read_res::<GameInput>();
         if input.keyboard.letter_pressed(LetterKeys::B) {
-            return Some(MAIN_MENU_GAME_STATE);
+            return Some(MAIN_MENU_GAME_SCENE);
         }
         return None;
     }
@@ -308,13 +259,13 @@ fn next_night(ecs: &mut ECS) {
     ecs.write_res::<StateTimer>().countdown_s = ecs.read_res::<GameDay>().night_length;
 }
 
-pub const DAY_GAME_STATE: GameStateId = 10;
+pub const DAY_GAME_SCENE: GameSceneId = 10;
 
-pub struct DayGameState {
+pub struct DayGameScene {
 }
 
-impl GameState for DayGameState {
-    fn on_state_start(&self, ecs: &mut ECS) {
+impl GameScene for DayGameScene {
+    fn on_scene_start(&self, ecs: &mut ECS) {
         register_core_systems(ecs);
         ecs.add_system(Box::new(mouse_click_system));
         ecs.add_system(Box::new(mouse_cursor_system));
@@ -326,20 +277,20 @@ impl GameState for DayGameState {
         }
     }
 
-    fn on_state_stop(&self, ecs: &mut ECS) {
-        ecs.add_res(LastState(DAY_GAME_STATE));
+    fn on_scene_stop(&self, ecs: &mut ECS) {
+        ecs.add_res(LastScene(DAY_GAME_SCENE));
     }
 
-    fn render_state(&self, ecs: &ECS, scene: &Scene) {
+    fn render_scene(&self, ecs: &ECS, scene: &Scene) {
         draw_everything(ecs, scene);
     }
 
-    fn next_state(&self, ecs: &ECS) -> Option<u32> {
+    fn next_scene(&self, ecs: &ECS) -> Option<u32> {
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
-            return Some(NIGHT_GAME_STATE);
+            return Some(NIGHT_GAME_SCENE);
         } else {
             if ecs.read_res::<GameInput>().keyboard.letter_pressed(LetterKeys::B) {
-                return Some(MAIN_MENU_GAME_STATE);
+                return Some(MAIN_MENU_GAME_SCENE);
             }
             return None;
         }
@@ -361,14 +312,14 @@ impl GameState for DayGameState {
     }
 }
 
-pub const NIGHT_GAME_STATE: GameStateId = 11;
+pub const NIGHT_GAME_SCENE: GameSceneId = 11;
 
-pub struct NightGameState {
+pub struct NightGameScene {
 
 }
 
-impl GameState for NightGameState {
-    fn on_state_start(&self, ecs: &mut ECS) {
+impl GameScene for NightGameScene {
+    fn on_scene_start(&self, ecs: &mut ECS) {
         register_core_systems(ecs);
         ecs.add_system(Box::new(wave_spawner_system));
         ecs.add_system(Box::new(monster_move_system));
@@ -384,20 +335,20 @@ impl GameState for NightGameState {
         }
     }
 
-    fn on_state_stop(&self, ecs: &mut ECS) {
-        ecs.add_res(LastState(NIGHT_GAME_STATE));
+    fn on_scene_stop(&self, ecs: &mut ECS) {
+        ecs.add_res(LastScene(NIGHT_GAME_SCENE));
     }
 
-    fn render_state(&self, ecs: &ECS, scene: &Scene) {
+    fn render_scene(&self, ecs: &ECS, scene: &Scene) {
         draw_everything(ecs, scene);
     }
 
-    fn next_state(&self, ecs: &ECS) -> Option<u32> {
+    fn next_scene(&self, ecs: &ECS) -> Option<u32> {
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
-            return Some(DAY_GAME_STATE);
+            return Some(DAY_GAME_SCENE);
         } else {
             if ecs.read_res::<GameInput>().keyboard.letter_pressed(LetterKeys::B) {
-                return Some(MAIN_MENU_GAME_STATE);
+                return Some(MAIN_MENU_GAME_SCENE);
             }
             return None;
         }
@@ -419,16 +370,16 @@ impl GameState for NightGameState {
     }
 }
 
-pub struct LastState(GameStateId);
+pub struct LastScene(GameSceneId);
 
-pub const MAIN_MENU_GAME_STATE: GameStateId = 1;
+pub const MAIN_MENU_GAME_SCENE: GameSceneId = 1;
 
-pub struct MainMenuGameState {
+pub struct MainMenuGameScene {
 
 }
 
-impl GameState for MainMenuGameState {
-    fn on_state_start(&self, ecs: &mut ECS) {
+impl GameScene for MainMenuGameScene {
+    fn on_scene_start(&self, ecs: &mut ECS) {
         register_core_systems(ecs);
         ecs.add_system(Box::new(menu_mouse_system));
         let capture_layer = ecs.read_res::<MenuScreen>().capture_layer;
@@ -438,28 +389,28 @@ impl GameState for MainMenuGameState {
         ecs.build_entity().add(OrthographicCamera::new(-6., 6., -6., 6.));
     }
 
-    fn on_state_stop(&self, ecs: &mut ECS) {
-        ecs.add_res(LastState(MAIN_MENU_GAME_STATE));
+    fn on_scene_stop(&self, ecs: &mut ECS) {
+        ecs.add_res(LastScene(MAIN_MENU_GAME_SCENE));
         let capture_layer = ecs.read_res::<MenuScreen>().capture_layer;
         ecs.remove_component::<ActiveCaptureLayer>(&capture_layer);
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
         ecs.remove_component::<ActiveCaptureLayer>(&button_layer);
     }
 
-    fn render_state(&self, ecs: &ECS, scene: &Scene) {
+    fn render_scene(&self, ecs: &ECS, scene: &Scene) {
         draw_everything(ecs, scene);
         let menu = ecs.read_res::<MenuScreen>();
         let menugui = ecs.read::<GuiComponent>(&menu.entity);
         menugui.unwrap().render(&ecs, &scene);
     }
 
-    fn next_state(&self, ecs: &ECS) -> Option<u32> {
+    fn next_scene(&self, ecs: &ECS) -> Option<u32> {
         let input = ecs.read_res::<GameInput>();
         if input.keyboard.letter_pressed(LetterKeys::B) {
-            return Some(ecs.read_res::<LastState>().0);
+            return Some(ecs.read_res::<LastScene>().0);
         }
         if ecs.events::<ResumeEvent>().len() > 0 {
-            return Some(ecs.read_res::<LastState>().0);
+            return Some(ecs.read_res::<LastScene>().0);
         }
         return None;
     }
@@ -513,18 +464,18 @@ impl GameLogic for Game {
         ecs.migrate_events::<StartEvent>();
     }
 
-    fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>> {
-        let mut res: HashMap<GameStateId, Box<dyn GameState>> = HashMap::new();
-        res.insert(START_MENU_GAME_STATE, Box::new(StartMenuGameState {}));
-        res.insert(MAIN_GAME_STATE, Box::new(MainGameState {}));
-        res.insert(MAIN_MENU_GAME_STATE, Box::new(MainMenuGameState {}));
-        res.insert(DAY_GAME_STATE, Box::new(DayGameState {}));
-        res.insert(NIGHT_GAME_STATE, Box::new(NightGameState {}));
+    fn game_scenes(&self) -> HashMap<GameSceneId, Box<dyn GameScene>> {
+        let mut res: HashMap<GameSceneId, Box<dyn GameScene>> = HashMap::new();
+        res.insert(START_MENU_SCENE, Box::new(StartMenuScene {}));
+        res.insert(MAIN_GAME_SCENE, Box::new(MainGameScene {}));
+        res.insert(MAIN_MENU_GAME_SCENE, Box::new(MainMenuGameScene {}));
+        res.insert(DAY_GAME_SCENE, Box::new(DayGameScene {}));
+        res.insert(NIGHT_GAME_SCENE, Box::new(NightGameScene {}));
         return res;
     }
 
-    fn initial_game_state(&self) -> u32 {
-        return START_MENU_GAME_STATE;
+    fn initial_game_scene(&self) -> u32 {
+        return START_MENU_SCENE;
     }
 
     fn setup(&mut self, ecs: &mut ECS) {

@@ -72,12 +72,11 @@ fn add_menu_button(button_id: MainMenuButtonId, text: &str, menu_layer: Entity, 
     ecs.add_component(&button, button_id);
 
     let comp = ecs.read::<GuiComponent>(&button).unwrap();
-    let font = ecs.read_res::<Rc<Font>>();
     let text = GuiText::create(
         ecs,
         Some(comp.calculated_bounds),
         String::from(text),
-        font.clone(),
+        "segoe",
         true,
         true,
         32.,

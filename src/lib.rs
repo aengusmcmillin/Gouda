@@ -1,4 +1,4 @@
-use crate::ecs::{ECS, GameStateId};
+use crate::ecs::{ECS, GameSceneId};
 use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
 use crate::window::{WindowProps, WindowEvent};
@@ -105,11 +105,11 @@ impl TransformComponentBuilder {
     }
 }
 
-pub trait GameState {
-    fn on_state_start(&self, ecs: &mut ECS);
-    fn on_state_stop(&self, ecs: &mut ECS);
-    fn render_state(&self, ecs: &ECS, scene: &Scene);
-    fn next_state(&self, ecs: &ECS) -> Option<GameStateId>;
+pub trait GameScene {
+    fn on_scene_start(&self, ecs: &mut ECS);
+    fn on_scene_stop(&self, ecs: &mut ECS);
+    fn render_scene(&self, ecs: &ECS, scene: &Scene);
+    fn next_scene(&self, ecs: &ECS) -> Option<GameSceneId>;
     fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer>;
     fn camera(&self, ecs: &ECS) -> Box<dyn Camera>;
 }
@@ -118,16 +118,16 @@ pub trait GameLogic {
     fn window_props(&self) -> WindowProps;
     fn register_events(&self, ecs: &mut ECS);
     fn migrate_events(&self, ecs: &mut ECS);
-    fn game_states(&self) -> HashMap<GameStateId, Box<dyn GameState>>;
-    fn initial_game_state(&self) -> GameStateId;
+    fn game_scenes(&self) -> HashMap<GameSceneId, Box<dyn GameScene>>;
+    fn initial_game_scene(&self) -> GameSceneId;
     fn setup(&mut self, ecs: &mut ECS);
 }
 
 pub struct Gouda<T: GameLogic> {
     game_logic: T,
     ecs: ECS,
-    game_states: HashMap<GameStateId, Box<dyn GameState>>,
-    active_state: Option<GameStateId>,
+    game_scenes: HashMap<GameSceneId, Box<dyn GameScene>>,
+    active_scene: Option<GameSceneId>,
 }
 
 impl<T: GameLogic> Gouda<T> {
@@ -135,8 +135,8 @@ impl<T: GameLogic> Gouda<T> {
         Gouda {
             game_logic,
             ecs: ECS::new(),
-            game_states: HashMap::new(),
-            active_state: None,
+            game_scenes: HashMap::new(),
+            active_scene: None,
         }
     }
 
@@ -148,27 +148,27 @@ impl<T: GameLogic> Gouda<T> {
         self.game_logic.register_events(&mut self.ecs);
         self.game_logic.setup(&mut self.ecs);
 
-        self.game_states.extend(self.game_logic.game_states());
-        let state = self.game_logic.initial_game_state();
-        self.active_state = Some(state);
-        self.game_states.get(&state).unwrap().on_state_start(&mut self.ecs);
+        self.game_scenes.extend(self.game_logic.game_scenes());
+        let scene = self.game_logic.initial_game_scene();
+        self.active_scene = Some(scene);
+        self.game_scenes.get(&scene).unwrap().on_scene_start(&mut self.ecs);
     }
 
-    fn get_active_state(&self) -> &Box<dyn GameState> {
-        self.game_states.get(&self.active_state.unwrap()).unwrap()
+    fn get_active_scene(&self) -> &Box<dyn GameScene> {
+        self.game_scenes.get(&self.active_scene.unwrap()).unwrap()
     }
 
     fn update(&mut self, dt: f32, game_input: GameInput, events: Vec<WindowEvent>) {
-        if let Some(state) = self.get_active_state().next_state(&self.ecs) {
-            let gstate = self.game_states.get(&self.active_state.unwrap());
-            if let Some(gstate) = gstate {
-                gstate.on_state_stop(&mut self.ecs);
+        if let Some(scene) = self.get_active_scene().next_scene(&self.ecs) {
+            let gscene = self.game_scenes.get(&self.active_scene.unwrap());
+            if let Some(gscene) = gscene {
+                gscene.on_scene_stop(&mut self.ecs);
                 self.ecs.clear_systems();
             }
-            self.active_state = Some(state);
-            let gstate = self.game_states.get(&self.active_state.unwrap());
-            if let Some(gstate) = gstate {
-                gstate.on_state_start(&mut self.ecs);
+            self.active_scene = Some(scene);
+            let gscene = self.game_scenes.get(&self.active_scene.unwrap());
+            if let Some(gscene) = gscene {
+                gscene.on_scene_start(&mut self.ecs);
             }
         }
 
@@ -229,11 +229,11 @@ impl<T: GameLogic> Gouda<T> {
                 return;
             }
 
-            let game_state = self.game_states.get(&self.active_state.unwrap()).unwrap();
+            let game_scene = self.game_scenes.get(&self.active_scene.unwrap()).unwrap();
             let renderer = platform.get_renderer();
-            let camera = game_state.camera(&self.ecs);
+            let camera = game_scene.camera(&self.ecs);
             if let Some(scene) = renderer.begin_scene(camera) {
-                game_state.render_state(&self.ecs, &scene);
+                game_scene.render_scene(&self.ecs, &scene);
                 scene.end();
             }
         }

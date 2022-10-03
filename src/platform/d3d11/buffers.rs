@@ -1,4 +1,4 @@
-use crate::rendering::buffers2::{BufferLayout, ShaderDataType};
+use crate::rendering::buffers2::{BufferLayout};
 pub use crate::rendering::{Renderer, Scene};
 use winapi::um::d3d11::*;
 use std::mem;

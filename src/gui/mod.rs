@@ -84,7 +84,7 @@ pub struct GuiText {
 }
 
 impl GuiText {
-    pub fn create(ecs: &mut ECS, parent_bounds: Option<Bounds>, text: String, font: Rc<Font>, center_x: bool, center_y: bool, font_size: f32, constraints: GuiConstraints, color: Color) -> Entity {
+    pub fn create(ecs: &mut ECS, parent_bounds: Option<Bounds>, text: String, font: &'static str, center_x: bool, center_y: bool, font_size: f32, constraints: GuiConstraints, color: Color) -> Entity {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let bounds = match parent_bounds {
             Some(parent_bounds) => {
@@ -111,7 +111,7 @@ impl GuiText {
         ecs.build_entity().add(text).entity()
     }
 
-    pub fn change_text(&mut self, renderer: &Renderer, text: String, font: Rc<Font>) {
+    pub fn change_text(&mut self, renderer: &Renderer, text: String, font: &'static str) {
         let bounds = self.calculated_bounds;
         let pos = [(bounds.x as f32) / 450. - 1., (bounds.y as f32) / 450. - 1.];
         let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];

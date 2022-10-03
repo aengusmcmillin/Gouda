@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
-use std::str::Lines;
 use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
 use crate::shader_lib::font_shader::font_shader_layout;
 use std::rc::Rc;
@@ -121,7 +120,7 @@ impl TextDrawable {
     pub fn draw(&self, scene: &Scene) {
         scene.bind_shader("font");
         self.vertices.bind(scene);
-        self.font.texture.bind(scene);
+        scene.bind_font(self.font);
         self.color.bind(scene);
         scene.draw_triangles((self.text.len() * 6) as u64);
     }
@@ -132,7 +131,7 @@ pub struct RenderableCharacter {
 
 #[derive(Debug)]
 pub struct Font {
-    texture: RenderableTexture,
+    pub texture: RenderableTexture,
     characters: HashMap<u32, Character>,
     base_size: f32,
     size: f32,

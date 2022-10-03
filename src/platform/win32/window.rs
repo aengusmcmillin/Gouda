@@ -1,10 +1,10 @@
 extern crate winapi;
 
 use crate::window::{GameWindowImpl, WindowProps};
-use crate::input::{GameInput, GameButtonState, SpecialKeys};
+use crate::input::{GameInput};
 use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::_core::ptr::null_mut;
-use winapi::um::winuser::{WNDCLASSW, WNDCLASSEXA, CS_HREDRAW, CS_VREDRAW, CS_OWNDC, MessageBoxA, RegisterClassW, CW_USEDEFAULT, WS_OVERLAPPEDWINDOW, WS_VISIBLE, CreateWindowExW};
+use winapi::um::winuser::{WNDCLASSW, CS_HREDRAW, CS_VREDRAW, CS_OWNDC, MessageBoxA, RegisterClassW, CreateWindowExW};
 use winapi::shared::minwindef::{UINT};
 use winapi::shared::windef::{HWND};
 use winapi::um::xinput::{XINPUT_VIBRATION, XINPUT_STATE};
@@ -18,7 +18,6 @@ use self::winapi::shared::minwindef::{__some_function, DWORD};
 use std::mem::transmute;
 use self::winapi::um::winuser::*;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::dxgi::CreateDXGIFactory;
 use crate::platform::win32::win32_input::{win32_process_keyboard, win32_process_keyboard_message};
 
 trait Empty {

@@ -1,8 +1,4 @@
-use std::rc::Rc;
-
 use cgmath::{Matrix4, ortho, SquareMatrix, Vector3, Deg};
-
-use crate::{math::Mat4x4, rendering::{buffers::VertexConstantBuffer, Renderer}, ecs::ECS};
 
 pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
     return vec![

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, f32::consts::PI};
 
 
-use crate::{platform::d3d11::Renderable, rendering::buffers2::{BufferLayout, BufferElement}, shader_lib::{basic_shader::{basic_shader_layout}, texture_shader::texture_shader_layout, quad_shader::quad_shader_layout}};
+use crate::{platform::d3d11::Renderable, shader_lib::{basic_shader::{basic_shader_layout}, texture_shader::texture_shader_layout, quad_shader::quad_shader_layout}};
 
 use super::{buffers::{VertexBuffer, IndexBuffer}, Renderer, Scene};
 

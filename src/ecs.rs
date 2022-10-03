@@ -15,7 +15,7 @@ pub trait Mutation {
 
 pub type Mutations = Vec<Box<dyn Mutation>>;
 pub type System = dyn Fn(&ECS, f32) -> Mutations;
-pub type GameStateId = u32;
+pub type GameSceneId = u32;
 
 pub struct ECS {
     entity_allocator: GenIndexAllocator,
