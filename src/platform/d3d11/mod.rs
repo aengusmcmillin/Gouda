@@ -22,18 +22,6 @@ use self::buffers::IndexBuffer;
 use self::shader::Shader;
 use self::texture::RenderableTexture;
 
-pub struct Material3d {
-    pub shader_name: &'static str,
-}
-
-pub struct Renderable3d {
-    pub material_name: &'static str,
-}
-
-pub struct Renderable2d {
-    pub texture_name: &'static str,
-}
-
 pub trait Renderable {
     fn bind(&self, scene: &Scene);
     fn num_indices(&self) -> u64;
@@ -257,10 +245,6 @@ impl Scene<'_> {
             }
         }
     }
-
-    fn submit_2d() {}
-
-    fn submit_3d() {}
 
     fn submit_impl(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, projection: Matrix4<f32>, color: [f32; 4]) {
         shader.bind(self);
