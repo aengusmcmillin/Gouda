@@ -14,16 +14,16 @@ impl FontLibrary {
 
     pub fn construct(renderer: &Renderer) -> FontLibrary {
         let mut library = FontLibrary::new();
-        let segoe_bmp = include_bytes!("segoe.png");
-        let segoe_fnt = include_str!("segoe.fnt");
+        let segoe_bmp = include_bytes!("../../res/fonts/segoe.png");
+        let segoe_fnt = include_str!("../../res/fonts/segoe.fnt");
         library.add_font("segoe", Font::new_from_contents(renderer, segoe_bmp, segoe_fnt));
 
-        let arial_bmp = include_bytes!("arial.png");
-        let arial_fnt = include_str!("arial.fnt");
+        let arial_bmp = include_bytes!("../../res/fonts/arial.png");
+        let arial_fnt = include_str!("../../res/fonts/arial.fnt");
         library.add_font("arial", Font::new_from_contents(renderer, arial_bmp, arial_fnt));
 
-        let calibri_bmp = include_bytes!("calibri.png");
-        let calibri_fnt = include_str!("calibri.fnt");
+        let calibri_bmp = include_bytes!("../../res/fonts/calibri.png");
+        let calibri_fnt = include_str!("../../res/fonts/calibri.fnt");
         library.add_font("calibri", Font::new_from_contents(renderer, calibri_bmp, calibri_fnt));
         return library;
     }
