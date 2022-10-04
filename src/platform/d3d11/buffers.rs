@@ -190,4 +190,10 @@ impl IndexBuffer {
             (*scene.device_context).IASetIndexBuffer(self.buffer, DXGI_FORMAT_R16_UINT, 0);
         }
     }
+
+    pub fn bind_with_offset(&self, scene: &Scene, offset: u32) {
+        unsafe {
+            (*scene.device_context).IASetIndexBuffer(self.buffer, DXGI_FORMAT_R16_UINT, offset * 2);
+        }
+    }
 }

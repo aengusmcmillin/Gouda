@@ -18,7 +18,7 @@ pub struct RenderableTexture {
 }
 
 impl RenderableTexture {
-    pub fn new(renderer: &Renderer, image: &Image) -> RenderableTexture {
+    pub fn new(renderer: &Renderer, image: &Image, no_mip: bool) -> RenderableTexture {
         let texture_desc = D3D11_TEXTURE2D_DESC {
             Width: image.width as u32,
             Height: image.height as u32,
@@ -65,7 +65,7 @@ impl RenderableTexture {
             }
 
             let mut sampler_desc = D3D11_SAMPLER_DESC {
-                Filter: D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+                Filter: if no_mip { D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT } else { D3D11_FILTER_MIN_MAG_MIP_LINEAR },
                 AddressU: D3D11_TEXTURE_ADDRESS_WRAP,
                 AddressV: D3D11_TEXTURE_ADDRESS_WRAP,
                 AddressW: D3D11_TEXTURE_ADDRESS_WRAP,

@@ -45,7 +45,7 @@ impl GuiImage {
         let h = renderer.get_height() as f32;
         let pos = [(bounds.x as f32) / (w as f32 / 2.) - 1.0, (bounds.y as f32) / (h as f32 / 2.) - 1.0, 1.0];
         let size = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
-        let drawable =  RenderableTexture::new(renderer, &image);
+        let drawable =  RenderableTexture::new(renderer, &image, false);
 
         let transform = Matrix4::from_translation(Vector3::new(pos[0], pos[1], pos[2])) * Matrix4::from_nonuniform_scale(size[0], size[1], size[2]);
 

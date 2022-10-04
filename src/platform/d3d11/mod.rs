@@ -15,10 +15,16 @@ use winapi::um::d3dcommon::*;
 
 use crate::camera::Camera;
 use crate::font_library::FontLibrary;
+use crate::imgui::renderer::DrawVert;
+use crate::rendering::buffers2::BufferElement;
+use crate::rendering::buffers2::BufferLayout;
+use crate::rendering::buffers2::ShaderDataType;
 use crate::rendering::shapes::ShapeLibrary;
 use crate::shader_lib::ShaderLibrary;
+use crate::shader_lib::imgui_shader::imgui_shader_layout;
 
 use self::buffers::IndexBuffer;
+use self::buffers::VertexBuffer;
 use self::shader::Shader;
 use self::texture::RenderableTexture;
 
@@ -311,6 +317,12 @@ impl Scene<'_> {
         }
     }
 
+    pub fn draw_indexed_tris(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
+        unsafe {
+            (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            (*self.device_context).DrawIndexed(num_indices as u32, 0, 0);
+        }
+    }
     pub fn draw_tri_strip(&self, num_verts: u64) {
         unsafe {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -323,6 +335,19 @@ impl Scene<'_> {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             (*self.device_context).Draw(num_verts as u32, 0);
         }
+    }
+
+    pub fn submit_imgui(&self, vbuf: &Vec<[f32; 8]>, ibuf: &[u16], count: usize, vtx_offset: usize, idx_offset: usize, texture: &RenderableTexture, matrix: Matrix4<f32>) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get("imgui").unwrap();
+        shader.bind(self);
+        shader.upload_vertex_uniform_mat4(self, 0, matrix);
+        let vertex_buffer = VertexBuffer::new::<[f32; 8]>(self.renderer, imgui_shader_layout(), 0, vbuf.clone());
+        vertex_buffer.bind(self);
+        let index_buffer = IndexBuffer::new(self.renderer, ibuf.to_vec());
+        index_buffer.bind_with_offset(self, idx_offset as u32);
+        texture.bind(self);
+
+        self.draw_indexed_tris(count as u64, &index_buffer);
     }
 }
 

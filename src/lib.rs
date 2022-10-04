@@ -28,6 +28,9 @@ use camera::{Camera};
 use cgmath::{Matrix4, Vector3, Deg, Vector2};
 pub use images::bmp as bmp;
 pub use images::png as png;
+use crate::imgui::renderer::GoudaImguiRenderer;
+use crate::imgui::platform::GoudaImguiPlatform;
+use ::imgui::*;
 pub mod font;
 pub mod font_library;
 pub mod types;
@@ -35,6 +38,7 @@ pub mod gui;
 pub mod mouse_capture;
 pub mod camera;
 pub mod shader_lib;
+pub mod imgui;
 
 pub type RenderLayer = String;
 pub type RenderOrder = u32;
@@ -193,6 +197,33 @@ impl<T: GameLogic> Gouda<T> {
 
         let renderer = platform.get_renderer();
 
+        let mut imgui = Context::create();
+        imgui.set_ini_filename(None);
+
+        GoudaImguiPlatform::init(&mut imgui);
+
+        imgui.fonts().add_font(&[
+            FontSource::TtfData {
+                data: include_bytes!("../res/Roboto-Regular.ttf"),
+            size_pixels: 13.0,
+            config: Some(FontConfig {
+                // As imgui-glium-renderer isn't gamma-correct with
+                // it's font rendering, we apply an arbitrary
+                // multiplier to make the font a bit "heavier". With
+                // default imgui-glow-renderer this is unnecessary.
+                rasterizer_multiply: 1.5,
+                // Oversampling font helps improve text rendering at
+                // expense of larger font atlas texture.
+                oversample_h: 4,
+                oversample_v: 4,
+                ..FontConfig::default()
+            }),
+            }
+        ]);
+
+        let mut imgui_renderer = GoudaImguiRenderer::create(&renderer, &mut imgui);
+
+
         self.ecs.add_res(renderer.clone());
 
         self.setup_game();
@@ -207,8 +238,12 @@ impl<T: GameLogic> Gouda<T> {
             let dt = delta.as_millis() as f32 / 1000.;
             now = next;
 
+
             self.game_logic.migrate_events(&mut self.ecs);
             let window = platform.get_window();
+
+            GoudaImguiPlatform::prepare_frame(&mut imgui, &window, target_dur);
+
             let input = window.capture_input();
             let events = window.capture_events();
             for event in &events {
@@ -229,11 +264,22 @@ impl<T: GameLogic> Gouda<T> {
                 return;
             }
 
+            {
+                let io  = imgui.io_mut();
+                io.mouse_pos = [input.mouse.x as f32, input.mouse.y as f32];
+                io.mouse_down[0] = input.mouse.buttons[0].ended_down;
+            }
+
+            let ui = imgui.frame();
+
+            let draw_data = ui.render();
+
             let game_scene = self.game_scenes.get(&self.active_scene.unwrap()).unwrap();
             let renderer = platform.get_renderer();
             let camera = game_scene.camera(&self.ecs);
             if let Some(scene) = renderer.begin_scene(camera) {
                 game_scene.render_scene(&self.ecs, &scene);
+                imgui_renderer.render(&scene, draw_data);
                 scene.end();
             }
         }
