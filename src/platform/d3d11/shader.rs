@@ -260,6 +260,11 @@ impl Shader {
         let buffer = FragmentConstantBuffer::new(scene.renderer, offset, uniform.to_vec());
         buffer.bind(scene);
     }
+
+    pub fn upload_fragment_uniform_float3(&self, scene: &Scene, offset: u32, uniform: [f32; 3]) {
+        let buffer = FragmentConstantBuffer::new(scene.renderer, offset, [uniform[0], uniform[1], uniform[2], 0.].to_vec());
+        buffer.bind(scene);
+    }
 }
 
 impl std::fmt::Debug for Shader {

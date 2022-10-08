@@ -7,7 +7,6 @@ pub fn obj_model_shader_layout() -> BufferLayout {
             BufferElement::new("POSITION", ShaderDataType::Float4),
             BufferElement::new("TEXCOORD", ShaderDataType::Float2),
             BufferElement::new("NORMAL", ShaderDataType::Float3),
-            BufferElement::new("COLOR", ShaderDataType::Float3),
         ]
     )
 }
@@ -47,16 +46,15 @@ vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
 pub const OBJ_MODEL_VERTEX_SHADER: &str = "
 struct VSOut {
     float4 position : SV_POSITION;
+    float3 fragPos  : POSITION;
     float2 texcoord : TEXCOORD0;
     float3 normal : NORMAL;
-    float3 color : COLOR;
 };
 
 struct VertexIn {
     float4 position : POSITION;
     float2 texcoord : TEXCOORD0;
     float3 normal : NORMAL;
-    float3 color : COLOR;
 };
 
 cbuffer CBuf1
@@ -74,9 +72,9 @@ VSOut VSMain(VertexIn vertexIn)
     VSOut vso;
     float4x4 worldViewProj = mul(projection, transformation);
     vso.position = mul(worldViewProj, vertexIn.position);
+    vso.fragPos = mul(transformation, vertexIn.position);
     vso.texcoord = vertexIn.texcoord;
     vso.normal = vertexIn.normal;
-    vso.color = vertexIn.color;
     return vso;
 }
 ";
@@ -95,18 +93,41 @@ fragment float4 fragment_main( constant float4 &color [[buffer(0)]])
 pub const OBJ_MODEL_FRAGMENT_SHADER: &str = "
 struct VSOut {
     float4 position : SV_POSITION;
+    float3 fragPos  : POSITION;
     float2 texcoord : TEXCOORD0;
     float3 normal : NORMAL;
-    float3 color : COLOR;
 };
 
-cbuffer CBuf
+cbuffer B1 : register(b0)
 {
-    float4 color;
+    float3 ambient;
+};
+
+cbuffer B2 : register(b1)
+{
+    float3 diffuse;
+};
+
+cbuffer B3 : register(b2)
+{
+    float3 lightpos;
 };
 
 float4 PSMain(VSOut vsout) : SV_Target
 {
-    return float4(vsout.color[0], vsout.color[1], vsout.color[2], 1.0);
+    float ambientStrength = 1.2;
+    float3 lightColor = float3(1.0, 1.0, 1.0);
+
+    float3 ambientLevel = ambientStrength * lightColor;
+    float3 ambientColor = mul(ambient, mul(ambientStrength, lightColor));
+
+    float3 norm = normalize(vsout.normal);
+    float3 lightdir = normalize(lightpos - vsout.fragPos);
+    float diff = max(dot(norm, lightdir), 0.0);
+    float3 diffuseLevel = diff * lightColor;
+
+    float3 result = (ambientLevel + diffuseLevel) * diffuse;
+
+    return float4(result[0], result[1], result[2], 1.0);
 }
 ";

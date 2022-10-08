@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, SquareMatrix};
+use cgmath::{Matrix4, Vector3, SquareMatrix};
 use gouda::ecs::{GameSceneId, Entity, ECS, Mutation, Mutations};
 use gouda::rendering::model::ObjModel;
 use gouda::{GameScene, RenderLayer};
@@ -55,11 +55,9 @@ impl GameScene for StartMenuScene {
     }
 
     fn render_scene(&self, ecs: &ECS, scene: &Scene) {
-        let model = ecs.read_res::<ObjModel>();
-        scene.submit_obj(model, Matrix4::identity());
-        // let menu = ecs.read_res::<StartMenuScreen>();
-        // let menugui = ecs.read::<GuiComponent>(&menu.entity);
-        // menugui.unwrap().render(&ecs, &scene);
+        let menu = ecs.read_res::<StartMenuScreen>();
+        let menugui = ecs.read::<GuiComponent>(&menu.entity);
+        menugui.unwrap().render(&ecs, &scene);
     }
 
     fn next_scene(&self, ecs: &ECS) -> Option<u32> {

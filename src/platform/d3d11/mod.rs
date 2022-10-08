@@ -274,10 +274,22 @@ impl Scene<'_> {
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
         shader.upload_vertex_uniform_mat4(self, 1, transform);
-        obj_model.vertex_buffer.bind(self);
-        obj_model.index_buffer.bind(self);
 
-        self.draw_indexed_tris(obj_model.index_buffer.num_indices, &obj_model.index_buffer);
+        obj_model.vertex_buffer.bind(self);
+
+        if let Some(no_mat_ibuf) = &obj_model.no_material_index_buffer {
+            no_mat_ibuf.bind(self);
+            self.draw_indexed_tris(no_mat_ibuf.num_indices, &no_mat_ibuf);
+        }
+
+        obj_model.submeshes.iter().for_each(|submesh| {
+            shader.upload_fragment_uniform_float3(self, 0, submesh.ambient);
+            shader.upload_fragment_uniform_float3(self, 1, submesh.diffuse);
+            shader.upload_fragment_uniform_float3(self, 2, [0., 0.5, -2.5]);
+
+            submesh.index_buffer.bind(self);
+            self.draw_indexed_tris(submesh.index_buffer.num_indices, &submesh.index_buffer);
+        });
     }
 
     pub fn submit_shape_gui(&self, shader_name: &'static str, shape_name: &'static str, transform: Matrix4<f32>, color: [f32; 4]) {
