@@ -2,6 +2,7 @@
 
 use cgmath::Matrix4;
 use cgmath::SquareMatrix;
+use cgmath::Vector3;
 use winapi::shared::dxgi::*;
 use winapi::shared::dxgiformat::*;
 use winapi::shared::dxgitype::*;
@@ -15,10 +16,7 @@ use winapi::um::d3dcommon::*;
 
 use crate::camera::Camera;
 use crate::font_library::FontLibrary;
-use crate::imgui::renderer::DrawVert;
-use crate::rendering::buffers2::BufferElement;
-use crate::rendering::buffers2::BufferLayout;
-use crate::rendering::buffers2::ShaderDataType;
+use crate::rendering::model::ObjModel;
 use crate::rendering::shapes::ShapeLibrary;
 use crate::shader_lib::ShaderLibrary;
 use crate::shader_lib::imgui_shader::imgui_shader_layout;
@@ -27,6 +25,10 @@ use self::buffers::IndexBuffer;
 use self::buffers::VertexBuffer;
 use self::shader::Shader;
 use self::texture::RenderableTexture;
+
+pub mod buffers;
+pub mod shader;
+pub mod texture;
 
 pub trait Renderable {
     fn bind(&self, scene: &Scene);
@@ -267,6 +269,17 @@ impl Scene<'_> {
         self.submit_impl(shader, renderable, transform, self.camera_view_projection_matrix, color);
     }
 
+    pub fn submit_obj(&self, obj_model: &ObjModel, transform: Matrix4<f32>) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get("obj_model").unwrap();
+        shader.bind(self);
+        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
+        shader.upload_vertex_uniform_mat4(self, 1, transform);
+        obj_model.vertex_buffer.bind(self);
+        obj_model.index_buffer.bind(self);
+
+        self.draw_indexed_tris(obj_model.index_buffer.num_indices, &obj_model.index_buffer);
+    }
+
     pub fn submit_shape_gui(&self, shader_name: &'static str, shape_name: &'static str, transform: Matrix4<f32>, color: [f32; 4]) {
         let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name).unwrap();
         let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name).unwrap();
@@ -351,8 +364,3 @@ impl Scene<'_> {
     }
 }
 
-pub mod buffers;
-
-pub mod shader;
-
-pub mod texture;

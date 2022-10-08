@@ -5,7 +5,7 @@ use crate::types::{Color, Bounds};
 use crate::rendering::{Scene, Renderer};
 use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::math::create_transformation_matrix;
-use crate::font::{TextDrawable, Font};
+use crate::font::{TextDrawable};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;
 use crate::ecs::{ECS, Entity};

@@ -1,4 +1,6 @@
+use cgmath::{Matrix4, SquareMatrix};
 use gouda::ecs::{GameSceneId, Entity, ECS, Mutation, Mutations};
+use gouda::rendering::model::ObjModel;
 use gouda::{GameScene, RenderLayer};
 use gouda::mouse_capture::{MouseCaptureLayer, ActiveCaptureLayer, MouseCaptureArea};
 use gouda::gui::{GuiComponent, GuiText};
@@ -31,9 +33,7 @@ pub enum StartMenuButtonId {
 
 pub const START_MENU_SCENE: GameSceneId = 3;
 
-pub struct StartMenuScene {
-
-}
+pub struct StartMenuScene {}
 
 impl GameScene for StartMenuScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
@@ -55,9 +55,11 @@ impl GameScene for StartMenuScene {
     }
 
     fn render_scene(&self, ecs: &ECS, scene: &Scene) {
-        let menu = ecs.read_res::<StartMenuScreen>();
-        let menugui = ecs.read::<GuiComponent>(&menu.entity);
-        menugui.unwrap().render(&ecs, &scene);
+        let model = ecs.read_res::<ObjModel>();
+        scene.submit_obj(model, Matrix4::identity());
+        // let menu = ecs.read_res::<StartMenuScreen>();
+        // let menugui = ecs.read::<GuiComponent>(&menu.entity);
+        // menugui.unwrap().render(&ecs, &scene);
     }
 
     fn next_scene(&self, ecs: &ECS) -> Option<u32> {

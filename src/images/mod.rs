@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use crate::types::Color;
 
 pub mod bmp;

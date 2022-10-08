@@ -10,6 +10,7 @@ use self::imgui_shader::imgui_shader;
 use self::quad_shader::quad_shader;
 use self::texture_shader::texture_shader;
 use self::hex_shader::hex_shader;
+use self::obj_model_shader::obj_model_shader;
 
 pub mod basic_shader;
 pub mod font_shader;
@@ -18,6 +19,7 @@ pub mod imgui_shader;
 pub mod quad_shader;
 pub mod texture_shader;
 pub mod hex_shader;
+pub mod obj_model_shader;
 
 
 #[derive(Debug)]
@@ -39,6 +41,7 @@ impl ShaderLibrary {
         lib.add("quad", quad_shader(renderer));
         lib.add("texture", texture_shader(renderer));
         lib.add("hex", hex_shader(renderer));
+        lib.add("obj_model", obj_model_shader(renderer));
         return lib;
     }
 

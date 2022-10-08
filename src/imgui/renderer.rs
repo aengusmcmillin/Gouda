@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use cgmath::{Matrix4, Vector3};
 use imgui::{DrawData, Context, DrawCmdParams, DrawCmd};
 
@@ -80,8 +78,6 @@ impl GoudaImguiRenderer {
                         count,
                         cmd_params: 
                         DrawCmdParams {
-                            clip_rect,
-                            texture_id,
                             vtx_offset,
                             idx_offset,
                             ..
@@ -91,7 +87,7 @@ impl GoudaImguiRenderer {
                         scene.submit_imgui(&vbuf, ibuf, count, vtx_offset, idx_offset, texture, matrix);
                     }
                     DrawCmd::ResetRenderState => todo!(),
-                    DrawCmd::RawCallback { callback, raw_cmd } => todo!(),
+                    DrawCmd::RawCallback { callback: _, raw_cmd: _ } => todo!(),
                 }
             }
         }

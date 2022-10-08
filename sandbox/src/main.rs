@@ -3,6 +3,7 @@ use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetC
 use gouda::{Gouda, GameLogic, GameScene, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameSceneId};
 use gouda::rendering::{Scene, Renderer, drawable::ShapeDrawable};
+use gouda::rendering::model::{load_obj_file, load_mtl_file, ObjModel};
 use tree::create_tree;
 use std::rc::Rc;
 use gouda::input::{LetterKeys, GameInput};
@@ -480,9 +481,14 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
+        let objfile = load_obj_file("./models/sword.obj").unwrap();
+        let mtlfile = load_mtl_file("./models/sword.mtl").unwrap();
+        let model = ObjModel::new(renderer, objfile, mtlfile);
         let font = renderer.font_lib.as_ref().unwrap().get("segoe");
 
         ecs.add_res(StateTimer{countdown_s: 0.});
+
+        ecs.add_res(model);
 
         GameGui::create(ecs);
         ecs.add_res(generate_days());

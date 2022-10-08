@@ -1,0 +1,112 @@
+use crate::{rendering::buffers2::{BufferElement, ShaderDataType, BufferLayout}, platform::d3d11::{shader::Shader, Renderer}};
+
+
+pub fn obj_model_shader_layout() -> BufferLayout {
+    return BufferLayout::new(
+        vec![
+            BufferElement::new("POSITION", ShaderDataType::Float4),
+            BufferElement::new("TEXCOORD", ShaderDataType::Float2),
+            BufferElement::new("NORMAL", ShaderDataType::Float3),
+            BufferElement::new("COLOR", ShaderDataType::Float3),
+        ]
+    )
+}
+
+pub fn obj_model_shader(renderer: &Renderer) -> Shader {
+    let shader = Shader::new(
+        renderer, 
+        obj_model_shader_layout(), 
+        OBJ_MODEL_VERTEX_SHADER,
+        OBJ_MODEL_FRAGMENT_SHADER,
+    );
+    return shader;
+}
+
+#[cfg(target_os = "macos")]
+pub const OBJ_MODEL_VERTEX_SHADER: &str = "
+using namespace metal;
+
+struct VertexUniforms {
+    float4x4 mat;
+};
+
+struct VertexIn {
+    float2 xy   [[attribute(0)]];
+};
+
+vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
+                                 constant ViewProjection &viewProjection [[buffer(1)]],
+                                 constant ModelTransform &modelTransform [[buffer(2)]],
+                                 uint vid [[vertex_id]])
+{
+    return float4(in[vid].xy) * transformation.mat * projection.mat;
+}
+";
+
+#[cfg(target_os = "windows")]
+pub const OBJ_MODEL_VERTEX_SHADER: &str = "
+struct VSOut {
+    float4 position : SV_POSITION;
+    float2 texcoord : TEXCOORD0;
+    float3 normal : NORMAL;
+    float3 color : COLOR;
+};
+
+struct VertexIn {
+    float4 position : POSITION;
+    float2 texcoord : TEXCOORD0;
+    float3 normal : NORMAL;
+    float3 color : COLOR;
+};
+
+cbuffer CBuf1
+{
+    matrix projection;
+};
+
+cbuffer CBuf2
+{
+    matrix transformation;
+};
+
+VSOut VSMain(VertexIn vertexIn)
+{
+    VSOut vso;
+    float4x4 worldViewProj = mul(projection, transformation);
+    vso.position = mul(worldViewProj, vertexIn.position);
+    vso.texcoord = vertexIn.texcoord;
+    vso.normal = vertexIn.normal;
+    vso.color = vertexIn.color;
+    return vso;
+}
+";
+
+#[cfg(target_os = "macos")]
+pub const OBJ_MODEL_FRAGMENT_SHADER: &str = "
+using namespace metal;
+
+fragment float4 fragment_main( constant float4 &color [[buffer(0)]])
+{
+    return float4(color[0], color[1], color[2], color[3]);
+}
+";
+
+#[cfg(target_os = "windows")]
+pub const OBJ_MODEL_FRAGMENT_SHADER: &str = "
+struct VSOut {
+    float4 position : SV_POSITION;
+    float2 texcoord : TEXCOORD0;
+    float3 normal : NORMAL;
+    float3 color : COLOR;
+};
+
+cbuffer CBuf
+{
+    float4 color;
+};
+
+float4 PSMain(VSOut vsout) : SV_Target
+{
+    return float4(vsout.color[0], vsout.color[1], vsout.color[2], 1.0);
+}
+";

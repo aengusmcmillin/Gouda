@@ -30,7 +30,7 @@ impl VertexBuffer {
                 SysMemPitch: 0,
                 SysMemSlicePitch: 0
             };
-            let mut buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
+            let buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
             let mut buffer_ptr: *mut ID3D11Buffer = Box::into_raw(buffer);
             let result = (*renderer.device).CreateBuffer(&vertex_buffer_desc, &subresource_data, &mut buffer_ptr);
             if FAILED(result) {
@@ -74,7 +74,7 @@ impl ConstantBuffer {
                 SysMemPitch: 0,
                 SysMemSlicePitch: 0
             };
-            let mut buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
+            let buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
             let mut buffer_ptr: *mut ID3D11Buffer = Box::into_raw(buffer);
             let result = (*renderer.device).CreateBuffer(&constant_buffer_desc, &subresource_data, &mut buffer_ptr);
             if FAILED(result) {
@@ -156,7 +156,8 @@ impl FragmentConstantBuffer {
 
 #[derive(Debug)]
 pub struct IndexBuffer {
-    pub buffer: *mut ID3D11Buffer
+    pub buffer: *mut ID3D11Buffer,
+    pub num_indices: u64,
 }
 
 impl IndexBuffer {
@@ -175,13 +176,13 @@ impl IndexBuffer {
                 SysMemPitch: 0,
                 SysMemSlicePitch: 0
             };
-            let mut buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
+            let buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
             let mut buffer_ptr: *mut ID3D11Buffer = Box::into_raw(buffer);
             let result = (*renderer.device).CreateBuffer(&index_buffer_desc, &subresource_data, &mut buffer_ptr);
             if FAILED(result) {
                 panic!("Failed to create index buffer {:x}", result);
             }
-            IndexBuffer {buffer: buffer_ptr}
+            IndexBuffer {buffer: buffer_ptr, num_indices: indices.len() as u64}
         }
     }
 
