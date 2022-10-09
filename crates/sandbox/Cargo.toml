@@ -5,6 +5,6 @@ authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-gouda = { path = "../" }
+gouda = { path = "../gouda" }
 rand = "0.7.2"
 cgmath = "0.18.0"

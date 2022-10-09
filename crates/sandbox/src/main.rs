@@ -481,8 +481,8 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let objfile = load_obj_file("./models/rock2.obj").unwrap();
-        let mtlfile = load_mtl_file("./models/rock2.mtl").unwrap();
+        let objfile = load_obj_file("./assets/models/rock2.obj").unwrap();
+        let mtlfile = load_mtl_file("./assets/models/rock2.mtl").unwrap();
         let model = ObjModel::new(renderer, objfile, mtlfile);
         let font = renderer.font_lib.as_ref().unwrap().get("segoe");
 

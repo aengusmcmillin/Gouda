@@ -244,7 +244,7 @@ fn create_bottom_panel(ecs: &mut ECS, mouse_layer: Entity) -> Entity {
 
     let child1 = ecs.read::<GuiComponent>(&child1_entity).unwrap();
     let child1_bounds = child1.calculated_bounds.clone();
-    let image = PNG::from_file("bitmap/turret2.png").unwrap().image();
+    let image = PNG::from_file("./assets/bitmap/turret2.png").unwrap().image();
     let child_image1 = GuiImage::create(
         ecs,
         Some(child1_bounds),

@@ -1,0 +1,29 @@
+[package]
+name = "gouda"
+version = "0.1.0"
+authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anymap = "0.12.1"
+enum-map = "*"
+enum-map-derive = "*"
+compress = "0.1.2"
+png = "0.11.0"
+cgmath = "0.18.0"
+imgui = "0.8.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
+cocoa = "0.19.0"
+metal = "0.17.0"
+objc = "0.2.2"
+coreaudio-sys = "0.2.10"
+core-graphics = "0.17.3"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3.8", features = ["dxgi", "d3d11", "d3dcompiler", "std", "winuser", "libloaderapi", "winstring", "memoryapi", "dsound", "fileapi", "winbase", "xinput", "errhandlingapi", "ntdef", "handleapi", "windowsx"] }
+
+[lib]
+name = "gouda"
+

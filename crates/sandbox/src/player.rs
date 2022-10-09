@@ -17,7 +17,7 @@ pub struct Player {
 
 impl Player {
     pub fn create(ecs: &mut ECS) {
-        let spritesheet = SpriteSheetComponent::new(ecs, "bitmap/spritesheet.png".to_string(), 1, 4);
+        let spritesheet = SpriteSheetComponent::new(ecs, "./assets/bitmap/spritesheet.png".to_string(), 1, 4);
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8]);

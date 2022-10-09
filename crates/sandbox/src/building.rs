@@ -27,7 +27,7 @@ impl Turret {
             range_indicator: None
         };
 
-        let turret_sprite = SpriteComponent::new(ecs, "bitmap/turret2.png".to_string());
+        let turret_sprite = SpriteComponent::new(ecs, "./assets/bitmap/turret2.png".to_string());
         ecs.build_entity()
            .add(location)
            .add(turret_sprite)
@@ -44,7 +44,7 @@ pub struct Arrow {
 
 impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
-        let sprite = SpriteComponent::new(ecs, "bitmap/arrow.png".to_string());
+        let sprite = SpriteComponent::new(ecs, "./assets/bitmap/arrow.png".to_string());
         ecs.build_entity()
         .add(TransformComponent::builder().position(x, y).scale(0.3, 0.1).build())
         .add(sprite)

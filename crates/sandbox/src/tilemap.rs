@@ -69,11 +69,11 @@ impl Tilemap {
         for x in 0..11 {
             for y in 0..9 {
                 let tile = if x == 0 || x == 10 || y == 0 || y == 8 {
-                    let e = Tile::create_image_tile("bitmap/grass2.png".to_string(), ecs, x, y);
+                    let e = Tile::create_image_tile("./assets/bitmap/grass2.png".to_string(), ecs, x, y);
                     borders.push(e);
                     e
                 } else {
-                    Tile::create_image_tile("bitmap/grass.png".to_string(), ecs, x, y)
+                    Tile::create_image_tile("./assets/bitmap/grass.png".to_string(), ecs, x, y)
                 };
                 if x == 5 && y == 4 {
                     center_tile = Some(tile.clone());

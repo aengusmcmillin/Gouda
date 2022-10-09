@@ -204,7 +204,7 @@ impl<T: GameLogic> Gouda<T> {
 
         imgui.fonts().add_font(&[
             FontSource::TtfData {
-                data: include_bytes!("../res/Roboto-Regular.ttf"),
+                data: include_bytes!("../../../assets/Roboto-Regular.ttf"),
             size_pixels: 13.0,
             config: Some(FontConfig {
                 // As imgui-glium-renderer isn't gamma-correct with

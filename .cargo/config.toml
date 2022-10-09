@@ -1,0 +1,2 @@
+[alias]
+sandbox = "run --package sandbox --bin sandbox"
