@@ -8,10 +8,13 @@ edition = "2018"
 anymap = "0.12.1"
 gouda_ecs = { path = "../gouda_ecs" }
 gouda_transform = { path = "../gouda_transform" }
+gouda_rendering = { path = "../gouda_rendering" }
+gouda_types = { path = "../gouda_types" }
+gouda_images = { path = "../gouda_images" }
+gouda_math = { path = "../gouda_math" }
 enum-map = "*"
 enum-map-derive = "*"
 compress = "0.1.2"
-png = "0.11.0"
 cgmath = "0.18.0"
 imgui = "0.8.2"
 

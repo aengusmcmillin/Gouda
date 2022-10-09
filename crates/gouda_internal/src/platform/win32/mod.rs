@@ -3,8 +3,9 @@
 pub mod window;
 pub mod win32_input;
 
+use gouda_rendering::Renderer;
+
 use crate::window::{GameWindow, WindowProps};
-use crate::platform::d3d11::Renderer;
 use std::rc::Rc;
 use crate::platform::win32::window::Window;
 

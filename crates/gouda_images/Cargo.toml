@@ -1,0 +1,10 @@
+[package]
+name = "gouda_images"
+version = "0.0.0"
+authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+png = "0.11.0"
+compress = "0.1.2"
+gouda_types = { path = "../gouda_types" }

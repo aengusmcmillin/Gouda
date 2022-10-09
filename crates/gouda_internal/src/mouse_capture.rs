@@ -1,9 +1,9 @@
 use cgmath::{SquareMatrix, Vector4};
 
-use crate::camera::{OrthographicCamera, Camera};
+use gouda_rendering::camera::{OrthographicCamera, Camera};
 use gouda_ecs::{Mutations, ECS, Entity, Mutation};
 use crate::input::GameInput;
-use crate::types::Bounds;
+use gouda_types::Bounds;
 
 #[derive(Debug)]
 pub struct ActiveCaptureLayer {}

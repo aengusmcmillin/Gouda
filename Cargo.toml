@@ -12,3 +12,6 @@ members = ["crates/*"]
 gouda_ecs = { path = "./crates/gouda_ecs" }
 gouda_internal = { path = "./crates/gouda_internal" }
 gouda_transform = { path = "./crates/gouda_transform" }
+gouda_rendering = { path = "./crates/gouda_rendering" }
+gouda_types = { path = "./crates/gouda_types" }
+gouda_images = { path = "./crates/gouda_images" }

@@ -257,8 +257,11 @@ name = "gouda"
 version = "0.1.0"
 dependencies = [
  "gouda_ecs",
+ "gouda_images",
  "gouda_internal",
+ "gouda_rendering",
  "gouda_transform",
+ "gouda_types",
 ]
 
 [[package]]
@@ -268,6 +271,15 @@ dependencies = [
  "anymap",
  "enum-map",
  "enum-map-derive",
+]
+
+[[package]]
+name = "gouda_images"
+version = "0.0.0"
+dependencies = [
+ "compress",
+ "gouda_types",
+ "png",
 ]
 
 [[package]]
@@ -283,12 +295,36 @@ dependencies = [
  "enum-map",
  "enum-map-derive",
  "gouda_ecs",
+ "gouda_images",
+ "gouda_math",
+ "gouda_rendering",
  "gouda_transform",
+ "gouda_types",
  "imgui",
  "libc",
  "metal",
  "objc",
- "png",
+ "winapi",
+]
+
+[[package]]
+name = "gouda_math"
+version = "0.0.0"
+
+[[package]]
+name = "gouda_rendering"
+version = "0.0.0"
+dependencies = [
+ "cgmath",
+ "cocoa",
+ "core-graphics",
+ "gouda_ecs",
+ "gouda_images",
+ "gouda_math",
+ "gouda_transform",
+ "libc",
+ "metal",
+ "objc",
  "winapi",
 ]
 
@@ -298,6 +334,10 @@ version = "0.0.0"
 dependencies = [
  "cgmath",
 ]
+
+[[package]]
+name = "gouda_types"
+version = "0.0.0"
 
 [[package]]
 name = "imgui"

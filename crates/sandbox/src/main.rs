@@ -1,4 +1,3 @@
-use cgmath::Vector2;
 use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetComponent};
 use gouda::{Gouda, GameLogic, GameScene, RenderLayer, QuitEvent};
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameSceneId};
@@ -15,17 +14,16 @@ use rand::{Rng, thread_rng};
 use crate::tilemap::{Tile, Tilemap};
 use crate::player::{Player, player_move_system};
 use crate::cursor::Cursor;
-use gouda::font::Font;
 use crate::spawners::{WaveSpawner, wave_spawner_system, GameDay, generate_days};
 use crate::monster::{Monster, monster_move_system, monster_damage_system};
-use gouda::gui::{GuiComponent, ActiveGui, GuiText, GuiImage};
-use crate::gui::{GameGui, game_gui_system, StageText, change_stage_text, GoldText, WoodText, StoneText};
+use gouda::gui::{GuiComponent, ActiveGui};
+use crate::gui::{GameGui, game_gui_system, change_stage_text};
 use crate::main_menu::{MenuScreen, menu_mouse_system, SaveEvent, ResumeEvent, SettingsEvent};
 use std::collections::HashMap;
 use gouda::window::{WindowProps, WindowEvent};
-use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, mouse_capture_system, ActiveCaptureLayer};
-use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
-use crate::start_menu::{StartMenu, START_MENU_SCENE, StartMenuButtonId, StartMenuScene, StartEvent};
+use gouda::mouse_capture::{MouseCaptureArea, mouse_capture_system, ActiveCaptureLayer};
+use crate::building::{Turret, turret_attack_system, arrow_move_system};
+use crate::start_menu::{StartMenu, START_MENU_SCENE, StartMenuScene, StartEvent};
 use crate::supplies::Supplies;
 use crate::tree::TreeComponent;
 use crate::turret::{TurretSelectMutation, TurretDeselectMutation, CreateTurretMutation};
@@ -60,7 +58,7 @@ impl Mutation for TreeHarvestMutation {
     }
 }
 
-fn mouse_click_system(ecs: &ECS, dt: f32) -> Mutations {
+fn mouse_click_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = Vec::new();
     for (tile, mouse_capture, tile_e) in ecs.read2::<Tile, MouseCaptureArea>() {
         if mouse_capture.clicked_buttons[0] {
@@ -109,7 +107,7 @@ impl Mutation for CursorVisibilityMutation {
     }
 }
 
-fn mouse_cursor_system(ecs: &ECS, dt: f32) -> Mutations {
+fn mouse_cursor_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     let mut any_hovered = false;
     for (_, mouse_capture, e) in ecs.read2::<Tile, MouseCaptureArea>() {
@@ -191,7 +189,7 @@ impl GameScene for MainGameScene {
         return None;
     }
 
-    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
+    fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -297,7 +295,7 @@ impl GameScene for DayGameScene {
         }
     }
 
-    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
+    fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -355,7 +353,7 @@ impl GameScene for NightGameScene {
         }
     }
 
-    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
+    fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -416,7 +414,7 @@ impl GameScene for MainMenuGameScene {
         return None;
     }
 
-    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
+    fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("Tilemap"),
             String::from("Turrets"),
@@ -484,7 +482,6 @@ impl GameLogic for Game {
         let objfile = load_obj_file("./assets/models/rock2.obj").unwrap();
         let mtlfile = load_mtl_file("./assets/models/rock2.mtl").unwrap();
         let model = ObjModel::new(renderer, objfile, mtlfile);
-        let font = renderer.font_lib.as_ref().unwrap().get("segoe");
 
         ecs.add_res(StateTimer{countdown_s: 0.});
 

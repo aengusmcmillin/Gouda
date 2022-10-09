@@ -1,4 +1,4 @@
-use crate::types::Bounds;
+use gouda_types::Bounds;
 
 #[derive(Debug)]
 pub struct GuiConstraints {

@@ -1,16 +1,16 @@
 use cgmath::{Matrix4, Vector3};
 
-use crate::shader_lib::gui_shader::gui_shader_layout;
-use crate::types::{Color, Bounds};
-use crate::rendering::{Scene, Renderer};
-use crate::rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
-use crate::math::create_transformation_matrix;
-use crate::font::{TextDrawable};
+use gouda_rendering::shader_lib::gui_shader::gui_shader_layout;
+use gouda_types::{Color, Bounds};
+use gouda_rendering::{Scene, Renderer};
+use gouda_rendering::buffers::{VertexBuffer, IndexBuffer, FragmentConstantBuffer, VertexConstantBuffer};
+use gouda_math::create_transformation_matrix;
+use gouda_rendering::font::{TextDrawable};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
-use crate::images::Image;
-use crate::rendering::texture::RenderableTexture;
+use gouda_images::Image;
+use gouda_rendering::texture::RenderableTexture;
 use gouda_ecs::{ECS, Entity};
 
 pub mod constraints;

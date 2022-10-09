@@ -1,7 +1,8 @@
 use cgmath::{Matrix4, Vector3};
 use imgui::{DrawData, Context, DrawCmdParams, DrawCmd};
 
-use crate::{rendering::{Scene, texture::RenderableTexture, Renderer}, images::Image};
+use gouda_rendering::{Scene, texture::RenderableTexture, Renderer};
+use gouda_images::Image;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
