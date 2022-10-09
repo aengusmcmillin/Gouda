@@ -8,10 +8,10 @@ use crate::math::create_transformation_matrix;
 use crate::font::{TextDrawable};
 use std::rc::Rc;
 use crate::gui::constraints::GuiConstraints;
-use crate::ecs::{ECS, Entity};
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
 use crate::images::Image;
 use crate::rendering::texture::RenderableTexture;
+use gouda_ecs::{ECS, Entity};
 
 pub mod constraints;
 pub mod button;

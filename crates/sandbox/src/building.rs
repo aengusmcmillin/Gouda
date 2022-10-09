@@ -1,4 +1,4 @@
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 use gouda::ecs::{ECS, Entity, Mutations, Mutation};
 use gouda::rendering::sprites::SpriteComponent;
 use crate::tilemap::Tile;

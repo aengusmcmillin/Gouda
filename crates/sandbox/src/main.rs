@@ -7,7 +7,7 @@ use gouda::rendering::model::{load_obj_file, load_mtl_file, ObjModel};
 use tree::create_tree;
 use std::rc::Rc;
 use gouda::input::{LetterKeys, GameInput};
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 use gouda::camera::{Camera, OrthographicCamera};
 
 extern crate rand;

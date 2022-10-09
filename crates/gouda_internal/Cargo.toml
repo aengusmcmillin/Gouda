@@ -1,11 +1,13 @@
 [package]
-name = "gouda"
+name = "gouda_internal"
 version = "0.1.0"
 authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 anymap = "0.12.1"
+gouda_ecs = { path = "../gouda_ecs" }
+gouda_transform = { path = "../gouda_transform" }
 enum-map = "*"
 enum-map-derive = "*"
 compress = "0.1.2"
@@ -23,7 +25,3 @@ core-graphics = "0.17.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3.8", features = ["dxgi", "d3d11", "d3dcompiler", "std", "winuser", "libloaderapi", "winstring", "memoryapi", "dsound", "fileapi", "winbase", "xinput", "errhandlingapi", "ntdef", "handleapi", "windowsx"] }
-
-[lib]
-name = "gouda"
-

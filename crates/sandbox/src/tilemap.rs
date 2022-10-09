@@ -1,4 +1,4 @@
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 use gouda::rendering::sprites::SpriteComponent;
 use gouda::ecs::{ECS, Entity};
 use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, ActiveCaptureLayer};

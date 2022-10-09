@@ -1,4 +1,4 @@
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::rendering::drawable::ShapeDrawable;
 use crate::Monster;

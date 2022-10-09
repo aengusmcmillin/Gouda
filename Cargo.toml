@@ -1,2 +1,14 @@
+[package]
+name = "gouda"
+version = "0.1.0"
+authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
+edition = "2018"
+exclude = ["crates/"]
+
 [workspace]
 members = ["crates/*"]
+
+[dependencies]
+gouda_ecs = { path = "./crates/gouda_ecs" }
+gouda_internal = { path = "./crates/gouda_internal" }
+gouda_transform = { path = "./crates/gouda_transform" }

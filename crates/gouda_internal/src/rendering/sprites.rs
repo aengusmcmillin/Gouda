@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
-use crate::{png::PNG, ecs::ECS, TransformComponent, images::spritesheet::Spritesheet};
+use gouda_ecs::ECS;
+use gouda_transform::TransformComponent;
+use crate::{png::PNG, images::spritesheet::Spritesheet};
 
 use super::{Renderer, texture::RenderableTexture, Scene};
 

@@ -2,7 +2,8 @@ use gouda::{rendering::{
     drawable::{QuadDrawable},
     Renderer,
     Scene,
-    sprites::SpriteSheetComponent}, TransformComponent};
+    sprites::SpriteSheetComponent}};
+use gouda::transform::TransformComponent;
 use std::rc::Rc;
 use gouda::ecs::{ECS, Mutations, Entity, Mutation};
 use gouda::input::{GameInput, LetterKeys};

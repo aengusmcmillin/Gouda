@@ -1,7 +1,7 @@
 use cgmath::{SquareMatrix, Vector4};
 
 use crate::camera::{OrthographicCamera, Camera};
-use crate::ecs::{Mutations, ECS, Entity, Mutation};
+use gouda_ecs::{Mutations, ECS, Entity, Mutation};
 use crate::input::GameInput;
 use crate::types::Bounds;
 

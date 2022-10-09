@@ -4,6 +4,8 @@
 use anymap::AnyMap;
 use std::fmt::Debug;
 
+pub mod genindex;
+
 use crate::genindex::{GenIndex, GenIndexArray, GenIndexAllocator};
 
 pub type Entity = GenIndex;

@@ -1,8 +1,5 @@
 use cgmath::{Matrix4, SquareMatrix, Vector3};
-use gouda::rendering::{
-    Renderer,
-    Scene};
-use std::rc::Rc;
+use gouda::rendering::Scene;
 use gouda::ecs::ECS;
 
 pub struct Cursor {

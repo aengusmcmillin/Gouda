@@ -1,10 +1,9 @@
 [package]
-name = "sandbox"
-version = "0.1.0"
+name = "gouda_transform"
+version = "0.0.0"
 authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
+
 [dependencies]
-gouda = { path = "../../" }
-rand = "0.7.2"
 cgmath = "0.18.0"

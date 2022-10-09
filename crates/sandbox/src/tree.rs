@@ -1,6 +1,6 @@
 use crate::tilemap::Tile;
 use gouda::ecs::{ECS, Entity};
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 use gouda::rendering::sprites::SpriteComponent;
 
 pub fn create_tree(ecs: &mut ECS, tile: Entity) {

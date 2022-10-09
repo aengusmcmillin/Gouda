@@ -1,4 +1,4 @@
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 use gouda::rendering::drawable::ShapeDrawable;
 use gouda::ecs::{ECS, Entity, Mutation, Mutations};
 use crate::building::DamageDealt;

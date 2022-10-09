@@ -1,7 +1,7 @@
 use cgmath::Vector2;
-use gouda::rendering::sprites::{SpriteComponent, ColorBoxComponent, SpriteSheetComponent};
+use gouda::rendering::sprites::SpriteComponent;
 use gouda::ecs::{ECS, Mutations, Mutation, Entity, GameSceneId};
-use gouda::TransformComponent;
+use gouda::transform::TransformComponent;
 
 use crate::tilemap::{Tile, Tilemap};
 use crate::building::{Turret, turret_attack_system, Arrow, arrow_move_system, DamageDealt};
