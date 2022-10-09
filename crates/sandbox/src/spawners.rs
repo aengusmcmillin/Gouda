@@ -1,9 +1,9 @@
-use gouda::transform::TransformComponent;
-use gouda::ecs::{ECS, Mutations, Entity, Mutation};
-use gouda::rendering::drawable::ShapeDrawable;
-use crate::Monster;
-use gouda::input::GameInput;
 use crate::spawners::MonsterType::Wolf;
+use crate::Monster;
+use gouda::ecs::{Entity, Mutation, Mutations, ECS};
+use gouda::input::GameInput;
+use gouda::rendering::drawable::ShapeDrawable;
+use gouda::transform::TransformComponent;
 
 pub struct ProcessSpawnerMutation {
     entity: Entity,
@@ -30,7 +30,12 @@ pub fn wave_spawner_system(ecs: &ECS, _dt: f32) -> Mutations {
     let input = ecs.read_res::<GameInput>();
 
     for (_, transform, entity) in ecs.read2::<WaveSpawner, TransformComponent>() {
-        mutations.push(Box::new(ProcessSpawnerMutation {entity, dt: input.seconds_to_advance_over_update, x: transform.position.x, y: transform.position.y}));
+        mutations.push(Box::new(ProcessSpawnerMutation {
+            entity,
+            dt: input.seconds_to_advance_over_update,
+            x: transform.position.x,
+            y: transform.position.y,
+        }));
     }
 
     return mutations;
@@ -60,7 +65,10 @@ impl WaveSpawner {
             spawn_max_cd: spawn_cd,
             spawn_current_cd: spawn_cd,
         };
-        ecs.build_entity().add(spawner).add(transform).add(color_box);
+        ecs.build_entity()
+            .add(spawner)
+            .add(transform)
+            .add(color_box);
     }
 
     pub fn progress(&mut self, dt: f32) -> Option<MonsterSpec> {
@@ -106,16 +114,64 @@ pub struct SpawnerSpec {
 pub struct GameDay {
     pub day_length: f32,
     pub night_length: f32,
-    pub waves: Vec<SpawnerSpec>
+    pub waves: Vec<SpawnerSpec>,
 }
 
 pub fn generate_days() -> Vec<GameDay> {
     return vec![
-        GameDay {day_length: 5., night_length: 20., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 15]}}]},
-        GameDay {day_length: 5., night_length: 30., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 20]}}]},
-        GameDay {day_length: 5., night_length: 40., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 25]}}]},
-        GameDay {day_length: 5., night_length: 50., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 30]}}]},
-        GameDay {day_length: 5., night_length: 60., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 35]}}]},
-        GameDay {day_length: 5., night_length: 70., waves: vec![SpawnerSpec {wave: WaveSpec {monsters: vec![MonsterSpec {monster_type: Wolf}; 40]}}]},
-    ]
+        GameDay {
+            day_length: 5.,
+            night_length: 20.,
+            waves: vec![SpawnerSpec {
+                wave: WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: Wolf }; 15],
+                },
+            }],
+        },
+        GameDay {
+            day_length: 5.,
+            night_length: 30.,
+            waves: vec![SpawnerSpec {
+                wave: WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: Wolf }; 20],
+                },
+            }],
+        },
+        GameDay {
+            day_length: 5.,
+            night_length: 40.,
+            waves: vec![SpawnerSpec {
+                wave: WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: Wolf }; 25],
+                },
+            }],
+        },
+        GameDay {
+            day_length: 5.,
+            night_length: 50.,
+            waves: vec![SpawnerSpec {
+                wave: WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: Wolf }; 30],
+                },
+            }],
+        },
+        GameDay {
+            day_length: 5.,
+            night_length: 60.,
+            waves: vec![SpawnerSpec {
+                wave: WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: Wolf }; 35],
+                },
+            }],
+        },
+        GameDay {
+            day_length: 5.,
+            night_length: 70.,
+            waves: vec![SpawnerSpec {
+                wave: WaveSpec {
+                    monsters: vec![MonsterSpec { monster_type: Wolf }; 40],
+                },
+            }],
+        },
+    ];
 }

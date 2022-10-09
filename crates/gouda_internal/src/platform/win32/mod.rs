@@ -1,13 +1,13 @@
 #![cfg(target_os = "windows")]
 
-pub mod window;
 pub mod win32_input;
+pub mod window;
 
 use gouda_rendering::Renderer;
 
+use crate::platform::win32::window::Window;
 use crate::window::{GameWindow, WindowProps};
 use std::rc::Rc;
-use crate::platform::win32::window::Window;
 
 pub struct Win32PlatformLayer {
     window: GameWindow,

@@ -1,19 +1,18 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
-
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn texture_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("position", ShaderDataType::Float4),
-            BufferElement::new("texCoord", ShaderDataType::Float2)
-        ]
-    )
+    return BufferLayout::new(vec![
+        BufferElement::new("position", ShaderDataType::Float4),
+        BufferElement::new("texCoord", ShaderDataType::Float2),
+    ]);
 }
 
 pub fn texture_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        texture_shader_layout(), 
+        renderer,
+        texture_shader_layout(),
         TEXTURE_VERTEX_SHADER,
         TEXTURE_FRAGMENT_SHADER,
     );

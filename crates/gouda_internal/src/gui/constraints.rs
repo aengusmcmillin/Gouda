@@ -9,12 +9,17 @@ pub struct GuiConstraints {
 }
 
 impl GuiConstraints {
-    pub fn new(x: Constraint, y: Constraint, width: Constraint, height: Constraint) -> GuiConstraints {
+    pub fn new(
+        x: Constraint,
+        y: Constraint,
+        width: Constraint,
+        height: Constraint,
+    ) -> GuiConstraints {
         GuiConstraints {
             x,
             y,
             width,
-            height
+            height,
         }
     }
 
@@ -26,9 +31,9 @@ impl GuiConstraints {
 
         if w == 0. && h == 0. {
             panic!("Bad width and height");
-        } else if let Constraint::AspectConstraint {aspect} = self.width {
+        } else if let Constraint::AspectConstraint { aspect } = self.width {
             w = h * aspect;
-        } else if let Constraint::AspectConstraint {aspect} = self.height {
+        } else if let Constraint::AspectConstraint { aspect } = self.height {
             h = w * aspect;
         }
 
@@ -39,32 +44,23 @@ impl GuiConstraints {
             y -= h * 0.5;
         }
 
-        return Bounds {
-            x,
-            y,
-            w,
-            h
-        }
+        return Bounds { x, y, w, h };
     }
 }
 
 #[derive(Debug)]
 pub enum Constraint {
-    RelativeConstraint{size: f32},
+    RelativeConstraint { size: f32 },
     CenterConstraint,
-    PixelConstraint{size: i32},
-    AspectConstraint{aspect: f32},
+    PixelConstraint { size: i32 },
+    AspectConstraint { aspect: f32 },
 }
 
 impl Constraint {
     pub fn calculate(&self, min: f32, max: f32) -> f32 {
         match self {
-            Constraint::RelativeConstraint { size } => {
-                min + (max - min) * size
-            }
-            Constraint::CenterConstraint => {
-                (min + max) / 2.
-            }
+            Constraint::RelativeConstraint { size } => min + (max - min) * size,
+            Constraint::CenterConstraint => (min + max) / 2.,
             Constraint::PixelConstraint { size } => {
                 if *size < 0 {
                     max - min + *size as f32
@@ -72,9 +68,7 @@ impl Constraint {
                     *size as f32
                 }
             }
-            Constraint::AspectConstraint { aspect: _ } => {
-                0.
-            }
+            Constraint::AspectConstraint { aspect: _ } => 0.,
         }
     }
 }

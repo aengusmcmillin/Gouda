@@ -1,6 +1,6 @@
+use crate::buffers2::{BufferLayout, ShaderDataType};
 use crate::camera::matrix_to_vec;
 pub use crate::platform::d3d11::{Renderer, Scene};
-use crate::buffers2::{BufferLayout, ShaderDataType};
 use cgmath::Matrix4;
 use std::ffi::OsStr;
 use std::iter::once;
@@ -9,8 +9,7 @@ use std::os::windows::ffi::OsStrExt;
 use winapi::_core::fmt::{Error, Formatter};
 use winapi::_core::ptr::null_mut;
 use winapi::ctypes::c_void;
-use winapi::shared::dxgiformat::DXGI_FORMAT_R32G32_FLOAT;
-use winapi::shared::dxgiformat::*;
+use winapi::shared::dxgiformat::{DXGI_FORMAT_R32G32_FLOAT, *};
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11::{
     ID3D11InputLayout, ID3D11PixelShader, ID3D11VertexShader, D3D11_APPEND_ALIGNED_ELEMENT,
@@ -262,7 +261,11 @@ impl Shader {
     }
 
     pub fn upload_fragment_uniform_float3(&self, scene: &Scene, offset: u32, uniform: [f32; 3]) {
-        let buffer = FragmentConstantBuffer::new(scene.renderer, offset, [uniform[0], uniform[1], uniform[2], 0.].to_vec());
+        let buffer = FragmentConstantBuffer::new(
+            scene.renderer,
+            offset,
+            [uniform[0], uniform[1], uniform[2], 0.].to_vec(),
+        );
         buffer.bind(scene);
     }
 }

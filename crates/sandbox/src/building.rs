@@ -1,9 +1,9 @@
-use gouda::transform::TransformComponent;
-use gouda::ecs::{ECS, Entity, Mutations, Mutation};
-use gouda::rendering::sprites::SpriteComponent;
-use crate::tilemap::Tile;
-use gouda::input::GameInput;
 use crate::monster::Monster;
+use crate::tilemap::Tile;
+use gouda::ecs::{Entity, Mutation, Mutations, ECS};
+use gouda::input::GameInput;
+use gouda::rendering::sprites::SpriteComponent;
+use gouda::transform::TransformComponent;
 
 #[derive(Debug)]
 pub struct Turret {
@@ -18,20 +18,23 @@ impl Turret {
     pub fn create(ecs: &mut ECS, tile: Entity) {
         let tile = ecs.read::<Tile>(&tile).unwrap();
 
-        let location = TransformComponent::builder().position(tile.x as f32, tile.y as f32).scale(0.7, 0.7).build();
+        let location = TransformComponent::builder()
+            .position(tile.x as f32, tile.y as f32)
+            .scale(0.7, 0.7)
+            .build();
         let turret = Turret {
             selected: false,
             fire_cooldown: 1.,
             fire_timer: 1.,
             range: 3.,
-            range_indicator: None
+            range_indicator: None,
         };
 
         let turret_sprite = SpriteComponent::new(ecs, "./assets/bitmap/turret2.png".to_string());
         ecs.build_entity()
-           .add(location)
-           .add(turret_sprite)
-           .add(turret);
+            .add(location)
+            .add(turret_sprite)
+            .add(turret);
     }
 }
 
@@ -46,9 +49,18 @@ impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
         let sprite = SpriteComponent::new(ecs, "./assets/bitmap/arrow.png".to_string());
         ecs.build_entity()
-        .add(TransformComponent::builder().position(x, y).scale(0.3, 0.1).build())
-        .add(sprite)
-        .add(Arrow {target, speed: 5., damage: 1});
+            .add(
+                TransformComponent::builder()
+                    .position(x, y)
+                    .scale(0.3, 0.1)
+                    .build(),
+            )
+            .add(sprite)
+            .add(Arrow {
+                target,
+                speed: 5.,
+                damage: 1,
+            });
     }
 }
 
@@ -68,7 +80,7 @@ impl Mutation for ArrowCollisionMutation {
         let damage = arrow.damage;
         ecs.delete_entity(&self.arrow);
 
-        ecs.add_component(&target, DamageDealt {damage});
+        ecs.add_component(&target, DamageDealt { damage });
     }
 }
 
@@ -101,12 +113,13 @@ pub fn arrow_move_system(ecs: &ECS, _dt: f32) -> Mutations {
     for (arrow, arrow_location, entity) in ecs.read2::<Arrow, TransformComponent>() {
         let target = ecs.read::<TransformComponent>(&arrow.target);
         if let Some(monster) = target {
-            let v = (monster.position.x - arrow_location.position.x, monster.position.y - arrow_location.position.y);
+            let v = (
+                monster.position.x - arrow_location.position.x,
+                monster.position.y - arrow_location.position.y,
+            );
             let dist = (v.0 * v.0 + v.1 * v.1).sqrt();
             if dist < 0.5 {
-                mutations.push(Box::new(ArrowCollisionMutation {
-                    arrow: entity,
-                }));
+                mutations.push(Box::new(ArrowCollisionMutation { arrow: entity }));
             } else {
                 mutations.push(Box::new(MoveArrowTowardsMutation {
                     arrow: entity,
@@ -115,15 +128,12 @@ pub fn arrow_move_system(ecs: &ECS, _dt: f32) -> Mutations {
                 }))
             }
         } else {
-            mutations.push(Box::new(ArrowDestroyMutation {
-                arrow: entity,
-            }));
+            mutations.push(Box::new(ArrowDestroyMutation { arrow: entity }));
         }
     }
 
     return mutations;
 }
-
 
 pub struct FireArrowMutation {
     pub turret: Entity,
@@ -179,10 +189,16 @@ pub fn turret_attack_system(ecs: &ECS, _dt: f32) -> Mutations {
         if let Some((monster, dist)) = closest {
             if turret.fire_timer - input.seconds_to_advance_over_update <= 0. {
                 if dist < turret.range {
-                    mutations.push(Box::new(FireArrowMutation {turret: e, target: monster}));
+                    mutations.push(Box::new(FireArrowMutation {
+                        turret: e,
+                        target: monster,
+                    }));
                 }
             } else {
-                mutations.push(Box::new(DecrTurretTimerMutation {turret: e, dt: input.seconds_to_advance_over_update}));
+                mutations.push(Box::new(DecrTurretTimerMutation {
+                    turret: e,
+                    dt: input.seconds_to_advance_over_update,
+                }));
             }
         }
     }

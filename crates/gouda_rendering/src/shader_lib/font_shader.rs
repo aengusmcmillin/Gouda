@@ -1,25 +1,23 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
-
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn font_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("POSITION", ShaderDataType::Float4),
-            BufferElement::new("TEXCOORD", ShaderDataType::Float2)
-        ]
-    )
+    return BufferLayout::new(vec![
+        BufferElement::new("POSITION", ShaderDataType::Float4),
+        BufferElement::new("TEXCOORD", ShaderDataType::Float2),
+    ]);
 }
 
 pub fn font_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        font_shader_layout(), 
+        renderer,
+        font_shader_layout(),
         FONT_VERTEX_SHADER,
         FONT_FRAGMENT_SHADER,
     );
     return shader;
 }
-
 
 #[cfg(target_os = "macos")]
 pub const FONT_VERTEX_SHADER: &str = "
@@ -102,4 +100,3 @@ float4 PSMain(VSOut vOut) : SV_Target
     return float4(color[0], color[1], color[2], alpha);
 }
 ";
-

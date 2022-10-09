@@ -1,18 +1,17 @@
 #![cfg(target_os = "macos")]
 
-use crate::window::{GameWindow, WindowProps};
-use cocoa::foundation::NSAutoreleasePool;
-use cocoa::base::{nil, id};
-use cocoa::appkit::{NSApp, NSApplication};
-use cocoa::appkit::{NSApplicationActivationPolicy::NSApplicationActivationPolicyRegular,
-                    NSApplicationPresentationOptions};
-use objc::runtime::YES;
-use crate::rendering::Renderer;
 use crate::platform::osx::osx_window::OsxWindow;
+use crate::rendering::Renderer;
+use crate::window::{GameWindow, WindowProps};
+use cocoa::appkit::NSApplicationActivationPolicy::NSApplicationActivationPolicyRegular;
+use cocoa::appkit::{NSApp, NSApplication, NSApplicationPresentationOptions};
+use cocoa::base::{id, nil};
+use cocoa::foundation::NSAutoreleasePool;
+use objc::runtime::YES;
 use std::rc::Rc;
 
-pub mod osx_window;
 pub mod osx_input;
+pub mod osx_window;
 
 #[allow(dead_code)]
 pub struct OSXPlatformLayer {
@@ -23,7 +22,7 @@ pub struct OSXPlatformLayer {
 
 impl OSXPlatformLayer {
     pub fn new(props: WindowProps) -> Self {
-        let pool = unsafe {NSAutoreleasePool::new(nil)};
+        let pool = unsafe { NSAutoreleasePool::new(nil) };
         unsafe {
             let application = NSApp();
             application.setActivationPolicy_(NSApplicationActivationPolicyRegular);
@@ -57,6 +56,3 @@ impl OSXPlatformLayer {
         Rc::get_mut(&mut self.renderer).unwrap()
     }
 }
-
-
-

@@ -1,24 +1,24 @@
 extern crate winapi;
 
-use crate::window::{GameWindowImpl, WindowProps};
-use crate::input::{GameInput};
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::_core::ptr::null_mut;
-use winapi::um::winuser::{WNDCLASSW, CS_HREDRAW, CS_VREDRAW, CS_OWNDC, MessageBoxA, RegisterClassW, CreateWindowExW};
-use winapi::shared::minwindef::{UINT};
-use winapi::shared::windef::{HWND};
-use winapi::um::xinput::{XINPUT_VIBRATION, XINPUT_STATE};
-use std::ffi::{OsStr, CString};
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
-use winapi::shared::minwindef::{LRESULT, LPARAM, WPARAM};
-use winapi::shared::windef::{POINT};
-use self::winapi::um::libloaderapi::{LoadLibraryW, GetProcAddress};
 use self::winapi::shared::minwindef::{__some_function, DWORD};
-use std::mem::transmute;
+use self::winapi::um::libloaderapi::{GetProcAddress, LoadLibraryW};
 use self::winapi::um::winuser::*;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use crate::input::GameInput;
 use crate::platform::win32::win32_input::{win32_process_keyboard, win32_process_keyboard_message};
+use crate::window::{GameWindowImpl, WindowProps};
+use std::ffi::{CString, OsStr};
+use std::iter::once;
+use std::mem::transmute;
+use std::os::windows::ffi::OsStrExt;
+use winapi::_core::ptr::null_mut;
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
+use winapi::shared::windef::{HWND, POINT};
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::winuser::{
+    CreateWindowExW, MessageBoxA, RegisterClassW, CS_HREDRAW, CS_OWNDC, CS_VREDRAW, WNDCLASSW,
+};
+use winapi::um::xinput::{XINPUT_STATE, XINPUT_VIBRATION};
 
 trait Empty {
     fn empty() -> Self;
@@ -43,7 +43,6 @@ impl Empty for POINT {
     }
 }
 
-
 pub struct Window {
     pub hwnd: HWND,
     props: WindowProps,
@@ -52,12 +51,18 @@ pub struct Window {
 
 impl Window {
     pub fn new(props: WindowProps) -> Window {
-        let window = create_window("GoudaWindowClass", props.title.as_str(), props.width as u32, props.height as u32).unwrap();
+        let window = create_window(
+            "GoudaWindowClass",
+            props.title.as_str(),
+            props.width as u32,
+            props.height as u32,
+        )
+        .unwrap();
 
         let mut input = GameInput::default();
         input.seconds_to_advance_over_update = props.target_ms_per_frame / 1000.;
 
-        unsafe {ShowWindow(window, SW_SHOW)};
+        unsafe { ShowWindow(window, SW_SHOW) };
         Self {
             hwnd: window,
             props,
@@ -70,7 +75,7 @@ impl GameWindowImpl for Window {
     fn capture_input(&mut self) -> GameInput {
         self.input = GameInput::from(&self.input);
         let mut msg = MSG::empty();
-        while unsafe {PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) != 0} {
+        while unsafe { PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) != 0 } {
             match msg.message {
                 WM_MOUSEMOVE => {
                     let x = GET_X_LPARAM(msg.lParam);
@@ -105,12 +110,10 @@ impl GameWindowImpl for Window {
                     let is_down = (msg.lParam & (1 << 31)) == 0;
                     win32_process_keyboard(&mut self.input.keyboard, vkcode, was_down, is_down);
                 }
-                _ => {
-                    unsafe {
-                        TranslateMessage(&msg);
-                        DispatchMessageW(&msg);
-                    }
-                }
+                _ => unsafe {
+                    TranslateMessage(&msg);
+                    DispatchMessageW(&msg);
+                },
             }
         }
         return self.input.clone();
@@ -136,12 +139,10 @@ unsafe extern "system" fn win32_handle_proc(
     lparam: LPARAM,
 ) -> LRESULT {
     match message {
-        WM_CLOSE => {
-            0
-        }
+        WM_CLOSE => 0,
         _ => {
             return DefWindowProcW(window, message, wparam, lparam);
-        },
+        }
     }
 }
 fn win32_string(value: &str) -> Vec<u16> {
@@ -198,7 +199,7 @@ fn create_window(class_name: &str, title: &str, width: u32, height: u32) -> Opti
         hInstance: handle_instance,
         lpszClassName: class_name.as_ptr(),
         hIcon: null_mut(),
-        hCursor: unsafe {LoadCursorW(handle_instance, MAKEINTRESOURCEW(230))},
+        hCursor: unsafe { LoadCursorW(handle_instance, MAKEINTRESOURCEW(230)) },
         hbrBackground: null_mut(),
         lpszMenuName: null_mut(),
     };

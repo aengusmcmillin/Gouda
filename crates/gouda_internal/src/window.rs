@@ -4,7 +4,6 @@ pub struct GameWindow {
     game_window_impl: Box<dyn GameWindowImpl>,
 }
 
-
 impl GameWindow {
     pub fn new(platform_impl: Box<dyn GameWindowImpl>) -> Self {
         Self {
@@ -44,6 +43,6 @@ pub struct WindowProps {
 }
 
 pub enum WindowEvent {
-    ResizeEvent {width: f32, height: f32},
+    ResizeEvent { width: f32, height: f32 },
     CloseEvent,
 }

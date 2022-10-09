@@ -1,8 +1,8 @@
 use cgmath::{SquareMatrix, Vector4};
 
-use gouda_rendering::camera::{OrthographicCamera, Camera};
-use gouda_ecs::{Mutations, ECS, Entity, Mutation};
 use crate::input::GameInput;
+use gouda_ecs::{Entity, Mutation, Mutations, ECS};
+use gouda_rendering::camera::{Camera, OrthographicCamera};
 use gouda_types::Bounds;
 
 #[derive(Debug)]
@@ -55,7 +55,7 @@ impl HexMouseCaptureArea {
             clicked_buttons: [false; 5],
             released_buttons: [false; 5],
             center,
-            size
+            size,
         }
     }
 
@@ -69,7 +69,6 @@ impl HexMouseCaptureArea {
         return true;
     }
 }
-
 
 pub struct MouseCaptureMutation {
     area: Entity,
@@ -104,12 +103,17 @@ pub struct ClearOthersMutation {
 
 impl Mutation for ClearOthersMutation {
     fn apply(&self, ecs: &mut ECS) {
-        let to_clear: Vec<Entity> = ecs.get1::<MouseCaptureArea>().iter().filter(|&&e| {
-            if let Some(excluded) = self.excluded {
-                return e != excluded;
-            }
-            return true;
-        }).map(|&e| e.clone()).collect();
+        let to_clear: Vec<Entity> = ecs
+            .get1::<MouseCaptureArea>()
+            .iter()
+            .filter(|&&e| {
+                if let Some(excluded) = self.excluded {
+                    return e != excluded;
+                }
+                return true;
+            })
+            .map(|&e| e.clone())
+            .collect();
 
         for e in to_clear {
             let area = ecs.write::<MouseCaptureArea>(&e).unwrap();
@@ -119,12 +123,17 @@ impl Mutation for ClearOthersMutation {
             area.released_buttons = [false; 5];
         }
 
-        let to_clear: Vec<Entity> = ecs.get1::<HexMouseCaptureArea>().iter().filter(|&&e| {
-            if let Some(excluded) = self.excluded {
-                return e != excluded;
-            }
-            return true;
-        }).map(|&e| e.clone()).collect();
+        let to_clear: Vec<Entity> = ecs
+            .get1::<HexMouseCaptureArea>()
+            .iter()
+            .filter(|&&e| {
+                if let Some(excluded) = self.excluded {
+                    return e != excluded;
+                }
+                return true;
+            })
+            .map(|&e| e.clone())
+            .collect();
 
         for e in to_clear {
             let area = ecs.write::<HexMouseCaptureArea>(&e).unwrap();
@@ -136,20 +145,19 @@ impl Mutation for ClearOthersMutation {
     }
 }
 
-
 pub fn mouse_capture_system(ecs: &ECS, _dt: f32) -> Mutations {
     let camera = ecs.read1::<OrthographicCamera>()[0].0;
 
     let mut layers = ecs.read2::<MouseCaptureLayer, ActiveCaptureLayer>();
     layers.sort_by(|a, b| b.0.sort_index.cmp(&a.0.sort_index));
 
-
     let input = ecs.read_res::<GameInput>();
     let mouse_x = input.mouse.x;
     let mouse_y = 900 - input.mouse.y;
     let screen_mouse_x = mouse_x as f32 / 450. - 1.;
     let screen_mouse_y = mouse_y as f32 / 450. - 1.;
-    let mut mouse_world_pos = camera.get_view_projection_matrix().invert().unwrap() * Vector4::new(screen_mouse_x, screen_mouse_y, 0., 1.);
+    let mut mouse_world_pos = camera.get_view_projection_matrix().invert().unwrap()
+        * Vector4::new(screen_mouse_x, screen_mouse_y, 0., 1.);
     mouse_world_pos.w = 1.0 / mouse_world_pos.w;
     mouse_world_pos.x /= mouse_world_pos.w;
     mouse_world_pos.y /= mouse_world_pos.w;
@@ -188,8 +196,15 @@ pub fn mouse_capture_system(ecs: &ECS, _dt: f32) -> Mutations {
                 };
                 if area.bounds.contains_point(x, y) {
                     return vec![
-                        Box::new(MouseCaptureMutation {area: area_e.clone(), down_buttons, clicked_buttons, released_buttons}), 
-                        Box::new(ClearOthersMutation {excluded: Some(area_e.clone())})
+                        Box::new(MouseCaptureMutation {
+                            area: area_e.clone(),
+                            down_buttons,
+                            clicked_buttons,
+                            released_buttons,
+                        }),
+                        Box::new(ClearOthersMutation {
+                            excluded: Some(area_e.clone()),
+                        }),
                     ];
                 }
             }
@@ -198,13 +213,20 @@ pub fn mouse_capture_system(ecs: &ECS, _dt: f32) -> Mutations {
             if let Some(hex_area) = hex_area {
                 if hex_area.overlaps_mouse([mouse_world_pos.x as f32, mouse_world_pos.y as f32]) {
                     return vec![
-                        Box::new(MouseCaptureMutation {area: area_e.clone(), down_buttons, clicked_buttons, released_buttons}), 
-                        Box::new(ClearOthersMutation {excluded: Some(area_e.clone())})
+                        Box::new(MouseCaptureMutation {
+                            area: area_e.clone(),
+                            down_buttons,
+                            clicked_buttons,
+                            released_buttons,
+                        }),
+                        Box::new(ClearOthersMutation {
+                            excluded: Some(area_e.clone()),
+                        }),
                     ];
                 }
             }
         }
     }
 
-    return vec![Box::new(ClearOthersMutation {excluded: None})];
+    return vec![Box::new(ClearOthersMutation { excluded: None })];
 }

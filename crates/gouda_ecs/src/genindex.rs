@@ -1,4 +1,4 @@
-// Generation Index 
+// Generation Index
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct GenIndex {
     pub index: usize,
@@ -27,15 +27,24 @@ impl GenIndexAllocator {
 
     pub fn allocate(&mut self) -> GenIndex {
         if self.free.is_empty() {
-            self.entries.push(GenIndexAllocationEntry {is_free: false, generation: 1});
+            self.entries.push(GenIndexAllocationEntry {
+                is_free: false,
+                generation: 1,
+            });
             let index = self.entries.len() - 1;
-            return GenIndex {index, generation: 1};
+            return GenIndex {
+                index,
+                generation: 1,
+            };
         } else {
             let e = self.free.pop().unwrap();
             let entry = self.entries.get_mut(e).unwrap();
             entry.is_free = false;
             entry.generation += 1;
-            return GenIndex {index: e, generation: entry.generation};
+            return GenIndex {
+                index: e,
+                generation: entry.generation,
+            };
         }
     }
 
@@ -49,7 +58,7 @@ impl GenIndexAllocator {
                 entry.is_free = true;
                 self.free.push(index.index);
                 return true;
-            },
+            }
             None => {
                 return false;
             }
@@ -80,7 +89,10 @@ impl<T> GenIndexArray<T> {
             self.0.push(None);
         }
         let entry = self.0.get_mut(index.index).unwrap();
-        *entry = Some(ArrayEntry {value, generation: index.generation})
+        *entry = Some(ArrayEntry {
+            value,
+            generation: index.generation,
+        })
     }
 
     pub fn clear(&mut self, index: GenIndex) {
@@ -94,47 +106,41 @@ impl<T> GenIndexArray<T> {
     pub fn get(&self, index: GenIndex) -> Option<&T> {
         let entry = self.0.get(index.index);
         match entry {
-            Some(entry) => {
-                match entry {
-                    Some(entry) => {
-                        if entry.generation == index.generation {
-                            Some(&entry.value)
-                        } else {
-                            None
-                        }
-
-                    },
-                    None => { None }
+            Some(entry) => match entry {
+                Some(entry) => {
+                    if entry.generation == index.generation {
+                        Some(&entry.value)
+                    } else {
+                        None
+                    }
                 }
+                None => None,
             },
-            None => { None }
+            None => None,
         }
     }
 
     pub fn get_mut(&mut self, index: GenIndex) -> Option<&mut T> {
         let entry = self.0.get_mut(index.index);
         match entry {
-            Some(entry) => {
-                match entry {
-                    Some(entry) => {
-                        if entry.generation == index.generation {
-                            Some(&mut entry.value)
-                        } else {
-                            None
-                        }
-
-                    },
-                    None => { None }
+            Some(entry) => match entry {
+                Some(entry) => {
+                    if entry.generation == index.generation {
+                        Some(&mut entry.value)
+                    } else {
+                        None
+                    }
                 }
+                None => None,
             },
-            None => { None }
+            None => None,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{GenIndexArray, GenIndexAllocator};
+    use super::{GenIndexAllocator, GenIndexArray};
 
     #[test]
     fn can_set() {

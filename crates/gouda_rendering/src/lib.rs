@@ -1,32 +1,32 @@
-pub mod drawable;
-pub mod sprites;
-pub mod shapes;
 pub mod buffers2;
+pub mod camera;
+pub mod drawable;
+pub mod font;
+pub mod font_library;
 pub mod model;
 pub mod platform;
 pub mod shader_lib;
-pub mod font;
-pub mod font_library;
-pub mod camera;
+pub mod shapes;
+pub mod sprites;
 
 #[cfg(target_os = "macos")]
-pub use crate::platform::metal::Renderer as Renderer;
+pub use crate::platform::metal::buffers;
 #[cfg(target_os = "macos")]
-pub use crate::platform::metal::Scene as Scene;
+pub use crate::platform::metal::shader;
 #[cfg(target_os = "macos")]
-pub use crate::platform::metal::buffers as buffers;
+pub use crate::platform::metal::texture;
 #[cfg(target_os = "macos")]
-pub use crate::platform::metal::shader as shader;
+pub use crate::platform::metal::Renderer;
 #[cfg(target_os = "macos")]
-pub use crate::platform::metal::texture as texture;
+pub use crate::platform::metal::Scene;
 
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d11::Renderer as Renderer;
+pub use crate::platform::d3d11::buffers;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d11::Scene as Scene;
+pub use crate::platform::d3d11::shader;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d11::buffers as buffers;
+pub use crate::platform::d3d11::texture;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d11::shader as shader;
+pub use crate::platform::d3d11::Renderer;
 #[cfg(target_os = "windows")]
-pub use crate::platform::d3d11::texture as texture;
+pub use crate::platform::d3d11::Scene;

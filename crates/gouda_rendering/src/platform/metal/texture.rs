@@ -1,8 +1,8 @@
-use metal::{Texture, TextureDescriptor, MTLPixelFormat, MTLRegion, MTLOrigin, MTLSize};
+use crate::images::Image;
 use crate::platform::metal::{Renderer, Scene};
+use metal::{MTLOrigin, MTLPixelFormat, MTLRegion, MTLSize, Texture, TextureDescriptor};
 use std::mem;
 use std::os::raw::c_void;
-use crate::images::Image;
 
 #[derive(Debug)]
 pub struct RenderableTexture {
@@ -21,21 +21,23 @@ impl RenderableTexture {
         let metal_texture = renderer.device.new_texture(&descriptor);
 
         let region = MTLRegion {
-            origin: MTLOrigin {x: 0, y: 0, z: 0},
-            size: MTLSize {width, height, depth: 1 }
+            origin: MTLOrigin { x: 0, y: 0, z: 0 },
+            size: MTLSize {
+                width,
+                height,
+                depth: 1,
+            },
         };
-        let data: *const c_void = unsafe {
-            mem::transmute(image.raw_pixels().as_ptr())
-        };
+        let data: *const c_void = unsafe { mem::transmute(image.raw_pixels().as_ptr()) };
         metal_texture.replace_region(region, 0, 4 * width, data);
 
-        let result = Self {
-            metal_texture,
-        };
+        let result = Self { metal_texture };
         return result;
     }
 
     pub fn bind(&self, scene: &Scene) {
-        scene.encoder.set_fragment_texture(0, Some(&self.metal_texture));
+        scene
+            .encoder
+            .set_fragment_texture(0, Some(&self.metal_texture));
     }
 }

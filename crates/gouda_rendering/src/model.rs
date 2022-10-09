@@ -1,9 +1,7 @@
-use std::{
-    collections::HashMap,
-    error::Error,
-    fs::{self},
-    io::BufRead,
-};
+use std::collections::HashMap;
+use std::error::Error;
+use std::fs::{self};
+use std::io::BufRead;
 
 use crate::shader_lib::obj_model_shader::obj_model_shader_layout;
 
@@ -67,7 +65,7 @@ impl ObjModel {
             VertexBuffer::new::<Vert>(renderer, obj_model_shader_layout(), 0, verts);
         let index_buffer = if no_material_indices.len() > 0 {
             Some(IndexBuffer::new(renderer, no_material_indices))
-        }  else {
+        } else {
             None
         };
 
@@ -140,83 +138,81 @@ pub fn load_obj_file(path: &'static str) -> Result<ObjFile, Box<dyn Error>> {
     let mut active_material = None;
     let mut faces = vec![];
 
-    file.lines().for_each(|l| {
-        match l {
-            Ok(line) => {
-                if line.is_empty() || line.starts_with("#") {
-                    return;
-                }
-
-                let line: Vec<&str> = line.split(" ").collect();
-
-                match line[0] {
-                    "v" => {
-                        let x = line[1].parse::<f32>().unwrap();
-                        let y = line[2].parse::<f32>().unwrap();
-                        let z = line[3].parse::<f32>().unwrap();
-                        vertices.push([x, y, z, 1.]);
-                    }
-                    "vt" => {
-                        let u = line[1].parse::<f32>().unwrap();
-                        let v = if line.len() > 2 {
-                            line[2].parse::<f32>().unwrap()
-                        } else {
-                            0.
-                        };
-                        let w = if line.len() > 3 {
-                            line[3].parse::<f32>().unwrap()
-                        } else {
-                            0.
-                        };
-                        tex_coords.push([u, v, w])
-                    }
-                    "vn" => {
-                        let x = line[1].parse::<f32>().unwrap();
-                        let y = line[2].parse::<f32>().unwrap();
-                        let z = line[3].parse::<f32>().unwrap();
-                        vertex_normals.push([x, y, z]);
-                    }
-                    "vp" => {}
-                    "f" => {
-                        let num_verts = line.len() - 1;
-                        let mut verts = vec![];
-                        for i in 0..num_verts {
-                            let vert: Vec<&str> = line[i + 1].split('/').collect();
-                            let index = vert[0].parse::<u32>().unwrap();
-                            let texcoord_index = if vert.len() > 1 {
-                                vert[1].parse::<u32>().unwrap()
-                            } else {
-                                0
-                            };
-                            let normal_index = if vert.len() > 2 {
-                                vert[2].parse::<u32>().unwrap()
-                            } else {
-                                0
-                            };
-                            let vert = ObjVert {
-                                index: index as usize,
-                                normal_index: normal_index as usize,
-                                texcoord_index: texcoord_index as usize,
-                            };
-                            verts.push(vert);
-                        }
-                        let face = ObjFace {
-                            verts,
-                            material: active_material.clone(),
-                        };
-                        faces.push(face);
-                    }
-                    "usemtl" => {
-                        active_material = Some(line[1].to_string());
-                    }
-                    "mtllib" => {
-                        material_file_names.push(line[1].to_string());
-                    }
-                    default => {}
-                }
+    file.lines().for_each(|l| match l {
+        Ok(line) => {
+            if line.is_empty() || line.starts_with("#") {
+                return;
             }
-            _ => (),
+
+            let line: Vec<&str> = line.split(" ").collect();
+
+            match line[0] {
+                "v" => {
+                    let x = line[1].parse::<f32>().unwrap();
+                    let y = line[2].parse::<f32>().unwrap();
+                    let z = line[3].parse::<f32>().unwrap();
+                    vertices.push([x, y, z, 1.]);
+                }
+                "vt" => {
+                    let u = line[1].parse::<f32>().unwrap();
+                    let v = if line.len() > 2 {
+                        line[2].parse::<f32>().unwrap()
+                    } else {
+                        0.
+                    };
+                    let w = if line.len() > 3 {
+                        line[3].parse::<f32>().unwrap()
+                    } else {
+                        0.
+                    };
+                    tex_coords.push([u, v, w])
+                }
+                "vn" => {
+                    let x = line[1].parse::<f32>().unwrap();
+                    let y = line[2].parse::<f32>().unwrap();
+                    let z = line[3].parse::<f32>().unwrap();
+                    vertex_normals.push([x, y, z]);
+                }
+                "vp" => {}
+                "f" => {
+                    let num_verts = line.len() - 1;
+                    let mut verts = vec![];
+                    for i in 0..num_verts {
+                        let vert: Vec<&str> = line[i + 1].split('/').collect();
+                        let index = vert[0].parse::<u32>().unwrap();
+                        let texcoord_index = if vert.len() > 1 {
+                            vert[1].parse::<u32>().unwrap()
+                        } else {
+                            0
+                        };
+                        let normal_index = if vert.len() > 2 {
+                            vert[2].parse::<u32>().unwrap()
+                        } else {
+                            0
+                        };
+                        let vert = ObjVert {
+                            index: index as usize,
+                            normal_index: normal_index as usize,
+                            texcoord_index: texcoord_index as usize,
+                        };
+                        verts.push(vert);
+                    }
+                    let face = ObjFace {
+                        verts,
+                        material: active_material.clone(),
+                    };
+                    faces.push(face);
+                }
+                "usemtl" => {
+                    active_material = Some(line[1].to_string());
+                }
+                "mtllib" => {
+                    material_file_names.push(line[1].to_string());
+                }
+                default => {}
+            }
         }
+        _ => (),
     });
 
     return Ok(ObjFile {

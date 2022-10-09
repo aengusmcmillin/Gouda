@@ -1,7 +1,7 @@
-use gouda::transform::TransformComponent;
-use gouda::rendering::drawable::ShapeDrawable;
-use gouda::ecs::{ECS, Entity, Mutation, Mutations};
 use crate::building::DamageDealt;
+use gouda::ecs::{Entity, Mutation, Mutations, ECS};
+use gouda::rendering::drawable::ShapeDrawable;
+use gouda::transform::TransformComponent;
 
 #[derive(Debug)]
 pub struct Monster {
@@ -12,8 +12,14 @@ impl Monster {
     pub fn create(ecs: &mut ECS, x_pos: f32, y_pos: f32) {
         let color = [0.7, 0.2, 0.2, 1.];
         let shape = ShapeDrawable::new("quad", "quad", color);
-        let transform = TransformComponent::builder().position(x_pos, y_pos).scale(0.8, 0.8).build();
-        ecs.build_entity().add(Monster {health: 2}).add(shape).add(transform);
+        let transform = TransformComponent::builder()
+            .position(x_pos, y_pos)
+            .scale(0.8, 0.8)
+            .build();
+        ecs.build_entity()
+            .add(Monster { health: 2 })
+            .add(shape)
+            .add(transform);
     }
 
     pub fn take_damage(&mut self, damage: u32) {
@@ -63,7 +69,12 @@ pub fn monster_move_system(ecs: &ECS, dt: f32) -> Mutations {
         } else {
             delete = true;
         }
-        mutations.push(Box::new(MonsterMoveMutation {monster, dx, dy, delete}));
+        mutations.push(Box::new(MonsterMoveMutation {
+            monster,
+            dx,
+            dy,
+            delete,
+        }));
     }
     return mutations;
 }
@@ -87,7 +98,10 @@ impl Mutation for MonsterDamageMutation {
 pub fn monster_damage_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (_, damage, entity) in ecs.read2::<Monster, DamageDealt>() {
-        mutations.push(Box::new(MonsterDamageMutation {monster: entity, damage: damage.damage}));
+        mutations.push(Box::new(MonsterDamageMutation {
+            monster: entity,
+            damage: damage.damage,
+        }));
     }
     return mutations;
 }

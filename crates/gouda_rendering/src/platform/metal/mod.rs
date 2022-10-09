@@ -1,23 +1,23 @@
 #![cfg(target_os = "macos")]
 
-use cgmath::Matrix4;
-use metal::*;
-use core_graphics::geometry::CGSize;
-use crate::camera::{Camera};
+use crate::camera::Camera;
+use crate::platform::metal::buffers::IndexBuffer;
+use crate::platform::osx::osx_window::OsxWindow;
 use crate::rendering::shapes::ShapeLibrary;
 use crate::shader_lib::ShaderLibrary;
-use crate::window::{GameWindowImpl};
-use crate::platform::osx::osx_window::OsxWindow;
+use crate::window::GameWindowImpl;
+use cgmath::Matrix4;
+use core_graphics::geometry::CGSize;
+use metal::*;
 use std::f32;
 use std::mem::size_of;
-use crate::platform::metal::buffers::{IndexBuffer};
 
 use self::shader::Shader;
 use self::texture::RenderableTexture;
 
+pub mod buffers;
 pub mod drawable;
 pub mod shader;
-pub mod buffers;
 pub mod texture;
 
 pub struct Scene<'a> {
@@ -25,7 +25,7 @@ pub struct Scene<'a> {
     command_buffer: &'a CommandBufferRef,
     drawable: &'a DrawableRef,
     pub renderer: &'a Renderer,
-    pub camera_view_projection_matrix: Matrix4<f32>
+    pub camera_view_projection_matrix: Matrix4<f32>,
 }
 
 pub trait Renderable {
@@ -42,7 +42,13 @@ impl Scene<'_> {
         self.command_buffer.commit();
     }
 
-    pub fn submit(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, color: [f32; 4]) {
+    pub fn submit(
+        &self,
+        shader: &Shader,
+        renderable: &impl Renderable,
+        transform: Matrix4<f32>,
+        color: [f32; 4],
+    ) {
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
         shader.upload_vertex_uniform_mat4(self, 1, transform);
@@ -53,15 +59,45 @@ impl Scene<'_> {
         self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
     }
 
-    pub fn submit_shape_by_name(&self, shader_name: &str, shape_name: &str, transform: Matrix4<f32>, color: [f32; 4]) {
-        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader_name.to_string()).unwrap();
-        let shape = self.renderer.shape_lib.as_ref().unwrap().get(shape_name.to_string()).unwrap();
+    pub fn submit_shape_by_name(
+        &self,
+        shader_name: &str,
+        shape_name: &str,
+        transform: Matrix4<f32>,
+        color: [f32; 4],
+    ) {
+        let shader = self
+            .renderer
+            .shader_lib
+            .as_ref()
+            .unwrap()
+            .get(shader_name.to_string())
+            .unwrap();
+        let shape = self
+            .renderer
+            .shape_lib
+            .as_ref()
+            .unwrap()
+            .get(shape_name.to_string())
+            .unwrap();
         self.submit(shader, shape, transform, color);
     }
 
     pub fn submit_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
-        let shader = self.renderer.shader_lib.as_ref().unwrap().get("texture".to_string()).unwrap();
-        let shape = self.renderer.shape_lib.as_ref().unwrap().get("texture".to_string()).unwrap();
+        let shader = self
+            .renderer
+            .shader_lib
+            .as_ref()
+            .unwrap()
+            .get("texture".to_string())
+            .unwrap();
+        let shape = self
+            .renderer
+            .shape_lib
+            .as_ref()
+            .unwrap()
+            .get("texture".to_string())
+            .unwrap();
         texture.bind(self);
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
@@ -73,19 +109,13 @@ impl Scene<'_> {
     }
 
     pub fn draw_tri_strip(&self, num_verts: u64) {
-        self.encoder.draw_primitives(
-            MTLPrimitiveType::TriangleStrip,
-            0,
-            num_verts,
-        );
+        self.encoder
+            .draw_primitives(MTLPrimitiveType::TriangleStrip, 0, num_verts);
     }
 
     pub fn draw_triangles(&self, num_verts: u64) {
-        self.encoder.draw_primitives(
-            MTLPrimitiveType::Triangle,
-            0,
-            num_verts,
-        );
+        self.encoder
+            .draw_primitives(MTLPrimitiveType::Triangle, 0, num_verts);
     }
 
     pub fn draw_indexed(&self, index_count: u64, index_buffer: &IndexBuffer) {
@@ -94,7 +124,7 @@ impl Scene<'_> {
             index_count,
             MTLIndexType::UInt16,
             &index_buffer.data,
-            0
+            0,
         );
     }
 
@@ -104,12 +134,16 @@ impl Scene<'_> {
             index_count,
             MTLIndexType::UInt16,
             &index_buffer.data,
-            0
+            0,
         );
     }
 
     pub fn bind_shader(&self, shader: String) {
-        self.renderer.shader_lib.as_ref().unwrap().bind_shader(self, shader);
+        self.renderer
+            .shader_lib
+            .as_ref()
+            .unwrap()
+            .bind_shader(self, shader);
     }
 }
 
@@ -142,13 +176,9 @@ impl Renderer {
 
         let width = window.get_width();
         let height = window.get_height();
-        layer.set_drawable_size(CGSize::new(
-            width as f64,
-            height as f64,
-        ));
+        layer.set_drawable_size(CGSize::new(width as f64, height as f64));
 
         let command_queue = device.new_command_queue();
-
 
         let mut res = Renderer {
             device,
@@ -172,10 +202,8 @@ impl Renderer {
         self.width = width as usize;
         self.height = height as usize;
         println!("Resizing {} {}", width, height);
-        self.layer.set_drawable_size(CGSize::new(
-            width as f64,
-            height as f64,
-        ));
+        self.layer
+            .set_drawable_size(CGSize::new(width as f64, height as f64));
     }
 
     pub fn get_width(&self) -> usize {
@@ -194,7 +222,13 @@ impl Renderer {
             let command_buffer = self.command_queue.new_command_buffer();
 
             let encoder = command_buffer.new_render_command_encoder(render_pass_descriptor);
-            let scene = Scene {encoder, command_buffer, drawable, renderer: self, camera_view_projection_matrix: camera.get_view_projection_matrix()};
+            let scene = Scene {
+                encoder,
+                command_buffer,
+                drawable,
+                renderer: self,
+                camera_view_projection_matrix: camera.get_view_projection_matrix(),
+            };
             return Some(scene);
         } else {
             return None;
@@ -212,10 +246,10 @@ impl Renderer {
 
 pub trait Sizeable<T> {
     fn size() -> usize {
-        return size_of::<T>()
+        return size_of::<T>();
     }
     fn stride() -> usize {
-        return size_of::<T>()
+        return size_of::<T>();
     }
 }
 

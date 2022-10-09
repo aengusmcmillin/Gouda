@@ -1,25 +1,24 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn imgui_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("pos", ShaderDataType::Float2),
-            BufferElement::new("uv", ShaderDataType::Float2),
-            BufferElement::new("col", ShaderDataType::Float4),
-        ]
-    )
+    return BufferLayout::new(vec![
+        BufferElement::new("pos", ShaderDataType::Float2),
+        BufferElement::new("uv", ShaderDataType::Float2),
+        BufferElement::new("col", ShaderDataType::Float4),
+    ]);
 }
 
 pub fn imgui_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        imgui_shader_layout(), 
+        renderer,
+        imgui_shader_layout(),
         IMGUI_VERTEX_SHADER,
         IMGUI_FRAGMENT_SHADER,
     );
     return shader;
 }
-
 
 #[cfg(target_os = "macos")]
 pub const IMGUI_VERTEX_SHADER: &str = "

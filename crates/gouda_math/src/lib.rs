@@ -1,5 +1,5 @@
-use std::ops::Mul;
 use std::f32;
+use std::ops::Mul;
 
 #[derive(Debug)]
 pub struct Vec2 {
@@ -9,10 +9,9 @@ pub struct Vec2 {
 
 impl Vec2 {
     pub fn new(x: f32, y: f32) -> Self {
-        return Self { x, y }
+        return Self { x, y };
     }
 }
-
 
 #[derive(Debug)]
 pub struct Vec3 {
@@ -23,7 +22,7 @@ pub struct Vec3 {
 
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
-        return Self { x, y, z }
+        return Self { x, y, z };
     }
 }
 
@@ -32,19 +31,17 @@ pub struct Vec4 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    pub w: f32
+    pub w: f32,
 }
 
 #[derive(Debug)]
 pub struct Mat4x4 {
-    pub data: [[f32; 4]; 4]
+    pub data: [[f32; 4]; 4],
 }
 
 impl Mat4x4 {
     pub fn new(data: [[f32; 4]; 4]) -> Self {
-        Self {
-            data
-        }
+        Self { data }
     }
 
     pub fn inverse(&self) -> Self {
@@ -54,7 +51,7 @@ impl Mat4x4 {
                 [0., 1., 0., 0.],
                 [0., 0., 1., 0.],
                 [0., 0., 0., 1.],
-            ]
+            ],
         };
     }
 
@@ -65,54 +62,69 @@ impl Mat4x4 {
                 [0., 1., 0., 0.],
                 [0., 0., 1., 0.],
                 [0., 0., 0., 1.],
-            ]
+            ],
         };
     }
 
     pub fn ortho_matrix(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) -> Self {
         return Mat4x4 {
             data: [
-                [2. / (right - left), 0., 0., -1. * ((right + left) / (right - left))],
-                [0., 2. / (top - bottom), 0., -1. * ((top + bottom) / (top - bottom))],
-                [0., 0., -2./(far - near), -1. * ((far + near) / (far - near))],
+                [
+                    2. / (right - left),
+                    0.,
+                    0.,
+                    -1. * ((right + left) / (right - left)),
+                ],
+                [
+                    0.,
+                    2. / (top - bottom),
+                    0.,
+                    -1. * ((top + bottom) / (top - bottom)),
+                ],
+                [
+                    0.,
+                    0.,
+                    -2. / (far - near),
+                    -1. * ((far + near) / (far - near)),
+                ],
                 [0., 0., 0., 1.],
-            ]
+            ],
         };
     }
 
     pub fn x_rot_matrix(x_rot_deg: f32) -> Self {
-        let x_rot = x_rot_deg * f32::consts::PI/180.0;
+        let x_rot = x_rot_deg * f32::consts::PI / 180.0;
         return Mat4x4 {
             data: [
                 [1., 0., 0., 0.],
                 [0., x_rot.cos(), -x_rot.sin(), 0.],
                 [0., x_rot.sin(), x_rot.cos(), 0.],
                 [0., 0., 0., 1.],
-            ]
+            ],
         };
     }
 
     pub fn y_rot_matrix(y_rot_deg: f32) -> Self {
-        let y_rot = y_rot_deg * f32::consts::PI/180.0;
+        let y_rot = y_rot_deg * f32::consts::PI / 180.0;
         return Mat4x4 {
             data: [
                 [y_rot.cos(), 0., y_rot.sin(), 0.],
                 [0., 1., 0., 0.],
                 [-y_rot.sin(), 0., y_rot.cos(), 0.],
                 [0., 0., 0., 1.],
-            ]
+            ],
         };
     }
 
     pub fn z_rot_matrix(z_rot_deg: f32) -> Self {
-        let z_rot = z_rot_deg * f32::consts::PI/180.0;
+        let z_rot = z_rot_deg * f32::consts::PI / 180.0;
         return Mat4x4 {
             data: [
                 [z_rot.cos(), -z_rot.sin(), 0., 0.],
                 [z_rot.sin(), z_rot.cos(), 0., 0.],
                 [0., 0., 1., 0.],
                 [0., 0., 0., 1.],
-            ]
+            ],
         };
     }
 
@@ -122,21 +134,45 @@ impl Mat4x4 {
 
     pub fn raw_data(&self) -> [f32; 16] {
         return [
-            self.data[0][0], self.data[1][0], self.data[2][0], self.data[3][0],
-            self.data[0][1], self.data[1][1], self.data[2][1], self.data[3][1],
-            self.data[0][2], self.data[1][2], self.data[2][2], self.data[3][2],
-            self.data[0][3], self.data[1][3], self.data[2][3], self.data[3][3],
+            self.data[0][0],
+            self.data[1][0],
+            self.data[2][0],
+            self.data[3][0],
+            self.data[0][1],
+            self.data[1][1],
+            self.data[2][1],
+            self.data[3][1],
+            self.data[0][2],
+            self.data[1][2],
+            self.data[2][2],
+            self.data[3][2],
+            self.data[0][3],
+            self.data[1][3],
+            self.data[2][3],
+            self.data[3][3],
         ];
     }
 
     pub fn to_vec(&self) -> Vec<f32> {
         return vec![
-        self.data[0][0], self.data[0][1], self.data[0][2], self.data[0][3],
-        self.data[1][0], self.data[1][1], self.data[1][2], self.data[1][3],
-        self.data[2][0], self.data[2][1], self.data[2][2], self.data[2][3],
-        self.data[3][0], self.data[3][1], self.data[3][2], self.data[3][3]];
+            self.data[0][0],
+            self.data[0][1],
+            self.data[0][2],
+            self.data[0][3],
+            self.data[1][0],
+            self.data[1][1],
+            self.data[1][2],
+            self.data[1][3],
+            self.data[2][0],
+            self.data[2][1],
+            self.data[2][2],
+            self.data[2][3],
+            self.data[3][0],
+            self.data[3][1],
+            self.data[3][2],
+            self.data[3][3],
+        ];
     }
-
 }
 
 impl Mul for Mat4x4 {
@@ -145,31 +181,79 @@ impl Mul for Mat4x4 {
     fn mul(self, rhs: Self) -> Self::Output {
         let data = [
             [
-                self.data[0][0] * rhs.data[0][0] + self.data[0][1] * rhs.data[1][0] + self.data[0][2] * rhs.data[2][0] + self.data[0][3] * rhs.data[3][0],
-                self.data[0][0] * rhs.data[0][1] + self.data[0][1] * rhs.data[1][1] + self.data[0][2] * rhs.data[2][1] + self.data[0][3] * rhs.data[3][1],
-                self.data[0][0] * rhs.data[0][2] + self.data[0][1] * rhs.data[1][2] + self.data[0][2] * rhs.data[2][2] + self.data[0][3] * rhs.data[3][2],
-                self.data[0][0] * rhs.data[0][3] + self.data[0][1] * rhs.data[1][3] + self.data[0][2] * rhs.data[2][3] + self.data[0][3] * rhs.data[3][3],
+                self.data[0][0] * rhs.data[0][0]
+                    + self.data[0][1] * rhs.data[1][0]
+                    + self.data[0][2] * rhs.data[2][0]
+                    + self.data[0][3] * rhs.data[3][0],
+                self.data[0][0] * rhs.data[0][1]
+                    + self.data[0][1] * rhs.data[1][1]
+                    + self.data[0][2] * rhs.data[2][1]
+                    + self.data[0][3] * rhs.data[3][1],
+                self.data[0][0] * rhs.data[0][2]
+                    + self.data[0][1] * rhs.data[1][2]
+                    + self.data[0][2] * rhs.data[2][2]
+                    + self.data[0][3] * rhs.data[3][2],
+                self.data[0][0] * rhs.data[0][3]
+                    + self.data[0][1] * rhs.data[1][3]
+                    + self.data[0][2] * rhs.data[2][3]
+                    + self.data[0][3] * rhs.data[3][3],
             ],
             [
-                self.data[1][0] * rhs.data[0][0] + self.data[1][1] * rhs.data[1][0] + self.data[1][2] * rhs.data[2][0] + self.data[1][3] * rhs.data[3][0],
-                self.data[1][0] * rhs.data[0][1] + self.data[1][1] * rhs.data[1][1] + self.data[1][2] * rhs.data[2][1] + self.data[1][3] * rhs.data[3][1],
-                self.data[1][0] * rhs.data[0][2] + self.data[1][1] * rhs.data[1][2] + self.data[1][2] * rhs.data[2][2] + self.data[1][3] * rhs.data[3][2],
-                self.data[1][0] * rhs.data[0][3] + self.data[1][1] * rhs.data[1][3] + self.data[1][2] * rhs.data[2][3] + self.data[1][3] * rhs.data[3][3],
+                self.data[1][0] * rhs.data[0][0]
+                    + self.data[1][1] * rhs.data[1][0]
+                    + self.data[1][2] * rhs.data[2][0]
+                    + self.data[1][3] * rhs.data[3][0],
+                self.data[1][0] * rhs.data[0][1]
+                    + self.data[1][1] * rhs.data[1][1]
+                    + self.data[1][2] * rhs.data[2][1]
+                    + self.data[1][3] * rhs.data[3][1],
+                self.data[1][0] * rhs.data[0][2]
+                    + self.data[1][1] * rhs.data[1][2]
+                    + self.data[1][2] * rhs.data[2][2]
+                    + self.data[1][3] * rhs.data[3][2],
+                self.data[1][0] * rhs.data[0][3]
+                    + self.data[1][1] * rhs.data[1][3]
+                    + self.data[1][2] * rhs.data[2][3]
+                    + self.data[1][3] * rhs.data[3][3],
             ],
             [
-                self.data[1][0] * rhs.data[0][0] + self.data[2][1] * rhs.data[1][0] + self.data[2][2] * rhs.data[2][0] + self.data[2][3] * rhs.data[3][0],
-                self.data[1][0] * rhs.data[0][1] + self.data[2][1] * rhs.data[1][1] + self.data[2][2] * rhs.data[2][1] + self.data[2][3] * rhs.data[3][1],
-                self.data[1][0] * rhs.data[0][2] + self.data[2][1] * rhs.data[1][2] + self.data[2][2] * rhs.data[2][2] + self.data[2][3] * rhs.data[3][2],
-                self.data[1][0] * rhs.data[0][3] + self.data[2][1] * rhs.data[1][3] + self.data[2][2] * rhs.data[2][3] + self.data[2][3] * rhs.data[3][3],
+                self.data[1][0] * rhs.data[0][0]
+                    + self.data[2][1] * rhs.data[1][0]
+                    + self.data[2][2] * rhs.data[2][0]
+                    + self.data[2][3] * rhs.data[3][0],
+                self.data[1][0] * rhs.data[0][1]
+                    + self.data[2][1] * rhs.data[1][1]
+                    + self.data[2][2] * rhs.data[2][1]
+                    + self.data[2][3] * rhs.data[3][1],
+                self.data[1][0] * rhs.data[0][2]
+                    + self.data[2][1] * rhs.data[1][2]
+                    + self.data[2][2] * rhs.data[2][2]
+                    + self.data[2][3] * rhs.data[3][2],
+                self.data[1][0] * rhs.data[0][3]
+                    + self.data[2][1] * rhs.data[1][3]
+                    + self.data[2][2] * rhs.data[2][3]
+                    + self.data[2][3] * rhs.data[3][3],
             ],
             [
-                self.data[1][0] * rhs.data[0][0] + self.data[3][1] * rhs.data[1][0] + self.data[3][2] * rhs.data[2][0] + self.data[3][3] * rhs.data[3][0],
-                self.data[1][0] * rhs.data[0][1] + self.data[3][1] * rhs.data[1][1] + self.data[3][2] * rhs.data[2][1] + self.data[3][3] * rhs.data[3][1],
-                self.data[1][0] * rhs.data[0][2] + self.data[3][1] * rhs.data[1][2] + self.data[3][2] * rhs.data[2][2] + self.data[3][3] * rhs.data[3][2],
-                self.data[1][0] * rhs.data[0][3] + self.data[3][1] * rhs.data[1][3] + self.data[3][2] * rhs.data[2][3] + self.data[3][3] * rhs.data[3][3],
+                self.data[1][0] * rhs.data[0][0]
+                    + self.data[3][1] * rhs.data[1][0]
+                    + self.data[3][2] * rhs.data[2][0]
+                    + self.data[3][3] * rhs.data[3][0],
+                self.data[1][0] * rhs.data[0][1]
+                    + self.data[3][1] * rhs.data[1][1]
+                    + self.data[3][2] * rhs.data[2][1]
+                    + self.data[3][3] * rhs.data[3][1],
+                self.data[1][0] * rhs.data[0][2]
+                    + self.data[3][1] * rhs.data[1][2]
+                    + self.data[3][2] * rhs.data[2][2]
+                    + self.data[3][3] * rhs.data[3][2],
+                self.data[1][0] * rhs.data[0][3]
+                    + self.data[3][1] * rhs.data[1][3]
+                    + self.data[3][2] * rhs.data[2][3]
+                    + self.data[3][3] * rhs.data[3][3],
             ],
         ];
-        return Mat4x4{data};
+        return Mat4x4 { data };
     }
 }
 
@@ -184,13 +268,13 @@ pub fn create_view_matrix(pitch: f32, yaw: f32, camera_pos: [f32; 3]) -> Mat4x4 
 }
 
 pub fn create_projection_matrix(aspect: f32, fov: f32, zfar: f32, znear: f32) -> Mat4x4 {
-    let fov = fov * f32::consts::PI/180.0;
+    let fov = fov * f32::consts::PI / 180.0;
     let zm = zfar - znear;
     let zp = zfar + znear;
-    let xscale = (1./(fov / 2.).tan()) / aspect;
-    let yscale = 1./(fov / 2.).tan();
+    let xscale = (1. / (fov / 2.).tan()) / aspect;
+    let yscale = 1. / (fov / 2.).tan();
     let zscale = -zp / zm;
-    let ztranslate = -(2. * zfar * znear)/zm;
+    let ztranslate = -(2. * zfar * znear) / zm;
 
     return Mat4x4 {
         data: [
@@ -198,7 +282,7 @@ pub fn create_projection_matrix(aspect: f32, fov: f32, zfar: f32, znear: f32) ->
             [0., yscale, 0., 0.],
             [0., 0., zscale, ztranslate],
             [0., 0., -1., 0.],
-        ]
+        ],
     };
 }
 
@@ -209,8 +293,8 @@ pub fn translation_matrix(translation: Vec3) -> Mat4x4 {
             [0., 1., 0., translation.y],
             [0., 0., 1., translation.z],
             [0., 0., 0., 1.],
-        ]
-    }
+        ],
+    };
 }
 
 pub fn create_transformation_matrix(translate: [f32; 3], rot: [f32; 3], scale: [f32; 3]) -> Mat4x4 {
@@ -220,7 +304,7 @@ pub fn create_transformation_matrix(translate: [f32; 3], rot: [f32; 3], scale: [
             [0., 1., 0., translate[1]],
             [0., 0., 1., translate[2]],
             [0., 0., 0., 1.],
-        ]
+        ],
     };
 
     let xrot = Mat4x4::x_rot_matrix(rot[0]);
@@ -233,7 +317,7 @@ pub fn create_transformation_matrix(translate: [f32; 3], rot: [f32; 3], scale: [
             [0., scale[1], 0., 0.],
             [0., 0., scale[2], 0.],
             [0., 0., 0., 1.],
-        ]
+        ],
     };
 
     let transform_mat = zrot * yrot * xrot * transform_mat * scale_mat;

@@ -1,23 +1,20 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn gui_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("position", ShaderDataType::Float2),
-        ]
-    )
+    return BufferLayout::new(vec![BufferElement::new("position", ShaderDataType::Float2)]);
 }
 
 pub fn gui_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        gui_shader_layout(), 
+        renderer,
+        gui_shader_layout(),
         GUI_VERTEX_SHADER,
         GUI_FRAGMENT_SHADER,
     );
     return shader;
 }
-
 
 #[cfg(target_os = "macos")]
 pub const GUI_VERTEX_SHADER: &str = "

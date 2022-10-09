@@ -6,9 +6,32 @@ pub struct GameButtonState {
 
 #[derive(Enum, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum LetterKeys {
-    A, B, C, D, E, F, G, H, I,
-    J, K, L, M, N, O, P, Q, R,
-    S, T, U, V, W, X, Y, Z,
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
 }
 
 use self::LetterKeys::*;
@@ -25,24 +48,31 @@ impl LetterKeys {
 
 #[derive(Enum, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum NumberKeys {
-    ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
+    ZERO,
+    ONE,
+    TWO,
+    THREE,
+    FOUR,
+    FIVE,
+    SIX,
+    SEVEN,
+    EIGHT,
+    NINE,
 }
 
-use NumberKeys::*;
 use enum_map::EnumMap;
+use NumberKeys::*;
 
 impl NumberKeys {
     pub fn iterator() -> Iter<'static, NumberKeys> {
-        static NUMBERS: [NumberKeys; 10] = [
-            ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
-        ];
+        static NUMBERS: [NumberKeys; 10] =
+            [ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE];
         NUMBERS.iter()
     }
 
     pub fn from_usize(val: usize) -> NumberKeys {
-        static NUMBERS: [NumberKeys; 10] = [
-            ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
-        ];
+        static NUMBERS: [NumberKeys; 10] =
+            [ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE];
         assert!(val < 10, "Invalid Number");
         return NUMBERS[val];
     }
@@ -227,7 +257,7 @@ impl GameInput {
                 GameControllerInput::from(&old_input.controllers[2]),
                 GameControllerInput::from(&old_input.controllers[3]),
                 GameControllerInput::from(&old_input.controllers[4]),
-            ]
+            ],
         }
     }
 }

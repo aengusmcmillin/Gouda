@@ -1,10 +1,12 @@
 use std::rc::Rc;
 
 use gouda_ecs::ECS;
+use gouda_images::png::PNG;
+use gouda_images::spritesheet::Spritesheet;
 use gouda_transform::TransformComponent;
-use gouda_images::{png::PNG, spritesheet::Spritesheet};
 
-use super::{Renderer, texture::RenderableTexture, Scene};
+use super::texture::RenderableTexture;
+use super::{Renderer, Scene};
 
 #[derive(Debug)]
 pub struct SpriteComponent {
@@ -14,8 +16,12 @@ pub struct SpriteComponent {
 impl SpriteComponent {
     pub fn new(ecs: &mut ECS, sprite_name: String) -> SpriteComponent {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image(), false);
-        return SpriteComponent {texture}
+        let texture = RenderableTexture::new(
+            renderer,
+            &PNG::from_file(&sprite_name).unwrap().image(),
+            false,
+        );
+        return SpriteComponent { texture };
     }
 
     pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
@@ -30,7 +36,12 @@ pub struct SpriteSheetComponent {
 }
 
 impl SpriteSheetComponent {
-    pub fn new(ecs: &mut ECS, spritesheet_name: String, rows: usize, columns: usize) -> SpriteSheetComponent {
+    pub fn new(
+        ecs: &mut ECS,
+        spritesheet_name: String,
+        rows: usize,
+        columns: usize,
+    ) -> SpriteSheetComponent {
         let renderer = ecs.read_res::<Rc<Renderer>>();
 
         let png = PNG::from_file(&spritesheet_name);
@@ -46,7 +57,7 @@ impl SpriteSheetComponent {
         return SpriteSheetComponent {
             textures: all_textures,
             active: 0,
-        }
+        };
     }
 
     pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
@@ -66,10 +77,17 @@ impl SpriteListComponent {
         let mut all_textures = vec![];
         for sprite_name in sprite_names {
             let renderer = ecs.read_res::<Rc<Renderer>>();
-            let texture = RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image(), false);
+            let texture = RenderableTexture::new(
+                renderer,
+                &PNG::from_file(&sprite_name).unwrap().image(),
+                false,
+            );
             all_textures.push(texture);
         }
-        return SpriteListComponent {textures: all_textures, active: 0}
+        return SpriteListComponent {
+            textures: all_textures,
+            active: 0,
+        };
     }
 
     pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
@@ -84,13 +102,13 @@ pub struct ColorBoxComponent {
 }
 
 impl ColorBoxComponent {
-
     pub fn new(_ecs: &mut ECS, color: [f32; 3]) -> ColorBoxComponent {
-        return ColorBoxComponent { color: [color[0], color[1], color[2], 1.] };
+        return ColorBoxComponent {
+            color: [color[0], color[1], color[2], 1.],
+        };
     }
 
     pub fn draw(&self, scene: &Scene, location: &TransformComponent) {
         scene.submit_shape_by_name("quad", "quad", location.transform_matrix(), self.color)
     }
-
 }

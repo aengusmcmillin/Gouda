@@ -1,7 +1,7 @@
-use crate::platform::metal::{Renderer, Scene};
-use std::mem;
 use crate::platform::buffers2::ShaderDataType;
+use crate::platform::metal::{Renderer, Scene};
 use metal::*;
+use std::mem;
 
 impl ShaderDataType {
     pub fn to_metal(&self) -> MTLVertexFormat {
@@ -29,7 +29,11 @@ fn create_buffer<T>(renderer: &Renderer, data: Vec<T>) -> Buffer {
 
 fn update_buffer<T>(buffer: &Buffer, mut data: Vec<T>) {
     unsafe {
-        std::ptr::copy(data.as_mut_ptr(), mem::transmute(buffer.contents()), data.len());
+        std::ptr::copy(
+            data.as_mut_ptr(),
+            mem::transmute(buffer.contents()),
+            data.len(),
+        );
     };
 }
 
@@ -45,9 +49,7 @@ impl IndexBuffer {
         };
     }
 
-    pub fn bind(&self, _scene: &Scene) {
-
-    }
+    pub fn bind(&self, _scene: &Scene) {}
 }
 
 #[derive(Debug)]
@@ -61,11 +63,13 @@ impl FragmentConstantBuffer {
         return FragmentConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
-        }
+        };
     }
 
     pub fn bind(&self, scene: &Scene) {
-        scene.encoder.set_fragment_buffer(self.offset, Some(&self.data), 0);
+        scene
+            .encoder
+            .set_fragment_buffer(self.offset, Some(&self.data), 0);
     }
 
     pub fn update_data<T>(&self, data: Vec<T>) {
@@ -79,20 +83,24 @@ pub struct VertexConstantBuffer {
     offset: u64,
 }
 
-impl VertexConstantBuffer{
+impl VertexConstantBuffer {
     pub fn new<T>(renderer: &Renderer, offset: u64, data: Vec<T>) -> VertexConstantBuffer {
         return VertexConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
-        }
+        };
     }
 
     pub fn bind_to_offset(&self, scene: &Scene, offset: u64) {
-        scene.encoder.set_vertex_buffer(offset + 1, Some(&self.data), 0);
+        scene
+            .encoder
+            .set_vertex_buffer(offset + 1, Some(&self.data), 0);
     }
 
     pub fn bind(&self, scene: &Scene) {
-        scene.encoder.set_vertex_buffer(self.offset + 1, Some(&self.data), 0);
+        scene
+            .encoder
+            .set_vertex_buffer(self.offset + 1, Some(&self.data), 0);
     }
 
     pub fn update_data<T>(&self, data: Vec<T>) {
@@ -111,7 +119,7 @@ impl VertexBuffer {
         return VertexBuffer {
             offset,
             data: create_buffer(renderer, position_data),
-        }
+        };
     }
 
     pub fn bind_to_offset(&self, scene: &Scene, offset: u64) {
@@ -119,7 +127,9 @@ impl VertexBuffer {
     }
 
     pub fn bind(&self, scene: &Scene) {
-        scene.encoder.set_vertex_buffer(self.offset, Some(&self.data), 0);
+        scene
+            .encoder
+            .set_vertex_buffer(self.offset, Some(&self.data), 0);
     }
 
     pub fn update_data<T>(&self, _renderer: &Renderer, data: Vec<T>) {

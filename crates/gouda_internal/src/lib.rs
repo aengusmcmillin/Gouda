@@ -1,12 +1,12 @@
-use gouda_ecs::{ECS, GameSceneId};
 use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
-use crate::window::{WindowProps, WindowEvent};
-use std::time;
-use std::time::Instant;
-use gouda_rendering::{Scene, Renderer};
+use crate::window::{WindowEvent, WindowProps};
+use gouda_ecs::{GameSceneId, ECS};
+use gouda_rendering::{Renderer, Scene};
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::time;
+use std::time::Instant;
 
 #[cfg(target_os = "macos")]
 #[macro_use]
@@ -18,22 +18,19 @@ extern crate enum_map;
 pub mod input;
 mod platform;
 pub mod window;
-use gouda_rendering::camera::{Camera};
-pub use gouda_images::bmp as bmp;
-pub use gouda_images::png as png;
-use crate::imgui::renderer::GoudaImguiRenderer;
 use crate::imgui::platform::GoudaImguiPlatform;
+use crate::imgui::renderer::GoudaImguiRenderer;
 use ::imgui::*;
+pub use gouda_images::{bmp, png};
+use gouda_rendering::camera::Camera;
 pub mod gui;
-pub mod mouse_capture;
 pub mod imgui;
+pub mod mouse_capture;
 
 pub type RenderLayer = String;
 pub type RenderOrder = u32;
 
 pub struct QuitEvent;
-
-
 
 pub trait GameScene {
     fn on_scene_start(&self, ecs: &mut ECS);
@@ -81,7 +78,10 @@ impl<T: GameLogic> Gouda<T> {
         self.game_scenes.extend(self.game_logic.game_scenes());
         let scene = self.game_logic.initial_game_scene();
         self.active_scene = Some(scene);
-        self.game_scenes.get(&scene).unwrap().on_scene_start(&mut self.ecs);
+        self.game_scenes
+            .get(&scene)
+            .unwrap()
+            .on_scene_start(&mut self.ecs);
     }
 
     fn get_active_scene(&self) -> &Box<dyn GameScene> {
@@ -128,9 +128,8 @@ impl<T: GameLogic> Gouda<T> {
 
         GoudaImguiPlatform::init(&mut imgui);
 
-        imgui.fonts().add_font(&[
-            FontSource::TtfData {
-                data: include_bytes!("../../../assets/Roboto-Regular.ttf"),
+        imgui.fonts().add_font(&[FontSource::TtfData {
+            data: include_bytes!("../../../assets/Roboto-Regular.ttf"),
             size_pixels: 13.0,
             config: Some(FontConfig {
                 // As imgui-glium-renderer isn't gamma-correct with
@@ -144,8 +143,7 @@ impl<T: GameLogic> Gouda<T> {
                 oversample_v: 4,
                 ..FontConfig::default()
             }),
-            }
-        ]);
+        }]);
 
         let imgui_renderer = GoudaImguiRenderer::create(&renderer, &mut imgui);
 
@@ -158,11 +156,10 @@ impl<T: GameLogic> Gouda<T> {
             let delta = next - now;
             let target_dur = time::Duration::from_millis(16);
             if target_dur > delta {
-                continue
+                continue;
             }
             let dt = delta.as_millis() as f32 / 1000.;
             now = next;
-
 
             self.game_logic.migrate_events(&mut self.ecs);
             let window = platform.get_window();
@@ -176,7 +173,10 @@ impl<T: GameLogic> Gouda<T> {
                     WindowEvent::CloseEvent => {
                         return;
                     }
-                    WindowEvent::ResizeEvent { width: _, height: _ } => {
+                    WindowEvent::ResizeEvent {
+                        width: _,
+                        height: _,
+                    } => {
                         self.ecs.remove_res::<Rc<Renderer>>();
                         // platform.get_mut_renderer().resize(*width, *height);
                         let renderer = platform.get_renderer();
@@ -190,7 +190,7 @@ impl<T: GameLogic> Gouda<T> {
             }
 
             {
-                let io  = imgui.io_mut();
+                let io = imgui.io_mut();
                 io.mouse_pos = [input.mouse.x as f32, input.mouse.y as f32];
                 io.mouse_down[0] = input.mouse.buttons[0].ended_down;
             }

@@ -1,18 +1,15 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn quad_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("POSITION", ShaderDataType::Float2),
-        ]
-    )
+    return BufferLayout::new(vec![BufferElement::new("POSITION", ShaderDataType::Float2)]);
 }
-
 
 pub fn quad_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        quad_shader_layout(), 
+        renderer,
+        quad_shader_layout(),
         QUAD_VERTEX_SHADER,
         QUAD_FRAGMENT_SHADER,
     );

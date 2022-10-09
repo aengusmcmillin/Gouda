@@ -1,10 +1,10 @@
 extern crate core;
 use crate::utils::{u16_from_bytes, u32_from_bytes};
 
-use std::fs::File;
-use std::io::prelude::*;
 use crate::Image;
 use gouda_types::Color;
+use std::fs::File;
+use std::io::prelude::*;
 
 #[repr(packed)]
 #[derive(Debug, Clone, Copy)]
@@ -77,7 +77,7 @@ impl Bitmap {
                     c[offset + i as usize + 2],
                     c[offset + i as usize + 1],
                     c[offset + i as usize + 0],
-                    255
+                    255,
                 );
                 res.push(color);
             }
@@ -105,4 +105,3 @@ impl Bitmap {
         }
     }
 }
-

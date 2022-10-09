@@ -1,18 +1,18 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn basic_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("POSITION", ShaderDataType::Float3),
-            BufferElement::new("COLOR", ShaderDataType::Float4)
-        ]
-    )
+    return BufferLayout::new(vec![
+        BufferElement::new("POSITION", ShaderDataType::Float3),
+        BufferElement::new("COLOR", ShaderDataType::Float4),
+    ]);
 }
 
 pub fn basic_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        basic_shader_layout(), 
+        renderer,
+        basic_shader_layout(),
         BASIC_VERTEX_SHADER,
         BASIC_FRAGMENT_SHADER,
     );

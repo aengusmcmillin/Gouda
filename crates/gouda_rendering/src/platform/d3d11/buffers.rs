@@ -1,11 +1,11 @@
-use crate::buffers2::{BufferLayout};
+use crate::buffers2::BufferLayout;
 pub use crate::{Renderer, Scene};
-use winapi::um::d3d11::*;
 use std::mem;
-use std::ptr::null_mut;
-use winapi::shared::winerror::FAILED;
 use std::mem::size_of;
+use std::ptr::null_mut;
 use winapi::shared::dxgiformat::*;
+use winapi::shared::winerror::FAILED;
+use winapi::um::d3d11::*;
 
 #[derive(Debug)]
 pub struct VertexBuffer {
@@ -15,7 +15,12 @@ pub struct VertexBuffer {
 }
 
 impl VertexBuffer {
-    pub fn new<T>(renderer: &Renderer, layout: BufferLayout, offset: u32, data: Vec<T>) -> VertexBuffer {
+    pub fn new<T>(
+        renderer: &Renderer,
+        layout: BufferLayout,
+        offset: u32,
+        data: Vec<T>,
+    ) -> VertexBuffer {
         unsafe {
             let vertex_buffer_desc = D3D11_BUFFER_DESC {
                 ByteWidth: (size_of::<T>() * data.len()) as u32,
@@ -28,15 +33,23 @@ impl VertexBuffer {
             let subresource_data = D3D11_SUBRESOURCE_DATA {
                 pSysMem: mem::transmute(data.as_ptr()),
                 SysMemPitch: 0,
-                SysMemSlicePitch: 0
+                SysMemSlicePitch: 0,
             };
             let buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
             let mut buffer_ptr: *mut ID3D11Buffer = Box::into_raw(buffer);
-            let result = (*renderer.device).CreateBuffer(&vertex_buffer_desc, &subresource_data, &mut buffer_ptr);
+            let result = (*renderer.device).CreateBuffer(
+                &vertex_buffer_desc,
+                &subresource_data,
+                &mut buffer_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create vertex buffer");
             }
-            VertexBuffer {buffer: buffer_ptr, offset, layout: layout}
+            VertexBuffer {
+                buffer: buffer_ptr,
+                offset,
+                layout: layout,
+            }
         }
     }
 
@@ -46,7 +59,13 @@ impl VertexBuffer {
 
     pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
         unsafe {
-            (*scene.device_context).IASetVertexBuffers(0, 1, &self.buffer, &(self.layout.stride), &offset);
+            (*scene.device_context).IASetVertexBuffers(
+                0,
+                1,
+                &self.buffer,
+                &(self.layout.stride),
+                &offset,
+            );
         }
     }
 }
@@ -72,17 +91,19 @@ impl ConstantBuffer {
             let subresource_data = D3D11_SUBRESOURCE_DATA {
                 pSysMem: mem::transmute(data.as_ptr()),
                 SysMemPitch: 0,
-                SysMemSlicePitch: 0
+                SysMemSlicePitch: 0,
             };
             let buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
             let mut buffer_ptr: *mut ID3D11Buffer = Box::into_raw(buffer);
-            let result = (*renderer.device).CreateBuffer(&constant_buffer_desc, &subresource_data, &mut buffer_ptr);
+            let result = (*renderer.device).CreateBuffer(
+                &constant_buffer_desc,
+                &subresource_data,
+                &mut buffer_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create constant buffer {:x}", result);
             }
-            return ConstantBuffer {
-                buffer: buffer_ptr,
-            }
+            return ConstantBuffer { buffer: buffer_ptr };
         }
     }
 
@@ -90,10 +111,16 @@ impl ConstantBuffer {
         let mut msr = D3D11_MAPPED_SUBRESOURCE {
             pData: null_mut(),
             RowPitch: 0,
-            DepthPitch: 0
+            DepthPitch: 0,
         };
         unsafe {
-            let result = (*renderer.device_context).Map(mem::transmute(self.buffer), 0, D3D11_MAP_WRITE_DISCARD, 0, &mut msr);
+            let result = (*renderer.device_context).Map(
+                mem::transmute(self.buffer),
+                0,
+                D3D11_MAP_WRITE_DISCARD,
+                0,
+                &mut msr,
+            );
             if FAILED(result) {
                 panic!("failed to map buffer");
             }
@@ -111,7 +138,10 @@ pub struct VertexConstantBuffer {
 
 impl VertexConstantBuffer {
     pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> VertexConstantBuffer {
-        VertexConstantBuffer {buffer: ConstantBuffer::new(renderer, data), offset}
+        VertexConstantBuffer {
+            buffer: ConstantBuffer::new(renderer, data),
+            offset,
+        }
     }
 
     pub fn update_data<T>(&self, renderer: &Renderer, data: Vec<T>) {
@@ -174,15 +204,22 @@ impl IndexBuffer {
             let subresource_data = D3D11_SUBRESOURCE_DATA {
                 pSysMem: mem::transmute(indices.as_ptr()),
                 SysMemPitch: 0,
-                SysMemSlicePitch: 0
+                SysMemSlicePitch: 0,
             };
             let buffer: Box<ID3D11Buffer> = Box::new(mem::zeroed());
             let mut buffer_ptr: *mut ID3D11Buffer = Box::into_raw(buffer);
-            let result = (*renderer.device).CreateBuffer(&index_buffer_desc, &subresource_data, &mut buffer_ptr);
+            let result = (*renderer.device).CreateBuffer(
+                &index_buffer_desc,
+                &subresource_data,
+                &mut buffer_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create index buffer {:x}", result);
             }
-            IndexBuffer {buffer: buffer_ptr, num_indices: indices.len() as u64}
+            IndexBuffer {
+                buffer: buffer_ptr,
+                num_indices: indices.len() as u64,
+            }
         }
     }
 

@@ -11,7 +11,7 @@ impl Spritesheet {
         Spritesheet {
             rows,
             columns,
-            image
+            image,
         }
     }
 

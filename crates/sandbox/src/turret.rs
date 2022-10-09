@@ -1,11 +1,11 @@
 use cgmath::Vector2;
+use gouda::ecs::{Entity, Mutation, ECS};
 use gouda::rendering::sprites::SpriteComponent;
-use gouda::ecs::{ECS, Mutation, Entity};
 use gouda::transform::TransformComponent;
 
-use crate::tilemap::Tile;
 use crate::building::Turret;
 use crate::supplies::Supplies;
+use crate::tilemap::Tile;
 
 pub struct CreateTurretMutation {
     pub tile_e: Entity,
@@ -18,7 +18,6 @@ impl Mutation for CreateTurretMutation {
 
             ecs.write::<Tile>(&self.tile_e).unwrap().occupied = true;
         } else {
-
         }
     }
 }
@@ -31,7 +30,8 @@ impl Mutation for TurretSelectMutation {
     fn apply(&self, ecs: &mut ECS) {
         let mut loc = *ecs.read::<TransformComponent>(&self.turret_e).unwrap();
         loc.scale = Vector2::new(3.0, 3.0);
-        let range_sprite = SpriteComponent::new(ecs, "./assets/bitmap/range_indicator.png".to_string());
+        let range_sprite =
+            SpriteComponent::new(ecs, "./assets/bitmap/range_indicator.png".to_string());
         let range_indicator = Some(ecs.build_entity().add(range_sprite).add(loc).entity());
         let turret = ecs.write::<Turret>(&self.turret_e).unwrap();
         turret.selected = true;
@@ -39,8 +39,7 @@ impl Mutation for TurretSelectMutation {
     }
 }
 
-pub struct TurretDeselectMutation {
-}
+pub struct TurretDeselectMutation {}
 
 impl Mutation for TurretDeselectMutation {
     fn apply(&self, ecs: &mut ECS) {

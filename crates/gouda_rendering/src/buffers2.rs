@@ -1,4 +1,3 @@
-
 #[derive(Debug)]
 pub enum ShaderDataType {
     Float = 0,
@@ -8,9 +7,8 @@ pub enum ShaderDataType {
     Int,
     Int2,
     Int3,
-    Int4
+    Int4,
 }
-
 
 impl ShaderDataType {
     pub fn size(&self) -> u32 {
@@ -35,9 +33,12 @@ pub struct BufferLayout {
 
 impl BufferLayout {
     pub fn new(elements: Vec<BufferElement>) -> BufferLayout {
-        let mut res = BufferLayout { elements, stride: 0 };
+        let mut res = BufferLayout {
+            elements,
+            stride: 0,
+        };
         res.calculate_offsets_and_stride();
-        return res
+        return res;
     }
 
     fn calculate_offsets_and_stride(&mut self) {
@@ -63,11 +64,23 @@ pub struct BufferElement {
 impl BufferElement {
     pub fn new_normalized(name: &'static str, data_type: ShaderDataType) -> BufferElement {
         let size = data_type.size();
-        return BufferElement { name, data_type, offset: 0, size: size, normalized: true }
+        return BufferElement {
+            name,
+            data_type,
+            offset: 0,
+            size: size,
+            normalized: true,
+        };
     }
 
     pub fn new(name: &'static str, data_type: ShaderDataType) -> BufferElement {
         let size = data_type.size();
-        return BufferElement { name, data_type, offset: 0, size: size, normalized: false }
+        return BufferElement {
+            name,
+            data_type,
+            offset: 0,
+            size: size,
+            normalized: false,
+        };
     }
 }

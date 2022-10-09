@@ -3,7 +3,7 @@ pub enum Direction {
     Top,
     Right,
     Down,
-    Left
+    Left,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -24,7 +24,7 @@ impl Color {
         }
     }
     pub fn from_f32(r: f32, g: f32, b: f32, a: f32) -> Color {
-        Color {r, g, b, a}
+        Color { r, g, b, a }
     }
 }
 
@@ -49,9 +49,7 @@ pub struct WorldPosition {
     pub z: f32,
 }
 
-pub struct ScreenPosition {
-    
-}
+pub struct ScreenPosition {}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Size {

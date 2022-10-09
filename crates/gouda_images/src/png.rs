@@ -1,11 +1,10 @@
 extern crate core;
-use crate::utils::{u32_from_bytes};
+use crate::utils::u32_from_bytes;
 
-
-use std::fs::File;
-use std::io::prelude::*;
 use crate::Image;
 use gouda_types::Color;
+use std::fs::File;
+use std::io::prelude::*;
 
 pub struct Chunk {
     length: u32,
@@ -67,9 +66,12 @@ impl PNG {
         let mut buf = vec![0; info.buffer_size()];
         reader.next_frame(&mut buf).unwrap();
         return Some(PNG {
-            header_chunk: PNGHeader { width: info.width, height: info.height },
+            header_chunk: PNGHeader {
+                width: info.width,
+                height: info.height,
+            },
             data: buf,
-        })
+        });
     }
 
     pub fn from_file(path: &str) -> Option<PNG> {
@@ -79,9 +81,12 @@ impl PNG {
             let mut buf = vec![0; info.buffer_size()];
             reader.next_frame(&mut buf).unwrap();
             return Some(PNG {
-                header_chunk: PNGHeader { width: info.width, height: info.height },
+                header_chunk: PNGHeader {
+                    width: info.width,
+                    height: info.height,
+                },
                 data: buf,
-            })
+            });
         }
 
         let file = File::open(path);
@@ -91,7 +96,10 @@ impl PNG {
 
             let mut i = 8;
 
-            let mut header = PNGHeader {width: 0, height: 0};
+            let mut header = PNGHeader {
+                width: 0,
+                height: 0,
+            };
             let mut data_chunks = vec![];
             loop {
                 let chunk = parse_chunk(&c, i);
@@ -129,7 +137,7 @@ impl PNG {
             let result_row_len = (header.width * 4) as usize;
             for y in 0..header.height {
                 let filter_method = decompressed[(y * row_len) as usize];
-                for x in 0..header.width  {
+                for x in 0..header.width {
                     let index = (y * (row_len) + 1 + x * 4) as usize;
                     let rindex = (y * (result_row_len as u32) + x * 4) as usize;
                     let bpp = 4;
@@ -139,7 +147,12 @@ impl PNG {
                     let raw_a = decompressed[index + 3];
 
                     let (old_raw_r, old_raw_g, old_raw_b, old_raw_a) = if x > 0 {
-                        (result_bytes[rindex - bpp], result_bytes[rindex + 1 - bpp], result_bytes[rindex + 2 - bpp], result_bytes[rindex + 3 - bpp])
+                        (
+                            result_bytes[rindex - bpp],
+                            result_bytes[rindex + 1 - bpp],
+                            result_bytes[rindex + 2 - bpp],
+                            result_bytes[rindex + 3 - bpp],
+                        )
                     } else {
                         (0, 0, 0, 0)
                     };
@@ -149,7 +162,7 @@ impl PNG {
                             result_bytes[rindex - result_row_len],
                             result_bytes[rindex + 1 - result_row_len],
                             result_bytes[rindex + 2 - result_row_len],
-                            result_bytes[rindex + 3 - result_row_len]
+                            result_bytes[rindex + 3 - result_row_len],
                         )
                     } else {
                         (0, 0, 0, 0)
@@ -158,14 +171,13 @@ impl PNG {
                     let (prior_old_r, prior_old_g, prior_old_b, prior_old_a) = if y > 0 && x > 0 {
                         (
                             result_bytes[rindex - bpp - result_row_len],
-                            result_bytes[rindex + 1 - bpp  - result_row_len],
+                            result_bytes[rindex + 1 - bpp - result_row_len],
                             result_bytes[rindex + 2 - bpp - result_row_len],
-                            result_bytes[rindex + 3 - bpp - result_row_len]
+                            result_bytes[rindex + 3 - bpp - result_row_len],
                         )
                     } else {
                         (0, 0, 0, 0)
                     };
-
 
                     if filter_method == 1 {
                         result_bytes.push(raw_r.wrapping_add(old_raw_r));
@@ -187,10 +199,26 @@ impl PNG {
                         let f_a = ((old_raw_a.wrapping_add(prior_a)) as f32 / 2.0 % 256.).floor();
                         result_bytes.push(raw_a.wrapping_add(f_a as u8));
                     } else if filter_method == 4 {
-                        result_bytes.push(raw_r.wrapping_add(paeth(old_raw_r as i32, prior_r as i32, prior_old_r as i32)));
-                        result_bytes.push(raw_g.wrapping_add(paeth(old_raw_g as i32, prior_g as i32, prior_old_g as i32)));
-                        result_bytes.push(raw_b.wrapping_add(paeth(old_raw_b as i32, prior_b as i32, prior_old_b as i32)));
-                        result_bytes.push(raw_a.wrapping_add(paeth(old_raw_a as i32, prior_a as i32, prior_old_a as i32)));
+                        result_bytes.push(raw_r.wrapping_add(paeth(
+                            old_raw_r as i32,
+                            prior_r as i32,
+                            prior_old_r as i32,
+                        )));
+                        result_bytes.push(raw_g.wrapping_add(paeth(
+                            old_raw_g as i32,
+                            prior_g as i32,
+                            prior_old_g as i32,
+                        )));
+                        result_bytes.push(raw_b.wrapping_add(paeth(
+                            old_raw_b as i32,
+                            prior_b as i32,
+                            prior_old_b as i32,
+                        )));
+                        result_bytes.push(raw_a.wrapping_add(paeth(
+                            old_raw_a as i32,
+                            prior_a as i32,
+                            prior_old_a as i32,
+                        )));
                     } else {
                         result_bytes.push(raw_r);
                         result_bytes.push(raw_g);
@@ -226,5 +254,5 @@ fn parse_chunk(c: &Vec<u8>, i: usize) -> Chunk {
         length,
         chunk_type,
         chunk_data: bytes,
-    }
+    };
 }

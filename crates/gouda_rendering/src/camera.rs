@@ -1,12 +1,11 @@
-use cgmath::{Matrix4, ortho, SquareMatrix, Vector3, Deg};
+use cgmath::{ortho, Deg, Matrix4, SquareMatrix, Vector3};
 
 pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
     return vec![
-        matrix.x.x, matrix.x.y, matrix.x.z, matrix.x.w,
-        matrix.y.x, matrix.y.y, matrix.y.z, matrix.y.w,
-        matrix.z.x, matrix.z.y, matrix.z.z, matrix.z.w,
-        matrix.w.x, matrix.w.y, matrix.w.z, matrix.w.w,
-    ]
+        matrix.x.x, matrix.x.y, matrix.x.z, matrix.x.w, matrix.y.x, matrix.y.y, matrix.y.z,
+        matrix.y.w, matrix.z.x, matrix.z.y, matrix.z.z, matrix.z.w, matrix.w.x, matrix.w.y,
+        matrix.w.z, matrix.w.w,
+    ];
 }
 
 pub trait Camera {
@@ -37,25 +36,31 @@ impl Camera for OrthographicCamera {
     }
 
     fn get_view_projection_matrix(&self) -> Matrix4<f32> {
-        return self.view_projection_matrix
+        return self.view_projection_matrix;
     }
 }
 
 impl OrthographicCamera {
     pub fn new(left: f32, right: f32, bottom: f32, top: f32) -> Self {
         let mut res = Self {
-            projection_matrix: Matrix4::new(1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.) * ortho(left, right, bottom, top, -1., 1.),
+            projection_matrix: Matrix4::new(
+                1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.,
+            ) * ortho(left, right, bottom, top, -1., 1.),
             view_matrix: Matrix4::identity(),
             view_projection_matrix: Matrix4::identity(),
             position: Vector3::new(0., 0., 0.),
             rotation: 0.,
         };
         res.recalculate();
-        return res
+        return res;
     }
 
     fn recalculate(&mut self) {
-        let transform = Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, self.position.z)) * Matrix4::from_angle_z(Deg(self.rotation));
+        let transform = Matrix4::from_translation(Vector3::new(
+            self.position.x,
+            self.position.y,
+            self.position.z,
+        )) * Matrix4::from_angle_z(Deg(self.rotation));
         let inverse = transform.invert();
         if let Some(inverted) = inverse {
             self.view_matrix = inverted;
@@ -63,7 +68,6 @@ impl OrthographicCamera {
         }
     }
 }
-
 
 // #[derive(Debug)]
 // pub struct NormCamera {

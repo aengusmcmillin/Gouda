@@ -1,8 +1,9 @@
-use crate::{platform::metal::{Renderer, Scene}, camera::matrix_to_vec};
+use crate::camera::matrix_to_vec;
+use crate::platform::metal::{Renderer, Scene};
 use cgmath::Matrix4;
 use metal::*;
 
-use super::buffers::{BufferLayout, VertexConstantBuffer, FragmentConstantBuffer};
+use super::buffers::{BufferLayout, FragmentConstantBuffer, VertexConstantBuffer};
 
 #[derive(Debug)]
 pub struct Shader {
@@ -10,13 +11,20 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(gfx: &Renderer, buffer_layout: BufferLayout, vertex_src: &str, fragment_src: &str) -> Shader {
-        let vert = gfx.device
+    pub fn new(
+        gfx: &Renderer,
+        buffer_layout: BufferLayout,
+        vertex_src: &str,
+        fragment_src: &str,
+    ) -> Shader {
+        let vert = gfx
+            .device
             .new_library_with_source(&vertex_src, &CompileOptions::new())
             .expect("Failed to compile vertex shader")
             .get_function("vertex_main", None)
             .unwrap();
-        let frag = gfx.device
+        let frag = gfx
+            .device
             .new_library_with_source(&fragment_src, &CompileOptions::new())
             .expect("Failed to compile fragment shader")
             .get_function("fragment_main", None)
@@ -33,10 +41,16 @@ impl Shader {
             vertex_attribute_descriptor.set_format(attribute.data_type.to_metal());
             vertex_attribute_descriptor.set_buffer_index(0);
             vertex_attribute_descriptor.set_offset(attribute.offset as u64);
-            vertex_descriptor.attributes().set_object_at(index, Some(vertex_attribute_descriptor));
+            vertex_descriptor
+                .attributes()
+                .set_object_at(index, Some(vertex_attribute_descriptor));
         }
 
-        vertex_descriptor.layouts().object_at(0).unwrap().set_stride(buffer_layout.stride as u64);
+        vertex_descriptor
+            .layouts()
+            .object_at(0)
+            .unwrap()
+            .set_stride(buffer_layout.stride as u64);
 
         pipeline_state_descriptor.set_vertex_descriptor(Some(&vertex_descriptor));
 
@@ -51,28 +65,31 @@ impl Shader {
         render_buffer_attachment.set_alpha_blend_operation(MTLBlendOperation::Add);
         render_buffer_attachment.set_source_rgb_blend_factor(MTLBlendFactor::SourceAlpha);
         render_buffer_attachment.set_source_alpha_blend_factor(MTLBlendFactor::SourceAlpha);
-        render_buffer_attachment.set_destination_rgb_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
-        render_buffer_attachment.set_destination_alpha_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
+        render_buffer_attachment
+            .set_destination_rgb_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
+        render_buffer_attachment
+            .set_destination_alpha_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
 
-        let pipeline_state = gfx.device
+        let pipeline_state = gfx
+            .device
             .new_render_pipeline_state(&pipeline_state_descriptor)
             .unwrap();
 
-        return Shader {
-            pipeline_state,
-        }
+        return Shader { pipeline_state };
     }
 
     pub fn bind(&self, scene: &Scene) {
-        scene.encoder.set_render_pipeline_state(&self.pipeline_state);
+        scene
+            .encoder
+            .set_render_pipeline_state(&self.pipeline_state);
     }
 
-    pub fn upload_vertex_uniform_mat4(&self, scene: &Scene, offset: u64, matrix: Matrix4<f32>)  {
+    pub fn upload_vertex_uniform_mat4(&self, scene: &Scene, offset: u64, matrix: Matrix4<f32>) {
         let buffer = VertexConstantBuffer::new(scene.renderer, offset, matrix_to_vec(matrix));
         buffer.bind(scene);
     }
 
-    pub fn upload_fragment_uniform_float4(&self, scene: &Scene, offset: u64, uniform: [f32; 4])  {
+    pub fn upload_fragment_uniform_float4(&self, scene: &Scene, offset: u64, uniform: [f32; 4]) {
         let buffer = FragmentConstantBuffer::new(scene.renderer, offset, uniform.to_vec());
         buffer.bind(scene);
     }

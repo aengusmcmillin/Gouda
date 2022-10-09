@@ -1,13 +1,11 @@
-use gouda::{rendering::{
-    drawable::{QuadDrawable},
-    Renderer,
-    Scene,
-    sprites::SpriteSheetComponent}};
+use crate::tilemap::Tilemap;
+use gouda::ecs::{Entity, Mutation, Mutations, ECS};
+use gouda::input::{GameInput, LetterKeys};
+use gouda::rendering::drawable::QuadDrawable;
+use gouda::rendering::sprites::SpriteSheetComponent;
+use gouda::rendering::{Renderer, Scene};
 use gouda::transform::TransformComponent;
 use std::rc::Rc;
-use gouda::ecs::{ECS, Mutations, Entity, Mutation};
-use gouda::input::{GameInput, LetterKeys};
-use crate::tilemap::{Tilemap};
 
 #[derive(Debug)]
 pub struct Player {
@@ -18,16 +16,24 @@ pub struct Player {
 
 impl Player {
     pub fn create(ecs: &mut ECS) {
-        let spritesheet = SpriteSheetComponent::new(ecs, "./assets/bitmap/spritesheet.png".to_string(), 1, 4);
+        let spritesheet =
+            SpriteSheetComponent::new(ecs, "./assets/bitmap/spritesheet.png".to_string(), 1, 4);
 
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let selected_drawable = QuadDrawable::new(false, renderer, [0.8, 0.8, 0.8]);
 
         let tile = ecs.read_res::<Tilemap>().tile_at_pos(1, 2);
-        let transform = TransformComponent::builder().position(-4., -1.).scale(0.3, 0.3).build();
+        let transform = TransformComponent::builder()
+            .position(-4., -1.)
+            .scale(0.3, 0.3)
+            .build();
 
         ecs.build_entity()
-            .add(Player {selected_drawable, current_tile: tile, is_selected: false})
+            .add(Player {
+                selected_drawable,
+                current_tile: tile,
+                is_selected: false,
+            })
             .add(transform)
             .add(spritesheet);
     }
@@ -68,14 +74,30 @@ pub fn player_move_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = Vec::new();
     for (_, ent) in ecs.read1::<Player>() {
         if input.keyboard.letter_pressed(LetterKeys::A) {
-            mutations.push(Box::new(MoveMutation {entity: ent, dx: -1, dy: 0}))
+            mutations.push(Box::new(MoveMutation {
+                entity: ent,
+                dx: -1,
+                dy: 0,
+            }))
         } else if input.keyboard.letter_pressed(LetterKeys::D) {
-            mutations.push(Box::new(MoveMutation {entity: ent, dx: 1, dy: 0}))
+            mutations.push(Box::new(MoveMutation {
+                entity: ent,
+                dx: 1,
+                dy: 0,
+            }))
         }
         if input.keyboard.letter_pressed(LetterKeys::W) {
-            mutations.push(Box::new(MoveMutation {entity: ent, dx: 0, dy: 1}))
+            mutations.push(Box::new(MoveMutation {
+                entity: ent,
+                dx: 0,
+                dy: 1,
+            }))
         } else if input.keyboard.letter_pressed(LetterKeys::S) {
-            mutations.push(Box::new(MoveMutation {entity: ent, dx: 0, dy: -1}))
+            mutations.push(Box::new(MoveMutation {
+                entity: ent,
+                dx: 0,
+                dy: -1,
+            }))
         }
     }
     return mutations;

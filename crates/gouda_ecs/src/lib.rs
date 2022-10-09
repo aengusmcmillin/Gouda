@@ -6,7 +6,7 @@ use std::fmt::Debug;
 
 pub mod genindex;
 
-use crate::genindex::{GenIndex, GenIndexArray, GenIndexAllocator};
+use crate::genindex::{GenIndex, GenIndexAllocator, GenIndexArray};
 
 pub type Entity = GenIndex;
 type EntityMap<T> = GenIndexArray<T>;
@@ -145,7 +145,7 @@ impl ECS {
         return self.components.get_mut::<EntityMap<T>>().unwrap();
     }
 
-    fn attach_cleanup(&mut self, cleanup_closure: fn (&mut ECS)) {
+    fn attach_cleanup(&mut self, cleanup_closure: fn(&mut ECS)) {
         self.cleanup_closures.push(cleanup_closure);
     }
 
@@ -190,7 +190,7 @@ impl ECS {
         match comps {
             Some(comps) => {
                 comps.set(*entity, component);
-            },
+            }
             None => {}
         }
     }
@@ -200,7 +200,7 @@ impl ECS {
         match comps {
             Some(comps) => {
                 comps.clear(*entity);
-            },
+            }
             None => {}
         }
     }
@@ -211,7 +211,10 @@ impl ECS {
             let l = comps.0.len();
             for i in 0..l {
                 if let Some(e) = &comps.0[i] {
-                    let e = GenIndex {index: i, generation: e.generation};
+                    let e = GenIndex {
+                        index: i,
+                        generation: e.generation,
+                    };
                     if !self.entity_allocator.is_live(e) {
                         comps_to_remove.push(e);
                     }
@@ -232,7 +235,10 @@ impl ECS {
         self.processing_events.get_mut::<Vec<T>>().unwrap().clear();
         let v = self.queued_events.get_mut::<Vec<T>>().unwrap();
         while !v.is_empty() {
-            self.processing_events.get_mut::<Vec<T>>().unwrap().push(v.pop().unwrap());
+            self.processing_events
+                .get_mut::<Vec<T>>()
+                .unwrap()
+                .push(v.pop().unwrap());
         }
     }
 
@@ -260,7 +266,7 @@ impl ECS {
         self.resources.get_mut::<T>().unwrap()
     }
 
-    pub fn read<T: 'static + Debug>(&self, entity: &Entity) -> Option<&T>{
+    pub fn read<T: 'static + Debug>(&self, entity: &Entity) -> Option<&T> {
         if let Some(map) = self.components.get::<EntityMap<T>>() {
             if let Some(Some(i)) = map.0.get(entity.index) {
                 return Some(&i.value);
@@ -269,7 +275,7 @@ impl ECS {
         return None;
     }
 
-    pub fn write<T: 'static>(&mut self, entity: &Entity) -> Option<&mut T>{
+    pub fn write<T: 'static>(&mut self, entity: &Entity) -> Option<&mut T> {
         if let Some(map) = self.components.get_mut::<EntityMap<T>>() {
             if let Some(Some(val)) = map.0.get_mut(entity.index) {
                 return Some(&mut val.value);
@@ -290,7 +296,7 @@ impl ECS {
     impl_get!(get4, [t1, t2, t3, t4]);
     impl_get!(get5, [t1, t2, t3, t4, t5]);
 
-    pub fn new() -> ECS  {
+    pub fn new() -> ECS {
         ECS {
             entity_allocator: GenIndexAllocator::new(),
             components: AnyMap::new(),
@@ -314,7 +320,7 @@ pub struct EntityBuilder<'a> {
     entity: Entity,
 }
 
-impl <'a> EntityBuilder<'a> {
+impl<'a> EntityBuilder<'a> {
     pub fn add<T: 'static + Debug>(self, c: T) -> EntityBuilder<'a> {
         self.ecs.add_component(&self.entity, c);
         self

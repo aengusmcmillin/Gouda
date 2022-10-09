@@ -7,11 +7,7 @@ pub fn osx_process_keyboard_message(new_state: &mut GameButtonState, is_down: bo
     }
 }
 
-pub fn osx_process_key(
-    keyboard: &mut KeyboardInput,
-    u16_char: u16,
-    key_down: bool,
-) {
+pub fn osx_process_key(keyboard: &mut KeyboardInput, u16_char: u16, key_down: bool) {
     match u16_char {
         0xF700 => {
             osx_process_keyboard_message(&mut keyboard.special_keys[SpecialKeys::UpArrow], key_down)
@@ -142,16 +138,46 @@ pub fn osx_process_key(
                         &mut keyboard.letter_keys[LetterKeys::Z],
                         key_down,
                     ),
-                    '0' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::ZERO], key_down),
-                    '1' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::ONE], key_down),
-                    '2' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::TWO], key_down),
-                    '3' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::THREE], key_down),
-                    '4' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::FOUR], key_down),
-                    '5' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::FIVE], key_down),
-                    '6' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::SIX], key_down),
-                    '7' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::SEVEN], key_down),
-                    '8' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::EIGHT], key_down),
-                    '9' => osx_process_keyboard_message(&mut keyboard.number_keys[NumberKeys::NINE], key_down),
+                    '0' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::ZERO],
+                        key_down,
+                    ),
+                    '1' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::ONE],
+                        key_down,
+                    ),
+                    '2' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::TWO],
+                        key_down,
+                    ),
+                    '3' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::THREE],
+                        key_down,
+                    ),
+                    '4' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::FOUR],
+                        key_down,
+                    ),
+                    '5' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::FIVE],
+                        key_down,
+                    ),
+                    '6' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::SIX],
+                        key_down,
+                    ),
+                    '7' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::SEVEN],
+                        key_down,
+                    ),
+                    '8' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::EIGHT],
+                        key_down,
+                    ),
+                    '9' => osx_process_keyboard_message(
+                        &mut keyboard.number_keys[NumberKeys::NINE],
+                        key_down,
+                    ),
                     _ => {
                         println!("c: '{}'", c);
                     }

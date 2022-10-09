@@ -1,20 +1,19 @@
-use crate::{buffers2::{BufferElement, ShaderDataType, BufferLayout}, platform::d3d11::{shader::Shader, Renderer}};
-
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::platform::d3d11::shader::Shader;
+use crate::platform::d3d11::Renderer;
 
 pub fn obj_model_shader_layout() -> BufferLayout {
-    return BufferLayout::new(
-        vec![
-            BufferElement::new("POSITION", ShaderDataType::Float4),
-            BufferElement::new("TEXCOORD", ShaderDataType::Float2),
-            BufferElement::new("NORMAL", ShaderDataType::Float3),
-        ]
-    )
+    return BufferLayout::new(vec![
+        BufferElement::new("POSITION", ShaderDataType::Float4),
+        BufferElement::new("TEXCOORD", ShaderDataType::Float2),
+        BufferElement::new("NORMAL", ShaderDataType::Float3),
+    ]);
 }
 
 pub fn obj_model_shader(renderer: &Renderer) -> Shader {
     let shader = Shader::new(
-        renderer, 
-        obj_model_shader_layout(), 
+        renderer,
+        obj_model_shader_layout(),
         OBJ_MODEL_VERTEX_SHADER,
         OBJ_MODEL_FRAGMENT_SHADER,
     );

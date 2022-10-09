@@ -1,15 +1,13 @@
-use crate::{shader::Shader, buffers2::{BufferLayout, BufferElement, ShaderDataType}, Renderer};
-
+use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shader::Shader;
+use crate::Renderer;
 
 pub fn hex_shader(renderer: &Renderer) -> Shader {
-    let buffer_layout = BufferLayout::new(
-        vec![
-            BufferElement::new("position", ShaderDataType::Float2),
-        ]
-    );
+    let buffer_layout =
+        BufferLayout::new(vec![BufferElement::new("position", ShaderDataType::Float2)]);
     let shader = Shader::new(
-        renderer, 
-        buffer_layout, 
+        renderer,
+        buffer_layout,
         HEX_VERTEX_SHADER,
         HEX_FRAGMENT_SHADER,
     );

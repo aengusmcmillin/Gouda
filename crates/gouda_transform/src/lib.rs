@@ -1,5 +1,4 @@
-use cgmath::{Deg, Vector2, Matrix4, Vector3};
-
+use cgmath::{Deg, Matrix4, Vector2, Vector3};
 
 #[derive(Debug, Clone, Copy)]
 pub struct TransformComponent {
@@ -18,10 +17,10 @@ impl TransformComponent {
     }
 
     pub fn transform_matrix(&self) -> Matrix4<f32> {
-        return Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, 0.)) * 
-            Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, 1.) *
-            Matrix4::from_angle_x(Deg(self.rotation.x)) *
-            Matrix4::from_angle_y(Deg(self.rotation.y))
+        return Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, 0.))
+            * Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, 1.)
+            * Matrix4::from_angle_x(Deg(self.rotation.x))
+            * Matrix4::from_angle_y(Deg(self.rotation.y));
     }
 }
 
@@ -59,7 +58,7 @@ impl TransformComponentBuilder {
         TransformComponent {
             position: self.position,
             scale: self.scale,
-            rotation: self.rotation
+            rotation: self.rotation,
         }
     }
 }

@@ -1,9 +1,9 @@
-use gouda::transform::TransformComponent;
-use gouda::rendering::sprites::SpriteComponent;
-use gouda::ecs::{ECS, Entity};
-use gouda::mouse_capture::{MouseCaptureArea, MouseCaptureLayer, ActiveCaptureLayer};
-use gouda::types::{Bounds, Direction};
 use crate::hearth::Hearth;
+use gouda::ecs::{Entity, ECS};
+use gouda::mouse_capture::{ActiveCaptureLayer, MouseCaptureArea, MouseCaptureLayer};
+use gouda::rendering::sprites::SpriteComponent;
+use gouda::transform::TransformComponent;
+use gouda::types::{Bounds, Direction};
 
 #[derive(Debug)]
 pub struct Tile {
@@ -32,15 +32,25 @@ impl Tile {
             y: y,
             neighbors: [None; 4],
         };
-        let transform = TransformComponent::builder().position((x) as f32, (y) as f32).scale(1.0, 1.0).build();
+        let transform = TransformComponent::builder()
+            .position((x) as f32, (y) as f32)
+            .scale(1.0, 1.0)
+            .build();
         ecs.build_entity()
-           .add(tile)
-           .add(sprite)
-           .add(transform)
-           .add(MouseCaptureArea::new(false, Bounds{x: x  as f32- 0.5, y: y as f32 - 0.5, w: 1., h: 1.}))
-           .entity()
+            .add(tile)
+            .add(sprite)
+            .add(transform)
+            .add(MouseCaptureArea::new(
+                false,
+                Bounds {
+                    x: x as f32 - 0.5,
+                    y: y as f32 - 0.5,
+                    w: 1.,
+                    h: 1.,
+                },
+            ))
+            .entity()
     }
-
 }
 
 pub struct Tilemap {
@@ -51,8 +61,16 @@ pub struct Tilemap {
 fn set_neighbors(tile: &mut Tile, x: usize, y: usize, tiles: &Vec<Vec<Entity>>) {
     tile.neighbors = [
         if y > 0 { Some(tiles[x][y - 1]) } else { None },
-        if x < (tiles.len() - 1) { Some(tiles[x + 1][y]) } else { None },
-        if y < (tiles[x].len() - 1) { Some(tiles[x][y + 1]) } else { None },
+        if x < (tiles.len() - 1) {
+            Some(tiles[x + 1][y])
+        } else {
+            None
+        },
+        if y < (tiles[x].len() - 1) {
+            Some(tiles[x][y + 1])
+        } else {
+            None
+        },
         if x > 0 { Some(tiles[x - 1][y]) } else { None },
     ]
 }
@@ -65,11 +83,16 @@ impl Tilemap {
     pub fn create(ecs: &mut ECS) {
         let mut tiles: Vec<Vec<Entity>> = vec![Vec::with_capacity(9); 11];
         let mut center_tile = None;
-        let mut borders = vec!();
+        let mut borders = vec![];
         for x in 0..11 {
             for y in 0..9 {
                 let tile = if x == 0 || x == 10 || y == 0 || y == 8 {
-                    let e = Tile::create_image_tile("./assets/bitmap/grass2.png".to_string(), ecs, x, y);
+                    let e = Tile::create_image_tile(
+                        "./assets/bitmap/grass2.png".to_string(),
+                        ecs,
+                        x,
+                        y,
+                    );
                     borders.push(e);
                     e
                 } else {
@@ -98,11 +121,10 @@ impl Tilemap {
             sort_index: 0,
             capture_areas: all_tiles,
         };
-        ecs.build_entity().add(capture_area).add(ActiveCaptureLayer {});
-        let res = Tilemap {
-            tiles,
-            borders
-        };
+        ecs.build_entity()
+            .add(capture_area)
+            .add(ActiveCaptureLayer {});
+        let res = Tilemap { tiles, borders };
         ecs.add_res(res);
 
         Hearth::create(ecs);
@@ -128,4 +150,3 @@ impl Tilemap {
         return (0., 0.);
     }
 }
-

@@ -1,3 +1,1 @@
-pub struct GuiButton {
-
-}
+pub struct GuiButton {}

@@ -1,30 +1,26 @@
-use crate::window::{WindowProps, GameWindowImpl, WindowEvent};
+use crate::window::{GameWindowImpl, WindowEvent, WindowProps};
 
 extern crate libc;
 
 extern crate coreaudio_sys;
 
-use cocoa::{
-    appkit::{
-        NSApp, NSApplication,
-        NSBackingStoreBuffered, NSEvent, NSEventMask,
-        NSEventModifierFlags, NSEventType, NSMenu, NSMenuItem, NSWindow, NSWindowStyleMask,
-    },
-    base::{id, nil, selector, NO},
-    foundation::{
-        NSAutoreleasePool, NSDate, NSDefaultRunLoopMode, NSPoint, NSRect, NSSize,
-        NSString,
-    },
+use cocoa::appkit::{
+    NSApp, NSApplication, NSBackingStoreBuffered, NSEvent, NSEventMask, NSEventModifierFlags,
+    NSEventType, NSMenu, NSMenuItem, NSWindow, NSWindowStyleMask,
+};
+use cocoa::base::{id, nil, selector, NO};
+use cocoa::foundation::{
+    NSAutoreleasePool, NSDate, NSDefaultRunLoopMode, NSPoint, NSRect, NSSize, NSString,
 };
 
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel, YES};
 
 use crate::input::GameInput;
-use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
 use crate::platform::osx::osx_input::{osx_process_key, osx_process_keyboard_message};
-use std::mem;
 use crate::rendering::Renderer;
+use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
+use std::mem;
 
 pub struct OsxWindow {
     cocoa_window: CocoaWindow,
@@ -161,7 +157,11 @@ pub struct CocoaWindow {
 
 impl CocoaWindow {
     pub fn new(window: id, delegate: id) -> CocoaWindow {
-        CocoaWindow{window, view: None, delegate}
+        CocoaWindow {
+            window,
+            view: None,
+            delegate,
+        }
     }
 
     pub fn create_view(&mut self, frame_rect: NSRect) {
@@ -185,7 +185,9 @@ impl CocoaWindow {
 
     pub fn attach_renderer(&self, renderer: &Renderer) {
         unsafe {
-            self.view.unwrap().setLayer(mem::transmute(renderer.get_layer()));
+            self.view
+                .unwrap()
+                .setLayer(mem::transmute(renderer.get_layer()));
         }
     }
 
@@ -202,7 +204,10 @@ impl CocoaWindow {
         unsafe {
             if *(*self.delegate).get_ivar::<bool>("updated_size") {
                 let (w, h) = self.current_size();
-                events.push(WindowEvent::ResizeEvent {width: w, height: h});
+                events.push(WindowEvent::ResizeEvent {
+                    width: w,
+                    height: h,
+                });
                 (*self.delegate).set_ivar("updated_size", false);
             }
             if *(*self.delegate).get_ivar::<bool>("should_close") {
@@ -212,7 +217,6 @@ impl CocoaWindow {
         }
         return events;
     }
-
 }
 
 impl GameWindowImpl for OsxWindow {
@@ -244,21 +248,21 @@ impl GameWindowImpl for OsxWindow {
                                 .unwrap();
                         let u16_char = objc_string.encode_utf16().next().unwrap();
 
-                        osx_process_key(
-                            &mut keyboard,
-                            u16_char,
-                            key_down,
-                        );
+                        osx_process_key(&mut keyboard, u16_char, key_down);
                     }
                     NSEventType::NSFlagsChanged => {
                         let mut keyboard = &mut self.input.keyboard;
 
                         let modifiers = event.modifierFlags();
-                        let is_cmd_down = modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
-                        let is_alternate_down = modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
-                        let is_control_down = modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
-                        let is_shift_down = modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
-                        
+                        let is_cmd_down =
+                            modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
+                        let is_alternate_down =
+                            modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
+                        let is_control_down =
+                            modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
+                        let is_shift_down =
+                            modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
+
                         let keycode = event.keyCode();
                         if keycode == 56 {
                             keyboard.shift_down = is_shift_down;
@@ -311,4 +315,3 @@ impl GameWindowImpl for OsxWindow {
         self.props.height as usize
     }
 }
-

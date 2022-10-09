@@ -1,15 +1,12 @@
 use std::time::Duration;
 
-use imgui::{Context, BackendFlags, Key};
+use imgui::{BackendFlags, Context, Key};
 
 use crate::window::GameWindow;
 
-pub struct GoudaImguiPlatform {
-
-}
+pub struct GoudaImguiPlatform {}
 
 impl GoudaImguiPlatform {
-    
     pub fn init(imgui: &mut Context) {
         let io = imgui.io_mut();
         io.backend_flags.insert(BackendFlags::HAS_MOUSE_CURSORS);

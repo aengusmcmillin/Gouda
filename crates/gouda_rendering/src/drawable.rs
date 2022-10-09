@@ -1,20 +1,28 @@
-use crate::buffers::{VertexBuffer, IndexBuffer, VertexConstantBuffer, FragmentConstantBuffer};
-use crate::{Scene, Renderer};
-use gouda_math::{create_transformation_matrix, Mat4x4};
-use crate::texture::RenderableTexture;
-use crate::shader_lib::basic_shader::{basic_shader_layout};
+use crate::buffers::{FragmentConstantBuffer, IndexBuffer, VertexBuffer, VertexConstantBuffer};
+use crate::shader_lib::basic_shader::basic_shader_layout;
 use crate::shader_lib::font_shader::font_shader_layout;
+use crate::texture::RenderableTexture;
+use crate::{Renderer, Scene};
+use gouda_math::{create_transformation_matrix, Mat4x4};
 
 #[derive(Debug)]
 pub struct ShapeDrawable {
     pub shader_name: &'static str,
     pub shape_name: &'static str,
-    pub color: [f32; 4]
+    pub color: [f32; 4],
 }
 
 impl ShapeDrawable {
-    pub fn new(shader_name: &'static str, shape_name: &'static str, color: [f32; 4]) -> ShapeDrawable {
-        return ShapeDrawable { shader_name, shape_name, color };
+    pub fn new(
+        shader_name: &'static str,
+        shape_name: &'static str,
+        color: [f32; 4],
+    ) -> ShapeDrawable {
+        return ShapeDrawable {
+            shader_name,
+            shape_name,
+            color,
+        };
     }
 
     pub fn set_color(&mut self, color: [f32; 4]) {
@@ -42,24 +50,21 @@ impl TextureDrawable {
             0,
             vec![
                 [-1., -1., 0., 1., 0., 1.], // bottom left
-                [1., -1., 0., 1., 1., 1.], // bottom right
-                [1., 1., 0., 1., 1., 0.], // top right
-                [-1., 1., 0., 1., 0., 0.], // top left
-            ]);
+                [1., -1., 0., 1., 1., 1.],  // bottom right
+                [1., 1., 0., 1., 1., 0.],   // top right
+                [-1., 1., 0., 1., 0., 0.],  // top left
+            ],
+        );
 
-        let ib = IndexBuffer::new(
-            renderer,
-            vec![
-                0, 3, 2,
-                0, 1, 2,
-            ]);
+        let ib = IndexBuffer::new(renderer, vec![0, 3, 2, 0, 1, 2]);
 
         let position = [0.; 3];
         let scale = [1.; 3];
         let rotation = [0.; 3];
 
         let transform_mat = create_transformation_matrix(position, rotation, scale);
-        let transform_buffer = VertexConstantBuffer::new(renderer, 0, transform_mat.raw_data().to_vec());
+        let transform_buffer =
+            VertexConstantBuffer::new(renderer, 0, transform_mat.raw_data().to_vec());
         let identity_buffer = VertexConstantBuffer::new(renderer, 1, Mat4x4::identity().to_vec());
 
         return Self {
@@ -71,9 +76,8 @@ impl TextureDrawable {
             position,
             scale,
             rotation,
-        }
+        };
     }
-
 
     pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer) {
         camera_projection.bind_to_offset(scene, 1);
@@ -116,30 +120,23 @@ impl QuadDrawable {
             0,
             vec![
                 [-1., -1., 0., 1.], // bottom left
-                [1., -1., 0., 1.], // bottom right
-                [1., 1., 0., 1.], // top right
-                [-1., 1., 0., 1.], // top left
-            ]);
+                [1., -1., 0., 1.],  // bottom right
+                [1., 1., 0., 1.],   // top right
+                [-1., 1., 0., 1.],  // top left
+            ],
+        );
 
-        let ib = IndexBuffer::new(
-            renderer,
-            vec![
-                0, 3, 2,
-                0, 1, 2,
-            ]);
+        let ib = IndexBuffer::new(renderer, vec![0, 3, 2, 0, 1, 2]);
 
         let position = [0.; 3];
         let scale = [1.; 3];
         let rotation = [0.; 3];
 
         let transform_mat = create_transformation_matrix(position, rotation, scale);
-        let transform_buffer = VertexConstantBuffer::new(renderer,0, transform_mat.raw_data().to_vec());
+        let transform_buffer =
+            VertexConstantBuffer::new(renderer, 0, transform_mat.raw_data().to_vec());
 
-        let alpha = if is_gui {
-            0.5
-        } else {
-            1.0
-        };
+        let alpha = if is_gui { 0.5 } else { 1.0 };
         let data = [color[0], color[1], color[2], alpha];
         let color_buffer = FragmentConstantBuffer::new(renderer, 0, data.to_vec());
 
@@ -152,8 +149,8 @@ impl QuadDrawable {
             identity_buffer,
             position,
             scale,
-            rotation
-        }
+            rotation,
+        };
     }
 
     pub fn draw_with_projection(&self, scene: &Scene, camera_projection: &VertexConstantBuffer) {

@@ -1,20 +1,17 @@
-use std::fs::File;
-use std::io::{BufReader, BufRead};
-use std::collections::HashMap;
-use crate::buffers::{VertexBuffer, FragmentConstantBuffer};
+use crate::buffers::{FragmentConstantBuffer, VertexBuffer};
 use crate::shader_lib::font_shader::font_shader_layout;
 use crate::texture::RenderableTexture;
-use crate::Scene;
+use crate::{Renderer, Scene};
 use gouda_images::png::PNG;
-use crate::Renderer;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
-pub struct TextMeshCreator {
-
-}
+pub struct TextMeshCreator {}
 
 pub struct TextMeshData {
     pub positions: VertexBuffer,
-    pub texture_coords: VertexBuffer
+    pub texture_coords: VertexBuffer,
 }
 
 #[derive(Debug)]
@@ -27,11 +24,21 @@ pub struct TextDrawable {
 }
 
 impl TextDrawable {
-    pub fn new(renderer: &Renderer, position: [f32; 2], size: [f32; 2], center_x: bool, center_y: bool, font_name: &'static str, color: [f32; 3], text: String, font_size: f32) -> Self {
+    pub fn new(
+        renderer: &Renderer,
+        position: [f32; 2],
+        size: [f32; 2],
+        center_x: bool,
+        center_y: bool,
+        font_name: &'static str,
+        color: [f32; 3],
+        text: String,
+        font_size: f32,
+    ) -> Self {
         let font = renderer.font_lib.as_ref().unwrap().get(font_name).unwrap();
         let mut vertices = vec![];
 
-        let scaling = 1./font.base_size * font_size / font.size;
+        let scaling = 1. / font.base_size * font_size / font.size;
         let mut cursor = 0.;
         let mut base = position[1] + size[1];
         let start = position[0];
@@ -50,11 +57,36 @@ impl TextDrawable {
             let right = left + character.width as f32 * scaling;
 
             vertices.push([left, top, character.x as f32, character.y as f32]);
-            vertices.push([right, top, (character.x + character.width) as f32, character.y as f32]);
-            vertices.push([left, bottom, character.x as f32, (character.y + character.height) as f32]);
-            vertices.push([left, bottom, character.x as f32, (character.y + character.height) as f32]);
-            vertices.push([right, top, (character.x + character.width) as f32, character.y as f32]);
-            vertices.push([right, bottom, (character.x + character.width) as f32, (character.y + character.height) as f32]);
+            vertices.push([
+                right,
+                top,
+                (character.x + character.width) as f32,
+                character.y as f32,
+            ]);
+            vertices.push([
+                left,
+                bottom,
+                character.x as f32,
+                (character.y + character.height) as f32,
+            ]);
+            vertices.push([
+                left,
+                bottom,
+                character.x as f32,
+                (character.y + character.height) as f32,
+            ]);
+            vertices.push([
+                right,
+                top,
+                (character.x + character.width) as f32,
+                character.y as f32,
+            ]);
+            vertices.push([
+                right,
+                bottom,
+                (character.x + character.width) as f32,
+                (character.y + character.height) as f32,
+            ]);
 
             current_char_index += 6;
 
@@ -105,7 +137,8 @@ impl TextDrawable {
 
         let vertices = VertexBuffer::new(renderer, font_shader_layout(), 0, adjusted_vertices);
 
-        let color = FragmentConstantBuffer::new(renderer, 0, vec!([color[0], color[1], color[2], 0.0]));
+        let color =
+            FragmentConstantBuffer::new(renderer, 0, vec![[color[0], color[1], color[2], 0.0]]);
 
         return TextDrawable {
             text,
@@ -113,7 +146,7 @@ impl TextDrawable {
             font: font_name,
             vertices,
             color,
-        }
+        };
     }
 
     pub fn draw(&self, scene: &Scene) {
@@ -125,8 +158,7 @@ impl TextDrawable {
     }
 }
 
-pub struct RenderableCharacter {
-}
+pub struct RenderableCharacter {}
 
 #[derive(Debug)]
 pub struct Font {
@@ -170,11 +202,36 @@ impl Font {
                 id: entry.get("id").unwrap().to_string().parse::<u32>().unwrap(),
                 x: entry.get("x").unwrap().to_string().parse::<i32>().unwrap(),
                 y: entry.get("y").unwrap().to_string().parse::<i32>().unwrap(),
-                width: entry.get("width").unwrap().to_string().parse::<i32>().unwrap(),
-                height: entry.get("height").unwrap().to_string().parse::<i32>().unwrap(),
-                x_offset: entry.get("xoffset").unwrap().to_string().parse::<i32>().unwrap(),
-                y_offset: entry.get("yoffset").unwrap().to_string().parse::<i32>().unwrap(),
-                xadvance: entry.get("xadvance").unwrap().to_string().parse::<i32>().unwrap(),
+                width: entry
+                    .get("width")
+                    .unwrap()
+                    .to_string()
+                    .parse::<i32>()
+                    .unwrap(),
+                height: entry
+                    .get("height")
+                    .unwrap()
+                    .to_string()
+                    .parse::<i32>()
+                    .unwrap(),
+                x_offset: entry
+                    .get("xoffset")
+                    .unwrap()
+                    .to_string()
+                    .parse::<i32>()
+                    .unwrap(),
+                y_offset: entry
+                    .get("yoffset")
+                    .unwrap()
+                    .to_string()
+                    .parse::<i32>()
+                    .unwrap(),
+                xadvance: entry
+                    .get("xadvance")
+                    .unwrap()
+                    .to_string()
+                    .parse::<i32>()
+                    .unwrap(),
             };
             characters.insert(character.id, character);
         }
@@ -182,9 +239,24 @@ impl Font {
         Font {
             texture,
             characters,
-            base_size: common.get("scaleW").unwrap().to_string().parse::<i32>().unwrap() as f32,
-            size: info.get("size").unwrap().to_string().parse::<i32>().unwrap() as f32,
-            line_height: common.get("lineHeight").unwrap().to_string().parse::<i32>().unwrap() as f32,
+            base_size: common
+                .get("scaleW")
+                .unwrap()
+                .to_string()
+                .parse::<i32>()
+                .unwrap() as f32,
+            size: info
+                .get("size")
+                .unwrap()
+                .to_string()
+                .parse::<i32>()
+                .unwrap() as f32,
+            line_height: common
+                .get("lineHeight")
+                .unwrap()
+                .to_string()
+                .parse::<i32>()
+                .unwrap() as f32,
         }
     }
 
@@ -199,7 +271,7 @@ impl Font {
     pub fn new(renderer: &Renderer, font_file_path: &str, font_png_path: &str) -> Font {
         let font_file = File::open(font_file_path).unwrap();
         let font_file_reader = BufReader::new(font_file);
-        
+
         let texture = PNG::from_file(font_png_path).unwrap().image();
         let texture = RenderableTexture::new(renderer, &texture, false);
 

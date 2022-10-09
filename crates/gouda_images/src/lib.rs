@@ -37,4 +37,3 @@ impl Image {
         return res;
     }
 }
-

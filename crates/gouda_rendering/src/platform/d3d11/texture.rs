@@ -1,15 +1,14 @@
-use gouda_images::Image;
 pub use crate::platform::d3d11::{Renderer, Scene};
-pub use gouda_images::png::PNG;
 pub use gouda_images::bmp::Bitmap;
+pub use gouda_images::png::PNG;
+use gouda_images::Image;
+use std::mem;
 use winapi::ctypes::c_void;
-use winapi::um::d3d11::{D3D11_TEXTURE2D_DESC};
 use winapi::shared::dxgiformat::*;
 use winapi::shared::dxgitype::*;
-use winapi::um::d3d11::*;
-use std::mem;
 use winapi::shared::winerror::FAILED;
-use winapi::um::d3dcommon::{D3D11_SRV_DIMENSION_TEXTURE2D};
+use winapi::um::d3d11::{D3D11_TEXTURE2D_DESC, *};
+use winapi::um::d3dcommon::D3D11_SRV_DIMENSION_TEXTURE2D;
 
 #[derive(Debug)]
 pub struct RenderableTexture {
@@ -27,12 +26,12 @@ impl RenderableTexture {
             Format: DXGI_FORMAT_R8G8B8A8_UNORM,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
-                Quality: 0
+                Quality: 0,
             },
             Usage: D3D11_USAGE_DEFAULT,
             BindFlags: D3D11_BIND_SHADER_RESOURCE,
             CPUAccessFlags: 0,
-            MiscFlags: 0
+            MiscFlags: 0,
         };
         unsafe {
             let pixels = image.raw_pixels();
@@ -40,12 +39,16 @@ impl RenderableTexture {
             let subresource_data = D3D11_SUBRESOURCE_DATA {
                 pSysMem: data,
                 SysMemPitch: (image.width * 4) as u32,
-                SysMemSlicePitch: 0
+                SysMemSlicePitch: 0,
             };
 
             let texture: Box<ID3D11Texture2D> = Box::new(mem::zeroed());
             let mut texture_ptr: *mut ID3D11Texture2D = Box::into_raw(texture);
-            let result = (*renderer.device).CreateTexture2D(&texture_desc, &subresource_data, &mut texture_ptr);
+            let result = (*renderer.device).CreateTexture2D(
+                &texture_desc,
+                &subresource_data,
+                &mut texture_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create texture {:x}", result);
             }
@@ -59,13 +62,21 @@ impl RenderableTexture {
                 ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
                 u: shader_desc,
             };
-            let result = (*renderer.device).CreateShaderResourceView(mem::transmute(texture_ptr), &resource_view_desc, &mut resource_view_ptr);
+            let result = (*renderer.device).CreateShaderResourceView(
+                mem::transmute(texture_ptr),
+                &resource_view_desc,
+                &mut resource_view_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create shader resource view {:x}", result);
             }
 
             let sampler_desc = D3D11_SAMPLER_DESC {
-                Filter: if no_mip { D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT } else { D3D11_FILTER_MIN_MAG_MIP_LINEAR },
+                Filter: if no_mip {
+                    D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT
+                } else {
+                    D3D11_FILTER_MIN_MAG_MIP_LINEAR
+                },
                 AddressU: D3D11_TEXTURE_ADDRESS_WRAP,
                 AddressV: D3D11_TEXTURE_ADDRESS_WRAP,
                 AddressW: D3D11_TEXTURE_ADDRESS_WRAP,
@@ -74,13 +85,16 @@ impl RenderableTexture {
                 ComparisonFunc: 0,
                 BorderColor: [0., 0., 0., 0.],
                 MinLOD: 0.0,
-                MaxLOD: 0.0
+                MaxLOD: 0.0,
             };
             let sampler: Box<ID3D11SamplerState> = Box::new(mem::zeroed());
             let mut sampler_ptr: *mut ID3D11SamplerState = Box::into_raw(sampler);
             (*renderer.device).CreateSamplerState(&sampler_desc, &mut sampler_ptr);
 
-            RenderableTexture {texture: resource_view_ptr, sampler: sampler_ptr}
+            RenderableTexture {
+                texture: resource_view_ptr,
+                sampler: sampler_ptr,
+            }
         }
     }
 
@@ -93,23 +107,27 @@ impl RenderableTexture {
             Format: DXGI_FORMAT_R8G8B8A8_UNORM,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
-                Quality: 0
+                Quality: 0,
             },
             Usage: D3D11_USAGE_DEFAULT,
             BindFlags: D3D11_BIND_SHADER_RESOURCE,
             CPUAccessFlags: 0,
-            MiscFlags: 0
+            MiscFlags: 0,
         };
         unsafe {
             let subresource_data = D3D11_SUBRESOURCE_DATA {
                 pSysMem: mem::transmute(png.data.as_ptr()),
                 SysMemPitch: png.header_chunk.width * 4,
-                SysMemSlicePitch: 0
+                SysMemSlicePitch: 0,
             };
 
             let texture: Box<ID3D11Texture2D> = Box::new(mem::zeroed());
             let mut texture_ptr: *mut ID3D11Texture2D = Box::into_raw(texture);
-            let result = (*renderer.device).CreateTexture2D(&texture_desc, &subresource_data, &mut texture_ptr);
+            let result = (*renderer.device).CreateTexture2D(
+                &texture_desc,
+                &subresource_data,
+                &mut texture_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create texture");
             }
@@ -123,7 +141,11 @@ impl RenderableTexture {
                 ViewDimension: D3D11_SRV_DIMENSION_TEXTURE2D,
                 u: shader_desc,
             };
-            let result = (*renderer.device).CreateShaderResourceView(mem::transmute(texture_ptr), &resource_view_desc, &mut resource_view_ptr);
+            let result = (*renderer.device).CreateShaderResourceView(
+                mem::transmute(texture_ptr),
+                &resource_view_desc,
+                &mut resource_view_ptr,
+            );
             if FAILED(result) {
                 panic!("Failed to create shader resource view {:x}", result);
             }
@@ -138,7 +160,7 @@ impl RenderableTexture {
                 ComparisonFunc: 0,
                 BorderColor: [0., 0., 0., 0.],
                 MinLOD: 0.0,
-                MaxLOD: 0.0
+                MaxLOD: 0.0,
             };
             let sampler: Box<ID3D11SamplerState> = Box::new(mem::zeroed());
             let mut sampler_ptr: *mut ID3D11SamplerState = Box::into_raw(sampler);
@@ -147,7 +169,10 @@ impl RenderableTexture {
                 panic!("Failed to create sampler state");
             }
 
-            RenderableTexture {texture: resource_view_ptr, sampler: sampler_ptr}
+            RenderableTexture {
+                texture: resource_view_ptr,
+                sampler: sampler_ptr,
+            }
         }
     }
 
