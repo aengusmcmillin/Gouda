@@ -95,7 +95,7 @@ impl Mutation for MoveArrowTowardsMutation {
     }
 }
 
-pub fn arrow_move_system(ecs: &ECS, dt: f32) -> Mutations {
+pub fn arrow_move_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     let dt = ecs.read_res::<GameInput>().seconds_to_advance_over_update;
     for (arrow, arrow_location, entity) in ecs.read2::<Arrow, TransformComponent>() {
@@ -152,7 +152,7 @@ impl Mutation for DecrTurretTimerMutation {
     }
 }
 
-pub fn turret_attack_system(ecs: &ECS, dt: f32) -> Mutations {
+pub fn turret_attack_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
 
     let mut monster_positions: Vec<(Entity, f32, f32)> = vec![];

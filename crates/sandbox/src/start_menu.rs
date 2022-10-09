@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, Vector3, SquareMatrix};
+use cgmath::{Matrix4, Vector3};
 use gouda::ecs::{GameSceneId, Entity, ECS, Mutation, Mutations};
 use gouda::rendering::model::ObjModel;
 use gouda::{GameScene, RenderLayer};
@@ -9,8 +9,6 @@ use gouda::types::{Color, Bounds};
 use crate::{register_core_systems, LastScene, MAIN_GAME_SCENE};
 use gouda::rendering::Scene;
 use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint};
-use std::rc::Rc;
-use gouda::font::Font;
 use crate::start_menu::StartMenuButtonId::Start;
 use crate::tilemap::{Tilemap};
 use crate::cursor::Cursor;
@@ -71,7 +69,7 @@ impl GameScene for StartMenuScene {
         return None;
     }
 
-    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
+    fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![
             String::from("GUI")
         ];
@@ -102,7 +100,7 @@ impl Mutation for MenuClickMutation {
     }
 }
 
-pub fn start_menu_mouse_system(ecs: &ECS, dt: f32) -> Mutations {
+pub fn start_menu_mouse_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (capture_area, button, _) in ecs.read2::<MouseCaptureArea, StartMenuButtonId>() {
         if capture_area.clicked_buttons[0] {
@@ -115,7 +113,7 @@ pub fn start_menu_mouse_system(ecs: &ECS, dt: f32) -> Mutations {
 }
 
 
-fn add_menu_button(button_id: StartMenuButtonId, text: &str, menu_layer: Entity, bounds: Bounds, y: f32, ecs: &mut ECS, menu_screen_entity: Entity) {
+fn add_menu_button(button_id: StartMenuButtonId, text: &str, menu_layer: Entity, bounds: Bounds, _y: f32, ecs: &mut ECS, menu_screen_entity: Entity) {
     let button = GuiComponent::create_hoverable(
         ecs,
         Some(menu_layer),

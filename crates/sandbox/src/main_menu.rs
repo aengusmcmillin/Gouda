@@ -1,9 +1,7 @@
 use gouda::ecs::{ECS, Entity, Mutation, Mutations};
 use gouda::gui::{GuiComponent, GuiText};
 use gouda::types::{Color, Bounds};
-use std::rc::Rc;
 use gouda::gui::constraints::{Constraint, GuiConstraints};
-use gouda::font::Font;
 use gouda::mouse_capture::{MouseCaptureLayer, MouseCaptureArea};
 use gouda::gui::constraints::Constraint::{RelativeConstraint, CenterConstraint};
 use crate::main_menu::MainMenuButtonId::{Quit, Save, Settings, Resume};

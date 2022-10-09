@@ -84,7 +84,7 @@ impl Mutation for MonsterDamageMutation {
     }
 }
 
-pub fn monster_damage_system(ecs: &ECS, dt: f32) -> Mutations {
+pub fn monster_damage_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (_, damage, entity) in ecs.read2::<Monster, DamageDealt>() {
         mutations.push(Box::new(MonsterDamageMutation {monster: entity, damage: damage.damage}));

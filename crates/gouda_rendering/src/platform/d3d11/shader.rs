@@ -268,7 +268,7 @@ impl Shader {
 }
 
 impl std::fmt::Debug for Shader {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> Result<(), Error> {
         return Ok(());
     }
 }

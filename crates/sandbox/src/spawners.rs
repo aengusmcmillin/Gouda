@@ -25,7 +25,7 @@ impl Mutation for ProcessSpawnerMutation {
         }
     }
 }
-pub fn wave_spawner_system(ecs: &ECS, dt: f32) -> Mutations {
+pub fn wave_spawner_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = Vec::new();
     let input = ecs.read_res::<GameInput>();
 

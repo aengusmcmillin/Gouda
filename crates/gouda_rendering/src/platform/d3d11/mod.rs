@@ -51,7 +51,6 @@ pub struct Renderer {
     swap_chain: Box<IDXGISwapChain>,
     device: *mut ID3D11Device,
     device_context: *mut ID3D11DeviceContext,
-    back_buffer: Box<ID3D11Resource>,
     render_target: *mut ID3D11RenderTargetView,
     pub shader_lib: Option<ShaderLibrary>,
     pub shape_lib: Option<ShapeLibrary>,
@@ -61,7 +60,7 @@ pub struct Renderer {
 impl Renderer {
     pub fn new(hwnd: HWND) -> Result<Renderer, String> {
         unsafe {
-            let mut factory: *mut IDXGIFactory = null_mut();
+            let factory: *mut IDXGIFactory = null_mut();
             let result = CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory));
             if FAILED(result) {
                 return Err("Failed to create".to_string());
@@ -89,22 +88,22 @@ impl Renderer {
             }
             (*adapter_output).GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &mut num_modes, modes.as_mut_ptr());
 
-            let mut numerator = 0;
-            let mut denominator = 0;
-            for i in 0..(num_modes) as usize {
-                if modes[i].Width == 900 {
-                    if modes[i].Height == 900 {
-                        numerator = modes[i].RefreshRate.Numerator;
-                        denominator = modes[i].RefreshRate.Denominator;
-                    }
-                }
-            }
+            // let mut numerator = 0;
+            // let mut denominator = 0;
+            // for i in 0..(num_modes) as usize {
+            //     if modes[i].Width == 900 {
+            //         if modes[i].Height == 900 {
+            //             numerator = modes[i].RefreshRate.Numerator;
+            //             denominator = modes[i].RefreshRate.Denominator;
+            //         }
+            //     }
+            // }
 
             let mut adapter_desc: DXGI_ADAPTER_DESC = mem::zeroed();
             (*adapter).GetDesc(&mut adapter_desc);
 
-            let video_memory = adapter_desc.DedicatedVideoMemory / 1024 / 1024;
-            let desc = adapter_desc.Description;
+            // let video_memory = adapter_desc.DedicatedVideoMemory / 1024 / 1024;
+            // let desc = adapter_desc.Description;
 
             (*adapter_output).Release();
             (*adapter).Release();
@@ -128,11 +127,11 @@ impl Renderer {
                 Flags: 0
             };
 
-            let mut swap_chain: Box<IDXGISwapChain> = Box::new(mem::zeroed());
+            let swap_chain: Box<IDXGISwapChain> = Box::new(mem::zeroed());
             let mut swap_chain_ptr: *mut IDXGISwapChain = Box::into_raw(swap_chain);
-            let mut device: Box<ID3D11Device> = Box::new(mem::zeroed());
+            let device: Box<ID3D11Device> = Box::new(mem::zeroed());
             let mut device_ptr: *mut ID3D11Device = Box::into_raw(device);
-            let mut device_context: Box<ID3D11DeviceContext> = Box::new(mem::zeroed());
+            let device_context: Box<ID3D11DeviceContext> = Box::new(mem::zeroed());
             let mut device_context_ptr: *mut ID3D11DeviceContext = Box::into_raw(device_context);
 
             D3D11CreateDeviceAndSwapChain(null_mut(), D3D_DRIVER_TYPE_HARDWARE, null_mut(), D3D11_CREATE_DEVICE_DEBUG, null_mut(), 0,
@@ -162,7 +161,7 @@ impl Renderer {
             let blend_factor = [1.; 4];
             (*device_context).OMSetBlendState(blend_state_ptr, &blend_factor, 0xFFFFFFFF);
 
-            let mut back_buffer: Box<ID3D11Resource> = Box::new(mem::zeroed());
+            let back_buffer: Box<ID3D11Resource> = Box::new(mem::zeroed());
             let mut back_buffer_ptr: *mut ID3D11Resource = Box::into_raw(back_buffer);
             (*swap_chain).GetBuffer(0, &ID3D11Resource::uuidof(), mem::transmute(&mut back_buffer_ptr));
 
@@ -170,14 +169,13 @@ impl Renderer {
             let mut render_target_ptr: *mut ID3D11RenderTargetView = Box::into_raw(render_target);
             (*device).CreateRenderTargetView(back_buffer_ptr, null_mut(), mem::transmute(&mut render_target_ptr));
 
-            back_buffer = Box::from_raw(back_buffer_ptr);
+            // back_buffer = Box::from_raw(back_buffer_ptr);
             render_target = Box::from_raw(render_target_ptr);
 
             let mut res = Renderer {
                 swap_chain,
                 device: Box::into_raw(device),
                 device_context: Box::into_raw(device_context),
-                back_buffer,
                 render_target: Box::into_raw(render_target),
                 shader_lib: None,
                 shape_lib: None,
@@ -255,7 +253,7 @@ impl Scene<'_> {
 
     fn submit_impl(&self, shader: &Shader, renderable: &impl Renderable, transform: Matrix4<f32>, projection: Matrix4<f32>, color: [f32; 4]) {
         shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
+        shader.upload_vertex_uniform_mat4(self, 0, projection);
         shader.upload_vertex_uniform_mat4(self, 1, transform);
         shader.upload_fragment_uniform_float4(self, 0, color);
 
@@ -334,14 +332,14 @@ impl Scene<'_> {
         self.renderer.font_lib.as_ref().unwrap().get(font).unwrap().texture.bind(self);
     }
 
-    pub fn draw_indexed(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
+    pub fn draw_indexed(&self, num_indices: u64, _index_buffer: &buffers::IndexBuffer) {
         unsafe {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             (*self.device_context).DrawIndexed(num_indices as u32, 0, 0);
         }
     }
 
-    pub fn draw_indexed_tris(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
+    pub fn draw_indexed_tris(&self, num_indices: u64, _index_buffer: &buffers::IndexBuffer) {
         unsafe {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             (*self.device_context).DrawIndexed(num_indices as u32, 0, 0);
@@ -361,7 +359,7 @@ impl Scene<'_> {
         }
     }
 
-    pub fn submit_imgui(&self, vbuf: &Vec<[f32; 8]>, ibuf: &[u16], count: usize, vtx_offset: usize, idx_offset: usize, texture: &RenderableTexture, matrix: Matrix4<f32>) {
+    pub fn submit_imgui(&self, vbuf: &Vec<[f32; 8]>, ibuf: &[u16], count: usize, _vtx_offset: usize, idx_offset: usize, texture: &RenderableTexture, matrix: Matrix4<f32>) {
         let shader = self.renderer.shader_lib.as_ref().unwrap().get("imgui").unwrap();
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, matrix);

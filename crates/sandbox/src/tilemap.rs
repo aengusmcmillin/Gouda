@@ -24,8 +24,8 @@ impl Tile {
 
     fn create_texture_tile(ecs: &mut ECS, image_name: String, x: usize, y: usize) -> Entity {
         let sprite = SpriteComponent::new(ecs, image_name);
-        let x = (x as i32 - 5);
-        let y = (y as i32 - 3);
+        let x = x as i32 - 5;
+        let y = y as i32 - 3;
         let tile = Tile {
             occupied: false,
             x: x,
@@ -105,7 +105,7 @@ impl Tilemap {
         };
         ecs.add_res(res);
 
-        Hearth::create(ecs, center_tile.unwrap());
+        Hearth::create(ecs);
         ecs.write::<Tile>(&center_tile.unwrap()).unwrap().occupied = true;
     }
 
