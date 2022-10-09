@@ -1,18 +1,25 @@
 use std::{
     collections::HashMap,
     error::Error,
-    fs::{self, File},
+    fs::{self},
     io::BufRead,
 };
 
 use crate::shader_lib::obj_model_shader::obj_model_shader_layout;
 
-use super::buffers::{IndexBuffer, Renderer, Scene, VertexBuffer};
+use super::buffers::{IndexBuffer, Renderer, VertexBuffer};
 
 pub struct ObjModelSubset {
     pub index_buffer: IndexBuffer,
     pub ambient: [f32; 3],
     pub diffuse: [f32; 3],
+}
+
+#[repr(packed(1))]
+pub struct Vert {
+    pub pos: [f32; 4],
+    pub tex: [f32; 2],
+    pub normal: [f32; 3],
 }
 
 pub struct ObjModel {
@@ -23,7 +30,7 @@ pub struct ObjModel {
 
 impl ObjModel {
     pub fn new(renderer: &Renderer, obj_file: ObjFile, mtl_file: MtlFile) -> ObjModel {
-        let mut verts: Vec<[f32; 9]> = vec![];
+        let mut verts: Vec<Vert> = vec![];
         let mut no_material_indices: Vec<u16> = vec![];
         let mut index = 0;
 
@@ -35,14 +42,14 @@ impl ObjModel {
                 let normal = obj_file.vertex_normals.get(vert.normal_index - 1).unwrap();
                 let uv = obj_file.tex_coords.get(vert.texcoord_index - 1).unwrap();
 
-                verts.push([
-                    vertex[0], vertex[1], vertex[2], vertex[3], // pos
-                    uv[0], uv[1], // tex
-                    normal[0], normal[1], normal[2], // normal
-                ]);
+                verts.push(Vert {
+                    pos: *vertex,
+                    tex: [uv[0], uv[1]],
+                    normal: *normal,
+                });
             }
 
-            let mut indices = match face.material {
+            let indices = match face.material {
                 Some(material) => indices_by_material.entry(material).or_insert(vec![]),
                 None => &mut no_material_indices,
             };
@@ -57,7 +64,7 @@ impl ObjModel {
         }
 
         let vertex_buffer =
-            VertexBuffer::new::<[f32; 9]>(renderer, obj_model_shader_layout(), 0, verts);
+            VertexBuffer::new::<Vert>(renderer, obj_model_shader_layout(), 0, verts);
         let index_buffer = if no_material_indices.len() > 0 {
             Some(IndexBuffer::new(renderer, no_material_indices))
         }  else {
@@ -89,14 +96,7 @@ impl ObjModel {
     }
 }
 
-pub struct Model {
-    mesh: ObjFile,
-    material: MtlFile,
-}
-
 pub struct ObjFile {
-    name: &'static str,
-    material_names: Vec<String>,
     vertices: Vec<[f32; 4]>,
     tex_coords: Vec<[f32; 3]>,
     vertex_normals: Vec<[f32; 3]>,
@@ -115,7 +115,6 @@ pub struct ObjVert {
 }
 
 pub struct MtlFile {
-    file_name: &'static str,
     material_definitions: HashMap<String, MtlMaterialDefinition>,
 }
 
@@ -155,7 +154,6 @@ pub fn load_obj_file(path: &'static str) -> Result<ObjFile, Box<dyn Error>> {
                         let x = line[1].parse::<f32>().unwrap();
                         let y = line[2].parse::<f32>().unwrap();
                         let z = line[3].parse::<f32>().unwrap();
-                        // let w = line[4].parse::<f32>().unwrap();
                         vertices.push([x, y, z, 1.]);
                     }
                     "vt" => {
@@ -170,7 +168,7 @@ pub fn load_obj_file(path: &'static str) -> Result<ObjFile, Box<dyn Error>> {
                         } else {
                             0.
                         };
-                        tex_coords.push([u, v, 0.])
+                        tex_coords.push([u, v, w])
                     }
                     "vn" => {
                         let x = line[1].parse::<f32>().unwrap();
@@ -222,8 +220,6 @@ pub fn load_obj_file(path: &'static str) -> Result<ObjFile, Box<dyn Error>> {
     });
 
     return Ok(ObjFile {
-        name: path,
-        material_names: material_file_names,
         vertices,
         tex_coords,
         vertex_normals,
@@ -342,7 +338,6 @@ pub fn load_mtl_file(path: &'static str) -> Result<MtlFile, Box<dyn Error>> {
         .map(|item| (item.name.clone(), item))
         .collect();
     return Ok(MtlFile {
-        file_name: path,
         material_definitions,
     });
 }

@@ -55,9 +55,13 @@ impl GameScene for StartMenuScene {
     }
 
     fn render_scene(&self, ecs: &ECS, scene: &Scene) {
-        let menu = ecs.read_res::<StartMenuScreen>();
-        let menugui = ecs.read::<GuiComponent>(&menu.entity);
-        menugui.unwrap().render(&ecs, &scene);
+        let model = ecs.read_res::<ObjModel>();
+        let transform = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.5)) *
+            Matrix4::from_nonuniform_scale(1., 1., 1.);
+        scene.submit_obj(model, transform);
+        // let menu = ecs.read_res::<StartMenuScreen>();
+        // let menugui = ecs.read::<GuiComponent>(&menu.entity);
+        // menugui.unwrap().render(&ecs, &scene);
     }
 
     fn next_scene(&self, ecs: &ECS) -> Option<u32> {

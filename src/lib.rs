@@ -221,8 +221,7 @@ impl<T: GameLogic> Gouda<T> {
             }
         ]);
 
-        let mut imgui_renderer = GoudaImguiRenderer::create(&renderer, &mut imgui);
-
+        let imgui_renderer = GoudaImguiRenderer::create(&renderer, &mut imgui);
 
         self.ecs.add_res(renderer.clone());
 
@@ -251,7 +250,7 @@ impl<T: GameLogic> Gouda<T> {
                     WindowEvent::CloseEvent => {
                         return;
                     }
-                    WindowEvent::ResizeEvent { width, height } => {
+                    WindowEvent::ResizeEvent { width: _, height: _ } => {
                         self.ecs.remove_res::<Rc<Renderer>>();
                         // platform.get_mut_renderer().resize(*width, *height);
                         let renderer = platform.get_renderer();

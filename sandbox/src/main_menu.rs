@@ -42,7 +42,7 @@ impl Mutation for MenuClickMutation {
     }
 }
 
-pub fn menu_mouse_system(ecs: &ECS, dt: f32) -> Mutations {
+pub fn menu_mouse_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (capture_area, button, _) in ecs.read2::<MouseCaptureArea, MainMenuButtonId>() {
         if capture_area.clicked_buttons[0] {

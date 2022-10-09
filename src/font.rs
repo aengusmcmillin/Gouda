@@ -3,7 +3,6 @@ use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
 use crate::rendering::buffers::{VertexBuffer, FragmentConstantBuffer};
 use crate::shader_lib::font_shader::font_shader_layout;
-use std::rc::Rc;
 use crate::rendering::texture::RenderableTexture;
 use crate::rendering::Scene;
 use crate::png::PNG;

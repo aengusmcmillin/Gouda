@@ -67,7 +67,7 @@ impl ConstantBuffer {
                 BindFlags: D3D11_BIND_CONSTANT_BUFFER,
                 CPUAccessFlags: D3D11_CPU_ACCESS_WRITE,
                 MiscFlags: 0,
-                StructureByteStride: size_of::<T>() as u32,
+                StructureByteStride: 0,
             };
             let subresource_data = D3D11_SUBRESOURCE_DATA {
                 pSysMem: mem::transmute(data.as_ptr()),

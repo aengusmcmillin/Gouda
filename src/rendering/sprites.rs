@@ -83,7 +83,7 @@ pub struct ColorBoxComponent {
 
 impl ColorBoxComponent {
 
-    pub fn new(ecs: &mut ECS, color: [f32; 3]) -> ColorBoxComponent {
+    pub fn new(_ecs: &mut ECS, color: [f32; 3]) -> ColorBoxComponent {
         return ColorBoxComponent { color: [color[0], color[1], color[2], 1.] };
     }
 

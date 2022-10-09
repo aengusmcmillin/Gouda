@@ -5,20 +5,6 @@ use crate::rendering::texture::RenderableTexture;
 use crate::shader_lib::basic_shader::{basic_shader_layout};
 use crate::shader_lib::font_shader::font_shader_layout;
 
-use super::model::ObjFile;
-
-#[derive(Debug)]
-pub struct ObjDrawable {
-
-}
-
-impl ObjDrawable {
-    pub fn new(obj_file: &ObjFile) {
-    }
-}
-
-
-
 #[derive(Debug)]
 pub struct ShapeDrawable {
     pub shader_name: &'static str,

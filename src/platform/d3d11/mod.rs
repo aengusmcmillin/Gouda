@@ -2,7 +2,6 @@
 
 use cgmath::Matrix4;
 use cgmath::SquareMatrix;
-use cgmath::Vector3;
 use winapi::shared::dxgi::*;
 use winapi::shared::dxgiformat::*;
 use winapi::shared::dxgitype::*;
@@ -78,7 +77,7 @@ impl Renderer {
             (*adapter_output).GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &mut num_modes, null_mut());
 
             let mut modes: Vec<DXGI_MODE_DESC> = Vec::new();
-            for i in 0..(num_modes) {
+            for _i in 0..(num_modes) {
                 modes.push(DXGI_MODE_DESC {
                     Width: 0,
                     Height: 0,
@@ -241,7 +240,7 @@ pub struct Scene<'a> {
     pub render_target: *mut ID3D11RenderTargetView,
     pub swap_chain: &'a Box<IDXGISwapChain>,
     pub renderer: &'a Renderer,
-    pub camera_view_projection_matrix: Matrix4<f32>
+    pub camera_view_projection_matrix: Matrix4<f32>,
 }
 
 impl Scene<'_> {

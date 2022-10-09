@@ -13,13 +13,12 @@ pub struct Cursor {
 
 impl Cursor {
     pub fn create(ecs: &mut ECS) {
-        let renderer = ecs.read_res::<Rc<Renderer>>();
-        let cursor = Cursor::new(renderer);
+        let cursor = Cursor::new();
         ecs.add_res(cursor);
     }
 
-    pub fn new(renderer: &Rc<Renderer>) -> Cursor {
-        let mut res = Cursor {
+    pub fn new() -> Cursor {
+        let res = Cursor {
             visible: false,
             color: [0., 0., 0., 1.],
             transform: Matrix4::identity(),
