@@ -4,14 +4,12 @@ use crate::player::Player;
 use crate::start_menu::StartMenuButtonId::Start;
 use crate::tilemap::Tilemap;
 use crate::{register_core_systems, LastScene, MAIN_GAME_SCENE};
-use cgmath::{Matrix4, Vector3};
 use gouda::camera::{Camera, OrthographicCamera};
 use gouda::ecs::{Entity, GameSceneId, Mutation, Mutations, ECS};
 use gouda::gui::constraints::Constraint::{CenterConstraint, RelativeConstraint};
 use gouda::gui::constraints::{Constraint, GuiConstraints};
 use gouda::gui::{GuiComponent, GuiText};
 use gouda::mouse_capture::{ActiveCaptureLayer, MouseCaptureArea, MouseCaptureLayer};
-use gouda::rendering::model::ObjModel;
 use gouda::rendering::Scene;
 use gouda::types::{Bounds, Color};
 use gouda::{GameScene, RenderLayer};
@@ -54,13 +52,9 @@ impl GameScene for StartMenuScene {
     }
 
     fn render_scene(&self, ecs: &ECS, scene: &Scene) {
-        let model = ecs.read_res::<ObjModel>();
-        let transform = Matrix4::from_translation(Vector3::new(0.0, 0.0, 0.5))
-            * Matrix4::from_nonuniform_scale(1., 1., 1.);
-        scene.submit_obj(model, transform);
-        // let menu = ecs.read_res::<StartMenuScreen>();
-        // let menugui = ecs.read::<GuiComponent>(&menu.entity);
-        // menugui.unwrap().render(&ecs, &scene);
+        let menu = ecs.read_res::<StartMenuScreen>();
+        let menugui = ecs.read::<GuiComponent>(&menu.entity);
+        menugui.unwrap().render(&ecs, &scene);
     }
 
     fn next_scene(&self, ecs: &ECS) -> Option<u32> {

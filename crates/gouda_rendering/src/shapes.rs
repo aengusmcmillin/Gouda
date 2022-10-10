@@ -157,7 +157,7 @@ impl ShapeLibrary {
         return self.shapes2d.get(&name);
     }
 
-    // pub fn bind_shape(&self, scene: &Scene, name: String) {
-    //     self.get(name).unwrap().bind(scene);
-    // }
+    pub fn bind_shape(&self, scene: &Scene, name: &'static str) {
+        self.get(name).unwrap().bind(scene);
+    }
 }

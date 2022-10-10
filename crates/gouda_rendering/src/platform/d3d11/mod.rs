@@ -13,14 +13,15 @@ use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
 
 use crate::camera::Camera;
+use crate::font::Font;
 use crate::font_library::FontLibrary;
 use crate::model::ObjModel;
 use crate::shader_lib::imgui_shader::imgui_shader_layout;
 use crate::shader_lib::ShaderLibrary;
-use crate::shapes::ShapeLibrary;
+use crate::shapes::{Shape2d, ShapeLibrary};
 
 use self::buffers::{IndexBuffer, VertexBuffer};
-use self::shader::Shader;
+use self::shader::{Shader, ShaderUniform};
 use self::texture::RenderableTexture;
 
 pub mod buffers;
@@ -45,6 +46,12 @@ impl Vertex {
     }
 }
 
+// pub trait Renderer {
+//     fn get_shader(&self, name: &'static str) -> &Shader;
+//     fn get_shape(&self, name: &'static str) -> &Shape2d;
+//     fn get_font(&self, name: &'static str) -> &Font;
+// }
+
 pub struct Renderer {
     swap_chain: Box<IDXGISwapChain>,
     device: *mut ID3D11Device,
@@ -56,6 +63,17 @@ pub struct Renderer {
 }
 
 impl Renderer {
+    pub fn get_shader(&self, name: &'static str) -> &Shader {
+        return self.shader_lib.as_ref().unwrap().get(name).unwrap();
+    }
+
+    pub fn get_shape(&self, name: &'static str) -> &Shape2d {
+        return self.shape_lib.as_ref().unwrap().get(name).unwrap();
+    }
+
+    pub fn get_font(&self, name: &'static str) -> &Font {
+        return self.font_lib.as_ref().unwrap().get(name).unwrap();
+    }
     pub fn new(hwnd: HWND) -> Result<Renderer, String> {
         unsafe {
             let factory: *mut IDXGIFactory = null_mut();
@@ -237,7 +255,7 @@ impl Renderer {
             device_context: self.device_context,
             render_target: self.render_target,
             swap_chain: &self.swap_chain,
-            renderer: &self,
+            renderer: self,
             camera_view_projection_matrix: camera.get_view_projection_matrix(),
         };
 
@@ -325,13 +343,7 @@ impl Scene<'_> {
     }
 
     pub fn submit_obj(&self, obj_model: &ObjModel, transform: Matrix4<f32>) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get("obj_model")
-            .unwrap();
+        let shader = self.renderer.get_shader("obj_model");
         shader.bind(self);
         shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
         shader.upload_vertex_uniform_mat4(self, 1, transform);
@@ -346,7 +358,7 @@ impl Scene<'_> {
         obj_model.submeshes.iter().for_each(|submesh| {
             shader.upload_fragment_uniform_float3(self, 0, submesh.ambient);
             shader.upload_fragment_uniform_float3(self, 1, submesh.diffuse);
-            shader.upload_fragment_uniform_float3(self, 2, [0., 0.5, -2.5]);
+            shader.upload_fragment_uniform_float3(self, 2, [3., 0.5, -2.5]);
 
             submesh.index_buffer.bind(self);
             self.draw_indexed_tris(submesh.index_buffer.num_indices, &submesh.index_buffer);
@@ -360,20 +372,8 @@ impl Scene<'_> {
         transform: Matrix4<f32>,
         color: [f32; 4],
     ) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get(shader_name)
-            .unwrap();
-        let shape = self
-            .renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .get(shape_name)
-            .unwrap();
+        let shader = self.renderer.get_shader(shader_name);
+        let shape = self.renderer.get_shape(shape_name);
 
         self.submit_impl(
             shader,
@@ -391,22 +391,16 @@ impl Scene<'_> {
         transform: Matrix4<f32>,
         color: [f32; 4],
     ) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get(shader_name)
-            .unwrap();
-        let shape = self
-            .renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .get(shape_name)
-            .unwrap();
+        let shader = self.renderer.get_shader(shader_name);
+        let shape = self.renderer.get_shape(shape_name);
 
-        self.submit_impl(shader, shape, transform, Matrix4::identity(), color);
+        self.submit_impl(
+            shader,
+            shape,
+            transform,
+            self.camera_view_projection_matrix,
+            color,
+        );
     }
 
     fn submit_texture_with_projection(
@@ -453,6 +447,43 @@ impl Scene<'_> {
             .as_ref()
             .unwrap()
             .bind_shader(self, shader);
+    }
+
+    pub fn bind_shader_with_uniforms(
+        &self,
+        shader: &'static str,
+        vertex_uniforms: Vec<ShaderUniform>,
+        fragment_uniforms: Vec<ShaderUniform>,
+    ) {
+        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader);
+        if let Some(shader) = shader {
+            for (i, uniform) in vertex_uniforms.iter().enumerate() {
+                shader.upload_vertex_uniform(self, i as u32, *uniform);
+            }
+            for (i, uniform) in fragment_uniforms.iter().enumerate() {
+                shader.upload_fragment_uniform(self, i as u32, *uniform);
+            }
+            shader.bind(self);
+        }
+    }
+
+    pub fn draw_shape(&self, shape: &'static str) {
+        self.renderer
+            .shape_lib
+            .as_ref()
+            .unwrap()
+            .bind_shape(self, shape);
+        let shape = self
+            .renderer
+            .shape_lib
+            .as_ref()
+            .unwrap()
+            .get(shape)
+            .unwrap();
+
+        shape.bind(self);
+
+        self.draw_indexed(shape.num_indices(), shape.index_buffer());
     }
 
     pub fn bind_font(&self, font: &'static str) {

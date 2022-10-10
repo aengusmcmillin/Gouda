@@ -1,4 +1,6 @@
 use cgmath::{Matrix4, Vector3};
+use gouda_rendering::shader::ShaderUniform;
+use gouda_rendering::texture::RenderableTexture;
 
 use crate::gui::constraints::GuiConstraints;
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
@@ -10,7 +12,6 @@ use gouda_rendering::buffers::{
 };
 use gouda_rendering::font::TextDrawable;
 use gouda_rendering::shader_lib::gui_shader::gui_shader_layout;
-use gouda_rendering::texture::RenderableTexture;
 use gouda_rendering::{Renderer, Scene};
 use gouda_types::{Bounds, Color};
 use std::rc::Rc;
@@ -53,7 +54,7 @@ impl GuiImage {
             1.0,
         ];
         let size = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
-        let drawable = RenderableTexture::new(renderer, &image, false);
+        let drawable = RenderableTexture::new(renderer, &image);
 
         let transform = Matrix4::from_translation(Vector3::new(pos[0], pos[1], pos[2]))
             * Matrix4::from_nonuniform_scale(size[0], size[1], size[2]);
@@ -355,68 +356,48 @@ impl GuiComponent {
 
 #[derive(Debug)]
 pub struct GuiDrawable {
-    pub vertex_buffer: VertexBuffer,
-    pub index_buffer: IndexBuffer,
-    pub transform_buffer: VertexConstantBuffer,
-    pub color_buffer: FragmentConstantBuffer,
-    pub shape_buffer: FragmentConstantBuffer,
-    pub radius_buffer: FragmentConstantBuffer,
+    pub bounds: Bounds,
+    pub color: [f32; 4],
+    pub radius: f32,
 }
 
 impl GuiDrawable {
     pub fn new(renderer: &Renderer, radius: f32, bounds: Bounds, color: [f32; 4]) -> Self {
-        let w = renderer.get_width() as f32;
-        let h = renderer.get_height() as f32;
-        let position = [
-            (bounds.x as f32) / (w as f32 / 2.) - 1.,
-            (bounds.y as f32) / (h as f32 / 2.) - 1.,
-            0.0,
-        ];
-        let scale = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
-        let radius = radius / w;
-
-        let vb = VertexBuffer::new::<[f32; 2]>(
-            renderer,
-            gui_shader_layout(),
-            0,
-            vec![
-                [0., 0.], // bottom left
-                [2., 0.], // bottom right
-                [2., 2.], // top right
-                [0., 2.], // top left
-            ],
-        );
-
-        let ib = IndexBuffer::new(renderer, vec![0, 3, 2, 0, 1, 2]);
-
-        let transform_mat = create_transformation_matrix(position, [0., 0., 0.], scale);
-        let transform_buffer =
-            VertexConstantBuffer::new::<f32>(renderer, 0, transform_mat.raw_data().to_vec());
-
-        let color_buffer =
-            FragmentConstantBuffer::new(renderer, 0, vec![color[0], color[1], color[2], color[3]]);
-        let shape_buffer = FragmentConstantBuffer::new(renderer, 1, vec![scale[0], scale[1]]);
-        let radius_buffer = FragmentConstantBuffer::new(renderer, 2, vec![radius]);
-
         return Self {
-            vertex_buffer: vb,
-            index_buffer: ib,
-            transform_buffer,
-            color_buffer,
-            shape_buffer,
-            radius_buffer,
+            bounds,
+            color,
+            radius,
         };
     }
 
     pub fn draw(&self, scene: &Scene) {
-        scene.bind_shader("gui");
-        self.vertex_buffer.bind(scene);
-        self.index_buffer.bind(scene);
-        self.transform_buffer.bind(scene);
-        self.color_buffer.bind(&scene);
-        self.shape_buffer.bind(&scene);
-        self.radius_buffer.bind(&scene);
+        let w = scene.renderer.get_width() as f32;
+        let h = scene.renderer.get_height() as f32;
+        let position = [
+            (self.bounds.x as f32) / (w as f32 / 2.) - 1.,
+            (self.bounds.y as f32) / (h as f32 / 2.) - 1.,
+            0.0,
+        ];
+        let scale = [
+            self.bounds.w as f32 / w as f32,
+            self.bounds.h as f32 / h as f32,
+            1.0,
+        ];
+        let radius = self.radius / w;
 
-        scene.draw_indexed(6, &self.index_buffer);
+        let transform_mat =
+            Matrix4::from_translation(Vector3::new(position[0], position[1], position[2]))
+                * Matrix4::from_nonuniform_scale(scale[0], scale[1], scale[2]);
+
+        scene.bind_shader_with_uniforms(
+            "gui",
+            vec![ShaderUniform::Mat4(transform_mat)],
+            vec![
+                ShaderUniform::Float4(self.color),
+                ShaderUniform::Float2([scale[0], scale[1]]),
+                ShaderUniform::Float(radius),
+            ],
+        );
+        scene.draw_shape("gui");
     }
 }

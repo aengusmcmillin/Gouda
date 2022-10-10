@@ -35,7 +35,7 @@ impl TextDrawable {
         text: String,
         font_size: f32,
     ) -> Self {
-        let font = renderer.font_lib.as_ref().unwrap().get(font_name).unwrap();
+        let font = renderer.get_font(font_name);
         let mut vertices = vec![];
 
         let scaling = 1. / font.base_size * font_size / font.size;
@@ -262,7 +262,7 @@ impl Font {
 
     pub fn new_from_contents(renderer: &Renderer, font_img: &[u8], font_file: &str) -> Font {
         let texture = PNG::from_buffer(font_img).unwrap().image();
-        let texture = RenderableTexture::new(renderer, &texture, false);
+        let texture = RenderableTexture::new(renderer, &texture);
 
         let mut line_iter = font_file.lines().map(|item| item.to_string());
         return Font::new_impl(texture, &mut line_iter);
@@ -273,7 +273,7 @@ impl Font {
         let font_file_reader = BufReader::new(font_file);
 
         let texture = PNG::from_file(font_png_path).unwrap().image();
-        let texture = RenderableTexture::new(renderer, &texture, false);
+        let texture = RenderableTexture::new(renderer, &texture);
 
         let mut line_iter = font_file_reader.lines().filter_map(|result| result.ok());
         return Font::new_impl(texture, &mut line_iter);

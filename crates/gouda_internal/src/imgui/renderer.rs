@@ -134,7 +134,7 @@ impl GoudaImguiRenderer {
             ),
         };
 
-        let res = RenderableTexture::new(renderer, &image, true);
+        let res = RenderableTexture::new(renderer, &image);
 
         return res;
     }

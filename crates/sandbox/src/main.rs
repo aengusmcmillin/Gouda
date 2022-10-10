@@ -501,8 +501,8 @@ impl GameLogic for Game {
 
     fn setup(&mut self, ecs: &mut ECS) {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let objfile = load_obj_file("./assets/models/rock2.obj").unwrap();
-        let mtlfile = load_mtl_file("./assets/models/rock2.mtl").unwrap();
+        let objfile = load_obj_file("./assets/models/tree.obj").unwrap();
+        let mtlfile = load_mtl_file("./assets/models/tree.mtl").unwrap();
         let model = ObjModel::new(renderer, objfile, mtlfile);
 
         ecs.add_res(StateTimer { countdown_s: 0. });

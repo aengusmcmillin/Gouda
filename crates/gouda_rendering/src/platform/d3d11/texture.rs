@@ -2,6 +2,7 @@ pub use crate::platform::d3d11::{Renderer, Scene};
 pub use gouda_images::bmp::Bitmap;
 pub use gouda_images::png::PNG;
 use gouda_images::Image;
+use std::fmt::Debug;
 use std::mem;
 use winapi::ctypes::c_void;
 use winapi::shared::dxgiformat::*;
@@ -17,7 +18,7 @@ pub struct RenderableTexture {
 }
 
 impl RenderableTexture {
-    pub fn new(renderer: &Renderer, image: &Image, no_mip: bool) -> RenderableTexture {
+    pub fn new(renderer: &Renderer, image: &Image) -> RenderableTexture {
         let texture_desc = D3D11_TEXTURE2D_DESC {
             Width: image.width as u32,
             Height: image.height as u32,
@@ -72,11 +73,7 @@ impl RenderableTexture {
             }
 
             let sampler_desc = D3D11_SAMPLER_DESC {
-                Filter: if no_mip {
-                    D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT
-                } else {
-                    D3D11_FILTER_MIN_MAG_MIP_LINEAR
-                },
+                Filter: D3D11_FILTER_MIN_MAG_MIP_LINEAR,
                 AddressU: D3D11_TEXTURE_ADDRESS_WRAP,
                 AddressV: D3D11_TEXTURE_ADDRESS_WRAP,
                 AddressW: D3D11_TEXTURE_ADDRESS_WRAP,

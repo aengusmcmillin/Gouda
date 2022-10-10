@@ -3,11 +3,13 @@ pub mod camera;
 pub mod drawable;
 pub mod font;
 pub mod font_library;
+pub mod material_library;
 pub mod model;
 pub mod platform;
 pub mod shader_lib;
 pub mod shapes;
 pub mod sprites;
+pub mod texture_library;
 
 #[cfg(target_os = "macos")]
 pub use crate::platform::metal::buffers;

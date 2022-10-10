@@ -16,11 +16,8 @@ pub struct SpriteComponent {
 impl SpriteComponent {
     pub fn new(ecs: &mut ECS, sprite_name: String) -> SpriteComponent {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture = RenderableTexture::new(
-            renderer,
-            &PNG::from_file(&sprite_name).unwrap().image(),
-            false,
-        );
+        let texture =
+            RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
         return SpriteComponent { texture };
     }
 
@@ -50,7 +47,7 @@ impl SpriteSheetComponent {
         let mut all_textures = vec![];
         for i in 0..rows {
             for j in 0..columns {
-                let texture = RenderableTexture::new(renderer, &sheet.sprite(j, i), false);
+                let texture = RenderableTexture::new(renderer, &sheet.sprite(j, i));
                 all_textures.push(texture);
             }
         }
@@ -77,11 +74,8 @@ impl SpriteListComponent {
         let mut all_textures = vec![];
         for sprite_name in sprite_names {
             let renderer = ecs.read_res::<Rc<Renderer>>();
-            let texture = RenderableTexture::new(
-                renderer,
-                &PNG::from_file(&sprite_name).unwrap().image(),
-                false,
-            );
+            let texture =
+                RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
             all_textures.push(texture);
         }
         return SpriteListComponent {

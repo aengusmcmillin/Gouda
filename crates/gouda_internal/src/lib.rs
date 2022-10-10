@@ -2,6 +2,9 @@ use crate::input::{GameInput, LetterKeys};
 use crate::platform::PlatformLayer;
 use crate::window::{WindowEvent, WindowProps};
 use gouda_ecs::{GameSceneId, ECS};
+use gouda_rendering::font_library::FontLibrary;
+use gouda_rendering::shader_lib::ShaderLibrary;
+use gouda_rendering::shapes::ShapeLibrary;
 use gouda_rendering::{Renderer, Scene};
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -55,6 +58,9 @@ pub struct Gouda<T: GameLogic> {
     ecs: ECS,
     game_scenes: HashMap<GameSceneId, Box<dyn GameScene>>,
     active_scene: Option<GameSceneId>,
+    pub shader_lib: Option<ShaderLibrary>,
+    pub shape_lib: Option<ShapeLibrary>,
+    pub font_lib: Option<FontLibrary>,
 }
 
 impl<T: GameLogic> Gouda<T> {
@@ -64,6 +70,9 @@ impl<T: GameLogic> Gouda<T> {
             ecs: ECS::new(),
             game_scenes: HashMap::new(),
             active_scene: None,
+            shader_lib: None,
+            shape_lib: None,
+            font_lib: None,
         }
     }
 
