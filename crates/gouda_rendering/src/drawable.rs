@@ -1,8 +1,7 @@
 use crate::buffers::{FragmentConstantBuffer, IndexBuffer, VertexBuffer, VertexConstantBuffer};
 use crate::shader_lib::basic_shader::basic_shader_layout;
 use crate::shader_lib::font_shader::font_shader_layout;
-use crate::texture::RenderableTexture;
-use crate::{Renderer, Scene};
+use crate::{Renderer, Scene, Texture};
 use gouda_math::{create_transformation_matrix, Mat4x4};
 
 #[derive(Debug)]
@@ -36,14 +35,14 @@ pub struct TextureDrawable {
     pub index_buffer: IndexBuffer,
     pub transform_buffer: VertexConstantBuffer,
     pub identity_buffer: VertexConstantBuffer,
-    pub texture: RenderableTexture,
+    pub texture: Texture,
     pub position: [f32; 3],
     pub scale: [f32; 3],
     pub rotation: [f32; 3],
 }
 
 impl TextureDrawable {
-    pub fn new(_is_gui: bool, renderer: &Renderer, texture: RenderableTexture) -> Self {
+    pub fn new(_is_gui: bool, renderer: &Renderer, texture: Texture) -> Self {
         let vb = VertexBuffer::new(
             renderer,
             font_shader_layout(),

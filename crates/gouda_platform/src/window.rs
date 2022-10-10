@@ -1,7 +1,7 @@
 use crate::input::GameInput;
 
 pub struct GameWindow {
-    game_window_impl: Box<dyn GameWindowImpl>,
+    pub game_window_impl: Box<dyn GameWindowImpl>,
 }
 
 impl GameWindow {

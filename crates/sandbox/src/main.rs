@@ -1,6 +1,6 @@
 use gouda::camera::{Camera, OrthographicCamera};
 use gouda::ecs::{Entity, GameSceneId, Mutation, Mutations, ECS};
-use gouda::input::{GameInput, LetterKeys};
+use gouda::platform::input::{GameInput, LetterKeys};
 use gouda::rendering::drawable::ShapeDrawable;
 use gouda::rendering::model::{load_mtl_file, load_obj_file, ObjModel};
 use gouda::rendering::sprites::{ColorBoxComponent, SpriteComponent, SpriteSheetComponent};
@@ -25,7 +25,7 @@ use crate::tree::TreeComponent;
 use crate::turret::{CreateTurretMutation, TurretDeselectMutation, TurretSelectMutation};
 use gouda::gui::{ActiveGui, GuiComponent};
 use gouda::mouse_capture::{mouse_capture_system, ActiveCaptureLayer, MouseCaptureArea};
-use gouda::window::{WindowEvent, WindowProps};
+use gouda::platform::window::{WindowEvent, WindowProps};
 use rand::{thread_rng, Rng};
 use std::collections::HashMap;
 

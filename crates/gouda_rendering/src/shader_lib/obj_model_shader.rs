@@ -1,6 +1,6 @@
-use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
-use crate::platform::d3d11::shader::Shader;
-use crate::platform::d3d11::Renderer;
+use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shaders::Shader;
+use crate::Renderer;
 
 pub fn obj_model_shader_layout() -> BufferLayout {
     return BufferLayout::new(vec![

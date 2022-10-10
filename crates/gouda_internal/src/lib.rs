@@ -1,7 +1,7 @@
-use crate::input::{GameInput, LetterKeys};
-use crate::platform::PlatformLayer;
-use crate::window::{WindowEvent, WindowProps};
 use gouda_ecs::{GameSceneId, ECS};
+use gouda_platform::input::{GameInput, LetterKeys};
+use gouda_platform::window::{WindowEvent, WindowProps};
+use gouda_platform::PlatformLayer;
 use gouda_rendering::font_library::FontLibrary;
 use gouda_rendering::shader_lib::ShaderLibrary;
 use gouda_rendering::shapes::ShapeLibrary;
@@ -18,9 +18,6 @@ extern crate objc;
 #[macro_use]
 extern crate enum_map;
 
-pub mod input;
-mod platform;
-pub mod window;
 use crate::imgui::platform::GoudaImguiPlatform;
 use crate::imgui::renderer::GoudaImguiRenderer;
 use ::imgui::*;

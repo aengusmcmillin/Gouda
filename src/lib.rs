@@ -27,3 +27,7 @@ pub mod types {
 pub mod images {
     pub use gouda_images::*;
 }
+
+pub mod platform {
+    pub use gouda_platform::*;
+}

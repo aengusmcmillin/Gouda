@@ -1,7 +1,7 @@
 use crate::spawners::MonsterType::Wolf;
 use crate::Monster;
 use gouda::ecs::{Entity, Mutation, Mutations, ECS};
-use gouda::input::GameInput;
+use gouda::platform::input::GameInput;
 use gouda::rendering::drawable::ShapeDrawable;
 use gouda::transform::TransformComponent;
 

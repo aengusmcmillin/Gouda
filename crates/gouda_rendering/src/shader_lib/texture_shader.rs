@@ -1,5 +1,5 @@
-use crate::buffers2::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shader::Shader;
+use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
+use crate::shaders::Shader;
 use crate::Renderer;
 
 pub fn texture_shader_layout() -> BufferLayout {

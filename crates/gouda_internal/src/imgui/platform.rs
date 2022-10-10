@@ -1,8 +1,7 @@
 use std::time::Duration;
 
+use gouda_platform::window::GameWindow;
 use imgui::{BackendFlags, Context, Key};
-
-use crate::window::GameWindow;
 
 pub struct GoudaImguiPlatform {}
 

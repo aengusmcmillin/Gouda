@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::shader::Shader;
+use crate::shaders::Shader;
 use crate::{Renderer, Scene};
 
 use self::basic_shader::basic_shader;
@@ -33,17 +33,15 @@ impl ShaderLibrary {
         };
     }
 
-    pub fn construct(renderer: &Renderer) -> ShaderLibrary {
-        let mut lib = ShaderLibrary::new();
-        lib.add("basic", basic_shader(renderer));
-        lib.add("font", font_shader(renderer));
-        lib.add("gui", gui_shader(renderer));
-        lib.add("imgui", imgui_shader(renderer));
-        lib.add("quad", quad_shader(renderer));
-        lib.add("texture", texture_shader(renderer));
-        lib.add("hex", hex_shader(renderer));
-        lib.add("obj_model", obj_model_shader(renderer));
-        return lib;
+    pub fn initialize(&mut self, renderer: &mut Renderer) {
+        self.add("basic", basic_shader(renderer));
+        self.add("font", font_shader(renderer));
+        self.add("gui", gui_shader(renderer));
+        self.add("imgui", imgui_shader(renderer));
+        self.add("quad", quad_shader(renderer));
+        self.add("texture", texture_shader(renderer));
+        self.add("hex", hex_shader(renderer));
+        self.add("obj_model", obj_model_shader(renderer));
     }
 
     pub fn add(&mut self, name: &'static str, shader: Shader) {

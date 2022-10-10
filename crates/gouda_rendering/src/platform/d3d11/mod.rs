@@ -1,6 +1,5 @@
 #![cfg(target_os = "windows")]
 
-use cgmath::{Matrix4, SquareMatrix};
 use std::mem;
 use winapi::shared::dxgi::*;
 use winapi::shared::dxgiformat::*;
@@ -12,69 +11,21 @@ use winapi::shared::windef::HWND;
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
 
-use crate::camera::Camera;
-use crate::font::Font;
-use crate::font_library::FontLibrary;
-use crate::model::ObjModel;
-use crate::shader_lib::imgui_shader::imgui_shader_layout;
-use crate::shader_lib::ShaderLibrary;
-use crate::shapes::{Shape2d, ShapeLibrary};
-
-use self::buffers::{IndexBuffer, VertexBuffer};
-use self::shader::{Shader, ShaderUniform};
-use self::texture::RenderableTexture;
+use self::buffers::PlatformIndexBuffer;
 
 pub mod buffers;
 pub mod shader;
 pub mod texture;
 
-pub trait Renderable {
-    fn bind(&self, scene: &Scene);
-    fn num_indices(&self) -> u64;
-    fn index_buffer(&self) -> &IndexBuffer;
-}
-
-pub struct Vertex {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
-impl Vertex {
-    pub fn new(x: f32, y: f32, z: f32) -> Vertex {
-        Vertex { x, y, z }
-    }
-}
-
-// pub trait Renderer {
-//     fn get_shader(&self, name: &'static str) -> &Shader;
-//     fn get_shape(&self, name: &'static str) -> &Shape2d;
-//     fn get_font(&self, name: &'static str) -> &Font;
-// }
-
-pub struct Renderer {
+pub struct PlatformRenderer {
     swap_chain: Box<IDXGISwapChain>,
     device: *mut ID3D11Device,
     device_context: *mut ID3D11DeviceContext,
     render_target: *mut ID3D11RenderTargetView,
-    pub shader_lib: Option<ShaderLibrary>,
-    pub shape_lib: Option<ShapeLibrary>,
-    pub font_lib: Option<FontLibrary>,
 }
 
-impl Renderer {
-    pub fn get_shader(&self, name: &'static str) -> &Shader {
-        return self.shader_lib.as_ref().unwrap().get(name).unwrap();
-    }
-
-    pub fn get_shape(&self, name: &'static str) -> &Shape2d {
-        return self.shape_lib.as_ref().unwrap().get(name).unwrap();
-    }
-
-    pub fn get_font(&self, name: &'static str) -> &Font {
-        return self.font_lib.as_ref().unwrap().get(name).unwrap();
-    }
-    pub fn new(hwnd: HWND) -> Result<Renderer, String> {
+impl PlatformRenderer {
+    pub fn new(hwnd: HWND) -> Result<PlatformRenderer, String> {
         unsafe {
             let factory: *mut IDXGIFactory = null_mut();
             let result = CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory));
@@ -229,34 +180,23 @@ impl Renderer {
             // back_buffer = Box::from_raw(back_buffer_ptr);
             render_target = Box::from_raw(render_target_ptr);
 
-            let mut res = Renderer {
+            let mut res = PlatformRenderer {
                 swap_chain,
                 device: Box::into_raw(device),
                 device_context: Box::into_raw(device_context),
                 render_target: Box::into_raw(render_target),
-                shader_lib: None,
-                shape_lib: None,
-                font_lib: None,
             };
-            let shader_lib = ShaderLibrary::construct(&res);
-            res.shader_lib = Some(shader_lib);
-
-            let shape_lib = ShapeLibrary::construct(&res);
-            res.shape_lib = Some(shape_lib);
-
-            let font_lib = FontLibrary::construct(&res);
-            res.font_lib = Some(font_lib);
             return Ok(res);
         }
     }
-    pub fn begin_scene(&self, camera: Box<dyn Camera>) -> Option<Scene> {
-        let scene = Scene {
+
+    pub fn begin_scene(&self) -> Option<PlatformScene> {
+        let scene = PlatformScene {
             device: self.device,
             device_context: self.device_context,
             render_target: self.render_target,
             swap_chain: &self.swap_chain,
             renderer: self,
-            camera_view_projection_matrix: camera.get_view_projection_matrix(),
         };
 
         unsafe {
@@ -275,30 +215,17 @@ impl Renderer {
         }
         return Some(scene);
     }
-
-    pub fn end_scene(&self, scene: Scene) {
-        scene.end();
-    }
-
-    pub fn get_width(&self) -> usize {
-        return 900;
-    }
-
-    pub fn get_height(&self) -> usize {
-        return 900;
-    }
 }
 
-pub struct Scene<'a> {
+pub struct PlatformScene<'a> {
     pub device: *mut ID3D11Device,
     pub device_context: *mut ID3D11DeviceContext,
     pub render_target: *mut ID3D11RenderTargetView,
     pub swap_chain: &'a Box<IDXGISwapChain>,
-    pub renderer: &'a Renderer,
-    pub camera_view_projection_matrix: Matrix4<f32>,
+    pub renderer: &'a PlatformRenderer,
 }
 
-impl Scene<'_> {
+impl PlatformScene<'_> {
     pub fn end(self) {
         unsafe {
             let result = self.swap_chain.Present(1, 0);
@@ -307,204 +234,14 @@ impl Scene<'_> {
             }
         }
     }
-
-    fn submit_impl(
-        &self,
-        shader: &Shader,
-        renderable: &impl Renderable,
-        transform: Matrix4<f32>,
-        projection: Matrix4<f32>,
-        color: [f32; 4],
-    ) {
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, projection);
-        shader.upload_vertex_uniform_mat4(self, 1, transform);
-        shader.upload_fragment_uniform_float4(self, 0, color);
-
-        renderable.bind(self);
-
-        self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
-    }
-
-    pub fn submit(
-        &self,
-        shader: &Shader,
-        renderable: &impl Renderable,
-        transform: Matrix4<f32>,
-        color: [f32; 4],
-    ) {
-        self.submit_impl(
-            shader,
-            renderable,
-            transform,
-            self.camera_view_projection_matrix,
-            color,
-        );
-    }
-
-    pub fn submit_obj(&self, obj_model: &ObjModel, transform: Matrix4<f32>) {
-        let shader = self.renderer.get_shader("obj_model");
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
-        shader.upload_vertex_uniform_mat4(self, 1, transform);
-
-        obj_model.vertex_buffer.bind(self);
-
-        if let Some(no_mat_ibuf) = &obj_model.no_material_index_buffer {
-            no_mat_ibuf.bind(self);
-            self.draw_indexed_tris(no_mat_ibuf.num_indices, &no_mat_ibuf);
-        }
-
-        obj_model.submeshes.iter().for_each(|submesh| {
-            shader.upload_fragment_uniform_float3(self, 0, submesh.ambient);
-            shader.upload_fragment_uniform_float3(self, 1, submesh.diffuse);
-            shader.upload_fragment_uniform_float3(self, 2, [3., 0.5, -2.5]);
-
-            submesh.index_buffer.bind(self);
-            self.draw_indexed_tris(submesh.index_buffer.num_indices, &submesh.index_buffer);
-        });
-    }
-
-    pub fn submit_shape_gui(
-        &self,
-        shader_name: &'static str,
-        shape_name: &'static str,
-        transform: Matrix4<f32>,
-        color: [f32; 4],
-    ) {
-        let shader = self.renderer.get_shader(shader_name);
-        let shape = self.renderer.get_shape(shape_name);
-
-        self.submit_impl(
-            shader,
-            shape,
-            transform,
-            self.camera_view_projection_matrix,
-            color,
-        );
-    }
-
-    pub fn submit_shape_by_name(
-        &self,
-        shader_name: &'static str,
-        shape_name: &'static str,
-        transform: Matrix4<f32>,
-        color: [f32; 4],
-    ) {
-        let shader = self.renderer.get_shader(shader_name);
-        let shape = self.renderer.get_shape(shape_name);
-
-        self.submit_impl(
-            shader,
-            shape,
-            transform,
-            self.camera_view_projection_matrix,
-            color,
-        );
-    }
-
-    fn submit_texture_with_projection(
-        &self,
-        texture: &RenderableTexture,
-        transform: Matrix4<f32>,
-        projection: Matrix4<f32>,
-    ) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get("texture")
-            .unwrap();
-        let shape = self
-            .renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .get("texture")
-            .unwrap();
-        texture.bind(self);
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, projection);
-        shader.upload_vertex_uniform_mat4(self, 1, transform);
-
-        shape.bind(self);
-
-        self.draw_indexed(shape.num_indices(), shape.index_buffer());
-    }
-
-    pub fn submit_gui_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
-        self.submit_texture_with_projection(texture, transform, Matrix4::identity())
-    }
-
-    pub fn submit_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
-        self.submit_texture_with_projection(texture, transform, self.camera_view_projection_matrix)
-    }
-
-    pub fn bind_shader(&self, shader: &'static str) {
-        self.renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .bind_shader(self, shader);
-    }
-
-    pub fn bind_shader_with_uniforms(
-        &self,
-        shader: &'static str,
-        vertex_uniforms: Vec<ShaderUniform>,
-        fragment_uniforms: Vec<ShaderUniform>,
-    ) {
-        let shader = self.renderer.shader_lib.as_ref().unwrap().get(shader);
-        if let Some(shader) = shader {
-            for (i, uniform) in vertex_uniforms.iter().enumerate() {
-                shader.upload_vertex_uniform(self, i as u32, *uniform);
-            }
-            for (i, uniform) in fragment_uniforms.iter().enumerate() {
-                shader.upload_fragment_uniform(self, i as u32, *uniform);
-            }
-            shader.bind(self);
-        }
-    }
-
-    pub fn draw_shape(&self, shape: &'static str) {
-        self.renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .bind_shape(self, shape);
-        let shape = self
-            .renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .get(shape)
-            .unwrap();
-
-        shape.bind(self);
-
-        self.draw_indexed(shape.num_indices(), shape.index_buffer());
-    }
-
-    pub fn bind_font(&self, font: &'static str) {
-        self.renderer
-            .font_lib
-            .as_ref()
-            .unwrap()
-            .get(font)
-            .unwrap()
-            .texture
-            .bind(self);
-    }
-
-    pub fn draw_indexed(&self, num_indices: u64, _index_buffer: &buffers::IndexBuffer) {
+    pub fn draw_indexed(&self, num_indices: u64, _index_buffer: &PlatformIndexBuffer) {
         unsafe {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             (*self.device_context).DrawIndexed(num_indices as u32, 0, 0);
         }
     }
 
-    pub fn draw_indexed_tris(&self, num_indices: u64, _index_buffer: &buffers::IndexBuffer) {
+    pub fn draw_indexed_tris(&self, num_indices: u64, _index_buffer: &PlatformIndexBuffer) {
         unsafe {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             (*self.device_context).DrawIndexed(num_indices as u32, 0, 0);
@@ -522,34 +259,5 @@ impl Scene<'_> {
             (*self.device_context).IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             (*self.device_context).Draw(num_verts as u32, 0);
         }
-    }
-
-    pub fn submit_imgui(
-        &self,
-        vbuf: &Vec<[f32; 8]>,
-        ibuf: &[u16],
-        count: usize,
-        _vtx_offset: usize,
-        idx_offset: usize,
-        texture: &RenderableTexture,
-        matrix: Matrix4<f32>,
-    ) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get("imgui")
-            .unwrap();
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, matrix);
-        let vertex_buffer =
-            VertexBuffer::new::<[f32; 8]>(self.renderer, imgui_shader_layout(), 0, vbuf.clone());
-        vertex_buffer.bind(self);
-        let index_buffer = IndexBuffer::new(self.renderer, ibuf.to_vec());
-        index_buffer.bind_with_offset(self, idx_offset as u32);
-        texture.bind(self);
-
-        self.draw_indexed_tris(count as u64, &index_buffer);
     }
 }

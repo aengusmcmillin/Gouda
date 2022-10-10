@@ -5,19 +5,19 @@ use gouda_images::png::PNG;
 use gouda_images::spritesheet::Spritesheet;
 use gouda_transform::TransformComponent;
 
-use super::texture::RenderableTexture;
-use super::{Renderer, Scene};
+use crate::{Scene, Texture};
+
+use super::Renderer;
 
 #[derive(Debug)]
 pub struct SpriteComponent {
-    texture: RenderableTexture,
+    texture: Texture,
 }
 
 impl SpriteComponent {
     pub fn new(ecs: &mut ECS, sprite_name: String) -> SpriteComponent {
         let renderer = ecs.read_res::<Rc<Renderer>>();
-        let texture =
-            RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
+        let texture = Texture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
         return SpriteComponent { texture };
     }
 
@@ -28,7 +28,7 @@ impl SpriteComponent {
 
 #[derive(Debug)]
 pub struct SpriteSheetComponent {
-    textures: Vec<RenderableTexture>,
+    textures: Vec<Texture>,
     pub active: usize,
 }
 
@@ -47,7 +47,7 @@ impl SpriteSheetComponent {
         let mut all_textures = vec![];
         for i in 0..rows {
             for j in 0..columns {
-                let texture = RenderableTexture::new(renderer, &sheet.sprite(j, i));
+                let texture = Texture::new(renderer, &sheet.sprite(j, i));
                 all_textures.push(texture);
             }
         }
@@ -65,7 +65,7 @@ impl SpriteSheetComponent {
 
 #[derive(Debug)]
 pub struct SpriteListComponent {
-    textures: Vec<RenderableTexture>,
+    textures: Vec<Texture>,
     active: usize,
 }
 
@@ -74,8 +74,7 @@ impl SpriteListComponent {
         let mut all_textures = vec![];
         for sprite_name in sprite_names {
             let renderer = ecs.read_res::<Rc<Renderer>>();
-            let texture =
-                RenderableTexture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
+            let texture = Texture::new(renderer, &PNG::from_file(&sprite_name).unwrap().image());
             all_textures.push(texture);
         }
         return SpriteListComponent {

@@ -9,3 +9,6 @@ pub mod win32;
 
 #[cfg(target_os = "windows")]
 pub use win32::Win32PlatformLayer as PlatformLayer;
+
+pub mod input;
+pub mod window;

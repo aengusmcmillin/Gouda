@@ -4,8 +4,9 @@ use std::fs::{self};
 use std::io::BufRead;
 
 use crate::shader_lib::obj_model_shader::obj_model_shader_layout;
+use crate::Renderer;
 
-use super::buffers::{IndexBuffer, Renderer, VertexBuffer};
+use super::buffers::{IndexBuffer, VertexBuffer};
 
 pub struct ObjModelSubset {
     pub index_buffer: IndexBuffer,

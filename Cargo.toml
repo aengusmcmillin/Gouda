@@ -15,3 +15,4 @@ gouda_transform = { path = "./crates/gouda_transform" }
 gouda_rendering = { path = "./crates/gouda_rendering" }
 gouda_types = { path = "./crates/gouda_types" }
 gouda_images = { path = "./crates/gouda_images" }
+gouda_platform = { path = "./crates/gouda_platform" }

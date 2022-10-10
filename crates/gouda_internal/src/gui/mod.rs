@@ -1,18 +1,12 @@
 use cgmath::{Matrix4, Vector3};
-use gouda_rendering::shader::ShaderUniform;
-use gouda_rendering::texture::RenderableTexture;
+use gouda_rendering::shaders::ShaderUniform;
 
 use crate::gui::constraints::GuiConstraints;
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
 use gouda_ecs::{Entity, ECS};
 use gouda_images::Image;
-use gouda_math::create_transformation_matrix;
-use gouda_rendering::buffers::{
-    FragmentConstantBuffer, IndexBuffer, VertexBuffer, VertexConstantBuffer,
-};
 use gouda_rendering::font::TextDrawable;
-use gouda_rendering::shader_lib::gui_shader::gui_shader_layout;
-use gouda_rendering::{Renderer, Scene};
+use gouda_rendering::{Renderer, Scene, Texture};
 use gouda_types::{Bounds, Color};
 use std::rc::Rc;
 
@@ -25,7 +19,7 @@ pub struct ActiveGui {}
 
 #[derive(Debug)]
 pub struct GuiImage {
-    drawable: RenderableTexture,
+    drawable: Texture,
     visible: bool,
     transform: Matrix4<f32>,
 }
@@ -54,7 +48,7 @@ impl GuiImage {
             1.0,
         ];
         let size = [bounds.w as f32 / w as f32, bounds.h as f32 / h as f32, 1.0];
-        let drawable = RenderableTexture::new(renderer, &image);
+        let drawable = Texture::new(renderer, &image);
 
         let transform = Matrix4::from_translation(Vector3::new(pos[0], pos[1], pos[2]))
             * Matrix4::from_nonuniform_scale(size[0], size[1], size[2]);

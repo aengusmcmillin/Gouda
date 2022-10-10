@@ -1,4 +1,4 @@
-pub use crate::platform::d3d11::{Renderer, Scene};
+pub use crate::platform::d3d11::PlatformScene;
 pub use gouda_images::bmp::Bitmap;
 pub use gouda_images::png::PNG;
 use gouda_images::Image;
@@ -11,14 +11,16 @@ use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11::{D3D11_TEXTURE2D_DESC, *};
 use winapi::um::d3dcommon::D3D11_SRV_DIMENSION_TEXTURE2D;
 
+use super::PlatformRenderer;
+
 #[derive(Debug)]
-pub struct RenderableTexture {
+pub struct PlatformTexture {
     texture: *mut ID3D11ShaderResourceView,
     sampler: *mut ID3D11SamplerState,
 }
 
-impl RenderableTexture {
-    pub fn new(renderer: &Renderer, image: &Image) -> RenderableTexture {
+impl PlatformTexture {
+    pub fn new(renderer: &PlatformRenderer, image: &Image) -> PlatformTexture {
         let texture_desc = D3D11_TEXTURE2D_DESC {
             Width: image.width as u32,
             Height: image.height as u32,
@@ -88,14 +90,14 @@ impl RenderableTexture {
             let mut sampler_ptr: *mut ID3D11SamplerState = Box::into_raw(sampler);
             (*renderer.device).CreateSamplerState(&sampler_desc, &mut sampler_ptr);
 
-            RenderableTexture {
+            PlatformTexture {
                 texture: resource_view_ptr,
                 sampler: sampler_ptr,
             }
         }
     }
 
-    pub fn new_from_png(renderer: &Renderer, png: PNG) -> RenderableTexture {
+    pub fn new_from_png(renderer: &PlatformRenderer, png: PNG) -> PlatformTexture {
         let texture_desc = D3D11_TEXTURE2D_DESC {
             Width: png.header_chunk.width,
             Height: png.header_chunk.height,
@@ -166,14 +168,14 @@ impl RenderableTexture {
                 panic!("Failed to create sampler state");
             }
 
-            RenderableTexture {
+            PlatformTexture {
                 texture: resource_view_ptr,
                 sampler: sampler_ptr,
             }
         }
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         unsafe {
             (*scene.device_context).PSSetShaderResources(0, 1, &self.texture);
             (*scene.device_context).PSSetSamplers(0, 1, &self.sampler);

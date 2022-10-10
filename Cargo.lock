@@ -259,6 +259,7 @@ dependencies = [
  "gouda_ecs",
  "gouda_images",
  "gouda_internal",
+ "gouda_platform",
  "gouda_rendering",
  "gouda_transform",
  "gouda_types",
@@ -288,28 +289,38 @@ version = "0.1.0"
 dependencies = [
  "anymap",
  "cgmath",
- "cocoa",
  "compress",
- "core-graphics",
- "coreaudio-sys",
  "enum-map",
  "enum-map-derive",
  "gouda_ecs",
  "gouda_images",
  "gouda_math",
+ "gouda_platform",
  "gouda_rendering",
  "gouda_transform",
  "gouda_types",
  "imgui",
- "libc",
- "metal",
- "objc",
- "winapi",
 ]
 
 [[package]]
 name = "gouda_math"
 version = "0.0.0"
+
+[[package]]
+name = "gouda_platform"
+version = "0.1.0"
+dependencies = [
+ "cocoa",
+ "core-graphics",
+ "coreaudio-sys",
+ "enum-map",
+ "enum-map-derive",
+ "gouda_rendering",
+ "libc",
+ "metal",
+ "objc",
+ "winapi",
+]
 
 [[package]]
 name = "gouda_rendering"

@@ -5,9 +5,10 @@ pub mod window;
 
 use gouda_rendering::Renderer;
 
-use crate::platform::win32::window::Window;
-use crate::window::{GameWindow, WindowProps};
 use std::rc::Rc;
+
+use crate::win32::window::Window;
+use crate::window::{GameWindow, WindowProps};
 
 pub struct Win32PlatformLayer {
     window: GameWindow,
@@ -17,11 +18,13 @@ pub struct Win32PlatformLayer {
 impl Win32PlatformLayer {
     pub fn new(props: WindowProps) -> Self {
         let window = Window::new(props);
+        let hwnd = window.hwnd;
+        let game_window = GameWindow::new(Box::new(window));
         println!("building renderer");
-        let renderer = Renderer::new(window.hwnd.clone());
+        let renderer = Renderer::new(hwnd);
         println!("renderer built");
         Self {
-            window: GameWindow::new(Box::new(window)),
+            window: game_window,
             renderer: Rc::new(renderer.unwrap()),
         }
     }

@@ -1,5 +1,5 @@
-use crate::buffers2::BufferLayout;
-pub use crate::{Renderer, Scene};
+use crate::buffers::BufferLayout;
+pub use crate::Renderer;
 use std::mem;
 use std::mem::size_of;
 use std::ptr::null_mut;
@@ -7,20 +7,22 @@ use winapi::shared::dxgiformat::*;
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11::*;
 
+use super::{PlatformRenderer, PlatformScene};
+
 #[derive(Debug)]
-pub struct VertexBuffer {
+pub struct PlatformVertexBuffer {
     buffer: *mut ID3D11Buffer,
     offset: u32,
     layout: BufferLayout,
 }
 
-impl VertexBuffer {
+impl PlatformVertexBuffer {
     pub fn new<T>(
-        renderer: &Renderer,
+        renderer: &PlatformRenderer,
         layout: BufferLayout,
         offset: u32,
         data: Vec<T>,
-    ) -> VertexBuffer {
+    ) -> PlatformVertexBuffer {
         unsafe {
             let vertex_buffer_desc = D3D11_BUFFER_DESC {
                 ByteWidth: (size_of::<T>() * data.len()) as u32,
@@ -45,7 +47,7 @@ impl VertexBuffer {
             if FAILED(result) {
                 panic!("Failed to create vertex buffer");
             }
-            VertexBuffer {
+            PlatformVertexBuffer {
                 buffer: buffer_ptr,
                 offset,
                 layout: layout,
@@ -53,11 +55,11 @@ impl VertexBuffer {
         }
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         self.bind_to_offset(scene, self.offset);
     }
 
-    pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
+    pub fn bind_to_offset(&self, scene: &PlatformScene, offset: u32) {
         unsafe {
             (*scene.device_context).IASetVertexBuffers(
                 0,
@@ -71,12 +73,12 @@ impl VertexBuffer {
 }
 
 #[derive(Debug)]
-struct ConstantBuffer {
+struct PlatformConstantBuffer {
     buffer: *mut ID3D11Buffer,
 }
 
-impl ConstantBuffer {
-    pub fn new<T>(renderer: &Renderer, data: Vec<T>) -> ConstantBuffer {
+impl PlatformConstantBuffer {
+    pub fn new<T>(renderer: &PlatformRenderer, data: Vec<T>) -> PlatformConstantBuffer {
         unsafe {
             let len = size_of::<T>() * data.len();
             let width = ((len / 16) + 1) * 16;
@@ -103,11 +105,11 @@ impl ConstantBuffer {
             if FAILED(result) {
                 panic!("Failed to create constant buffer {:x}", result);
             }
-            return ConstantBuffer { buffer: buffer_ptr };
+            return PlatformConstantBuffer { buffer: buffer_ptr };
         }
     }
 
-    pub fn update_data<T>(&self, renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&self, renderer: &PlatformRenderer, data: Vec<T>) {
         let mut msr = D3D11_MAPPED_SUBRESOURCE {
             pData: null_mut(),
             RowPitch: 0,
@@ -131,53 +133,61 @@ impl ConstantBuffer {
 }
 
 #[derive(Debug)]
-pub struct VertexConstantBuffer {
-    buffer: ConstantBuffer,
+pub struct PlatformVertexConstantBuffer {
+    buffer: PlatformConstantBuffer,
     offset: u32,
 }
 
-impl VertexConstantBuffer {
-    pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> VertexConstantBuffer {
-        VertexConstantBuffer {
-            buffer: ConstantBuffer::new(renderer, data),
+impl PlatformVertexConstantBuffer {
+    pub fn new<T>(
+        renderer: &PlatformRenderer,
+        offset: u32,
+        data: Vec<T>,
+    ) -> PlatformVertexConstantBuffer {
+        PlatformVertexConstantBuffer {
+            buffer: PlatformConstantBuffer::new(renderer, data),
             offset,
         }
     }
 
-    pub fn update_data<T>(&self, renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&self, renderer: &PlatformRenderer, data: Vec<T>) {
         self.buffer.update_data(renderer, data);
     }
 
-    pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
+    pub fn bind_to_offset(&self, scene: &PlatformScene, offset: u32) {
         unsafe {
             (*scene.device_context).VSSetConstantBuffers(offset, 1, &self.buffer.buffer);
         }
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         self.bind_to_offset(scene, self.offset);
     }
 }
 
 #[derive(Debug)]
-pub struct FragmentConstantBuffer {
-    buffer: ConstantBuffer,
+pub struct PlatformFragmentConstantBuffer {
+    buffer: PlatformConstantBuffer,
     offset: u32,
 }
 
-impl FragmentConstantBuffer {
-    pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> FragmentConstantBuffer {
-        FragmentConstantBuffer {
-            buffer: ConstantBuffer::new(renderer, data),
+impl PlatformFragmentConstantBuffer {
+    pub fn new<T>(
+        renderer: &PlatformRenderer,
+        offset: u32,
+        data: Vec<T>,
+    ) -> PlatformFragmentConstantBuffer {
+        PlatformFragmentConstantBuffer {
+            buffer: PlatformConstantBuffer::new(renderer, data),
             offset,
         }
     }
 
-    pub fn update_data<T>(&mut self, renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&mut self, renderer: &PlatformRenderer, data: Vec<T>) {
         self.buffer.update_data(renderer, data);
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         unsafe {
             (*scene.device_context).PSSetConstantBuffers(self.offset, 1, &self.buffer.buffer);
         }
@@ -185,13 +195,12 @@ impl FragmentConstantBuffer {
 }
 
 #[derive(Debug)]
-pub struct IndexBuffer {
+pub struct PlatformIndexBuffer {
     pub buffer: *mut ID3D11Buffer,
-    pub num_indices: u64,
 }
 
-impl IndexBuffer {
-    pub fn new(renderer: &Renderer, indices: Vec<u16>) -> IndexBuffer {
+impl PlatformIndexBuffer {
+    pub fn new(renderer: &PlatformRenderer, indices: Vec<u16>) -> PlatformIndexBuffer {
         unsafe {
             let index_buffer_desc = D3D11_BUFFER_DESC {
                 ByteWidth: (size_of::<u16>() * indices.len()) as u32,
@@ -216,20 +225,11 @@ impl IndexBuffer {
             if FAILED(result) {
                 panic!("Failed to create index buffer {:x}", result);
             }
-            IndexBuffer {
-                buffer: buffer_ptr,
-                num_indices: indices.len() as u64,
-            }
+            PlatformIndexBuffer { buffer: buffer_ptr }
         }
     }
 
-    pub fn bind(&self, scene: &Scene) {
-        unsafe {
-            (*scene.device_context).IASetIndexBuffer(self.buffer, DXGI_FORMAT_R16_UINT, 0);
-        }
-    }
-
-    pub fn bind_with_offset(&self, scene: &Scene, offset: u32) {
+    pub fn bind_with_offset(&self, scene: &PlatformScene, offset: u32) {
         unsafe {
             (*scene.device_context).IASetIndexBuffer(self.buffer, DXGI_FORMAT_R16_UINT, offset * 2);
         }

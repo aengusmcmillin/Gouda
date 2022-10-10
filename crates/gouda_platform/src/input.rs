@@ -60,7 +60,7 @@ pub enum NumberKeys {
     NINE,
 }
 
-use enum_map::EnumMap;
+use enum_map::{Enum, EnumMap};
 use NumberKeys::*;
 
 impl NumberKeys {

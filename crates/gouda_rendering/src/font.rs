@@ -1,7 +1,6 @@
 use crate::buffers::{FragmentConstantBuffer, VertexBuffer};
 use crate::shader_lib::font_shader::font_shader_layout;
-use crate::texture::RenderableTexture;
-use crate::{Renderer, Scene};
+use crate::{Renderer, Scene, Texture};
 use gouda_images::png::PNG;
 use std::collections::HashMap;
 use std::fs::File;
@@ -162,7 +161,7 @@ pub struct RenderableCharacter {}
 
 #[derive(Debug)]
 pub struct Font {
-    pub texture: RenderableTexture,
+    pub texture: Texture,
     characters: HashMap<u32, Character>,
     base_size: f32,
     size: f32,
@@ -182,7 +181,7 @@ fn collect_elements(line: &String) -> HashMap<String, String> {
 }
 
 impl Font {
-    fn new_impl(texture: RenderableTexture, line_iter: &mut dyn Iterator<Item = String>) -> Font {
+    fn new_impl(texture: Texture, line_iter: &mut dyn Iterator<Item = String>) -> Font {
         let mut font_entries = Vec::new();
         let info_line = line_iter.next().unwrap();
         let common_line = line_iter.next().unwrap();
@@ -262,7 +261,7 @@ impl Font {
 
     pub fn new_from_contents(renderer: &Renderer, font_img: &[u8], font_file: &str) -> Font {
         let texture = PNG::from_buffer(font_img).unwrap().image();
-        let texture = RenderableTexture::new(renderer, &texture);
+        let texture = Texture::new(renderer, &texture);
 
         let mut line_iter = font_file.lines().map(|item| item.to_string());
         return Font::new_impl(texture, &mut line_iter);
@@ -273,7 +272,7 @@ impl Font {
         let font_file_reader = BufReader::new(font_file);
 
         let texture = PNG::from_file(font_png_path).unwrap().image();
-        let texture = RenderableTexture::new(renderer, &texture);
+        let texture = Texture::new(renderer, &texture);
 
         let mut line_iter = font_file_reader.lines().filter_map(|result| result.ok());
         return Font::new_impl(texture, &mut line_iter);

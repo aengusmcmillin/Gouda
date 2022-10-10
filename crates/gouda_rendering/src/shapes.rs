@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::platform::d3d11::Renderable;
 use crate::shader_lib::basic_shader::basic_shader_layout;
 use crate::shader_lib::quad_shader::quad_shader_layout;
 use crate::shader_lib::texture_shader::texture_shader_layout;
+use crate::{Renderable, Scene};
 
 use super::buffers::{IndexBuffer, VertexBuffer};
-use super::{Renderer, Scene};
+use super::Renderer;
 
 pub type Vertex2d = [f32; 2];
 
@@ -139,14 +139,12 @@ impl ShapeLibrary {
         };
     }
 
-    pub fn construct(renderer: &Renderer) -> ShapeLibrary {
-        let mut lib = ShapeLibrary::new();
-        lib.add_2d_shape("square", Shape2d::square(renderer));
-        lib.add_2d_shape("gui", Shape2d::gui(renderer));
-        lib.add_2d_shape("quad", Shape2d::square(renderer));
-        lib.add_2d_shape("hex", Shape2d::hex(renderer));
-        lib.add_2d_shape("texture", Shape2d::texture_quad(renderer));
-        return lib;
+    pub fn initialize(&mut self, renderer: &Renderer) {
+        self.add_2d_shape("square", Shape2d::square(renderer));
+        self.add_2d_shape("gui", Shape2d::gui(renderer));
+        self.add_2d_shape("quad", Shape2d::square(renderer));
+        self.add_2d_shape("hex", Shape2d::hex(renderer));
+        self.add_2d_shape("texture", Shape2d::texture_quad(renderer));
     }
 
     pub fn add_2d_shape(&mut self, name: &'static str, shape2d: Shape2d) {

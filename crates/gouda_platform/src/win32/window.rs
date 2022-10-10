@@ -1,11 +1,11 @@
 extern crate winapi;
 
+use crate::input::GameInput;
+use crate::window::{GameWindowImpl, WindowProps};
+
 use self::winapi::shared::minwindef::{__some_function, DWORD};
 use self::winapi::um::libloaderapi::{GetProcAddress, LoadLibraryW};
 use self::winapi::um::winuser::*;
-use crate::input::GameInput;
-use crate::platform::win32::win32_input::{win32_process_keyboard, win32_process_keyboard_message};
-use crate::window::{GameWindowImpl, WindowProps};
 use std::ffi::{CString, OsStr};
 use std::iter::once;
 use std::mem::transmute;
@@ -19,6 +19,8 @@ use winapi::um::winuser::{
     CreateWindowExW, MessageBoxA, RegisterClassW, CS_HREDRAW, CS_OWNDC, CS_VREDRAW, WNDCLASSW,
 };
 use winapi::um::xinput::{XINPUT_STATE, XINPUT_VIBRATION};
+
+use super::win32_input::{win32_process_keyboard, win32_process_keyboard_message};
 
 trait Empty {
     fn empty() -> Self;

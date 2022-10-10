@@ -2,8 +2,7 @@ use cgmath::{Matrix4, Vector3};
 use imgui::{Context, DrawCmd, DrawCmdParams, DrawData};
 
 use gouda_images::Image;
-use gouda_rendering::texture::RenderableTexture;
-use gouda_rendering::{Renderer, Scene};
+use gouda_rendering::{Renderer, Scene, Texture};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -22,7 +21,7 @@ pub struct DrawVert {
 }
 
 pub struct GoudaImguiRenderer {
-    font_texture: RenderableTexture,
+    font_texture: Texture,
 }
 
 impl GoudaImguiRenderer {
@@ -122,7 +121,7 @@ impl GoudaImguiRenderer {
         }
     }
 
-    fn upload_font_texture(renderer: &Renderer, fonts: &mut imgui::FontAtlas) -> RenderableTexture {
+    fn upload_font_texture(renderer: &Renderer, fonts: &mut imgui::FontAtlas) -> Texture {
         let texture = fonts.build_rgba32_texture();
         let image = Image {
             width: texture.width as usize,
@@ -134,7 +133,7 @@ impl GoudaImguiRenderer {
             ),
         };
 
-        let res = RenderableTexture::new(renderer, &image);
+        let res = Texture::new(renderer, &image);
 
         return res;
     }

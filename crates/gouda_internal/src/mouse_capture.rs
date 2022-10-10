@@ -1,7 +1,7 @@
 use cgmath::{SquareMatrix, Vector4};
 
-use crate::input::GameInput;
 use gouda_ecs::{Entity, Mutation, Mutations, ECS};
+use gouda_platform::input::GameInput;
 use gouda_rendering::camera::{Camera, OrthographicCamera};
 use gouda_types::Bounds;
 
