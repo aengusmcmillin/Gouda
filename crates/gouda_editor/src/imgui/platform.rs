@@ -37,11 +37,11 @@ impl GoudaImguiPlatform {
         imgui.set_platform_name(Some("gouda-imgui-platform".to_string()));
     }
 
-    pub fn prepare_frame(context: &mut Context, window: &GameWindow, dt: Duration) {
+    pub fn prepare_frame(context: &mut Context, dt: Duration) {
         let io = context.io_mut();
         io.update_delta_time(dt);
 
-        io.display_size = [window.get_width() as f32, window.get_height() as f32];
+        io.display_size = [900., 900.];
         io.display_framebuffer_scale = [1., 1.];
     }
 }

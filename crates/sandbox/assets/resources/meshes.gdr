@@ -1,0 +1,5 @@
+WOLF_MESH = {
+    name = "wolf_mesh",
+    model = "wolf.obj",
+    material = "wolf.mtl",
+}

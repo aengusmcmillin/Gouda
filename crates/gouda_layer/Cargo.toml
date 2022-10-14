@@ -1,8 +1,9 @@
 [package]
-name = "gouda_types"
+name = "gouda_layer"
 version = "0.0.0"
 authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 gouda_ecs = { path = "../gouda_ecs" }
+gouda_rendering = { path = "../gouda_rendering" }

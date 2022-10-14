@@ -1,4 +1,6 @@
 use gouda_ecs::{GameSceneId, ECS};
+use gouda_editor::EditorLayer;
+use gouda_layer::Layer;
 use gouda_platform::input::{GameInput, LetterKeys};
 use gouda_platform::window::{WindowEvent, WindowProps};
 use gouda_platform::PlatformLayer;
@@ -15,16 +17,9 @@ use std::time::Instant;
 #[macro_use]
 extern crate objc;
 
-#[macro_use]
-extern crate enum_map;
-
-use crate::imgui::platform::GoudaImguiPlatform;
-use crate::imgui::renderer::GoudaImguiRenderer;
-use ::imgui::*;
 pub use gouda_images::{bmp, png};
 use gouda_rendering::camera::Camera;
 pub mod gui;
-pub mod imgui;
 pub mod mouse_capture;
 
 pub type RenderLayer = String;
@@ -55,6 +50,7 @@ pub struct Gouda<T: GameLogic> {
     ecs: ECS,
     game_scenes: HashMap<GameSceneId, Box<dyn GameScene>>,
     active_scene: Option<GameSceneId>,
+    layers: Vec<Box<dyn Layer>>,
     pub shader_lib: Option<ShaderLibrary>,
     pub shape_lib: Option<ShapeLibrary>,
     pub font_lib: Option<FontLibrary>,
@@ -67,6 +63,7 @@ impl<T: GameLogic> Gouda<T> {
             ecs: ECS::new(),
             game_scenes: HashMap::new(),
             active_scene: None,
+            layers: vec![Box::new(EditorLayer::new())],
             shader_lib: None,
             shape_lib: None,
             font_lib: None,
@@ -128,32 +125,10 @@ impl<T: GameLogic> Gouda<T> {
         let mut now = Instant::now();
 
         let renderer = platform.get_renderer();
-
-        let mut imgui = Context::create();
-        imgui.set_ini_filename(None);
-
-        GoudaImguiPlatform::init(&mut imgui);
-
-        imgui.fonts().add_font(&[FontSource::TtfData {
-            data: include_bytes!("../../../assets/Roboto-Regular.ttf"),
-            size_pixels: 13.0,
-            config: Some(FontConfig {
-                // As imgui-glium-renderer isn't gamma-correct with
-                // it's font rendering, we apply an arbitrary
-                // multiplier to make the font a bit "heavier". With
-                // default imgui-glow-renderer this is unnecessary.
-                rasterizer_multiply: 1.5,
-                // Oversampling font helps improve text rendering at
-                // expense of larger font atlas texture.
-                oversample_h: 4,
-                oversample_v: 4,
-                ..FontConfig::default()
-            }),
-        }]);
-
-        let imgui_renderer = GoudaImguiRenderer::create(&renderer, &mut imgui);
-
         self.ecs.add_res(renderer.clone());
+
+        let ecs = &self.ecs;
+        self.layers.iter_mut().for_each(|layer| layer.setup(ecs));
 
         self.setup_game();
 
@@ -169,8 +144,6 @@ impl<T: GameLogic> Gouda<T> {
 
             self.game_logic.migrate_events(&mut self.ecs);
             let window = platform.get_window();
-
-            GoudaImguiPlatform::prepare_frame(&mut imgui, &window, target_dur);
 
             let input = window.capture_input();
             let events = window.capture_events();
@@ -190,27 +163,27 @@ impl<T: GameLogic> Gouda<T> {
                     }
                 };
             }
+
+            let ecs = &self.ecs;
+            self.layers
+                .iter_mut()
+                .for_each(|layer| layer.update(ecs, dt));
+
             self.update(dt, input.clone(), events);
             if self.ecs.events::<QuitEvent>().len() > 0 {
                 return;
             }
 
-            {
-                let io = imgui.io_mut();
-                io.mouse_pos = [input.mouse.x as f32, input.mouse.y as f32];
-                io.mouse_down[0] = input.mouse.buttons[0].ended_down;
-            }
-
-            let ui = imgui.frame();
-
-            let draw_data = ui.render();
-
             let game_scene = self.game_scenes.get(&self.active_scene.unwrap()).unwrap();
             let renderer = platform.get_renderer();
             let camera = game_scene.camera(&self.ecs);
-            if let Some(scene) = renderer.begin_scene(camera) {
+            if let Some(mut scene) = renderer.begin_scene() {
+                scene.bind_camera(camera.as_ref());
                 game_scene.render_scene(&self.ecs, &scene);
-                imgui_renderer.render(&scene, draw_data);
+                let mut ecs = &mut self.ecs;
+                self.layers
+                    .iter_mut()
+                    .for_each(|layer| layer.render(&mut ecs, &mut scene));
                 scene.end();
             }
         }

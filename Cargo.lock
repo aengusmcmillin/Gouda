@@ -275,6 +275,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "gouda_editor"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "gouda_ecs",
+ "gouda_images",
+ "gouda_layer",
+ "gouda_platform",
+ "gouda_rendering",
+ "imgui",
+]
+
+[[package]]
 name = "gouda_images"
 version = "0.0.0"
 dependencies = [
@@ -293,13 +306,23 @@ dependencies = [
  "enum-map",
  "enum-map-derive",
  "gouda_ecs",
+ "gouda_editor",
  "gouda_images",
+ "gouda_layer",
  "gouda_math",
  "gouda_platform",
  "gouda_rendering",
  "gouda_transform",
  "gouda_types",
  "imgui",
+]
+
+[[package]]
+name = "gouda_layer"
+version = "0.0.0"
+dependencies = [
+ "gouda_ecs",
+ "gouda_rendering",
 ]
 
 [[package]]
@@ -349,6 +372,9 @@ dependencies = [
 [[package]]
 name = "gouda_types"
 version = "0.0.0"
+dependencies = [
+ "gouda_ecs",
+]
 
 [[package]]
 name = "imgui"

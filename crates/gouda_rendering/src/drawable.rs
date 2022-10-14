@@ -95,7 +95,7 @@ impl TextureDrawable {
         self.texture.bind(scene);
         self.index_buffer.bind(scene);
 
-        scene.draw_indexed(6, &self.index_buffer);
+        scene.draw_indexed(&self.index_buffer);
     }
 }
 
@@ -169,6 +169,6 @@ impl QuadDrawable {
         self.index_buffer.bind(scene);
         self.color_buffer.bind(&scene);
 
-        scene.draw_indexed(6, &self.index_buffer);
+        scene.draw_indexed(&self.index_buffer);
     }
 }

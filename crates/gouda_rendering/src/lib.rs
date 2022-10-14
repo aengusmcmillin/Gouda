@@ -28,15 +28,7 @@ use shapes::{Shape2d, ShapeLibrary};
 use winapi::shared::windef::HWND;
 
 #[cfg(target_os = "macos")]
-pub use crate::platform::metal::buffers;
-#[cfg(target_os = "macos")]
-pub use crate::platform::metal::shader;
-#[cfg(target_os = "macos")]
-pub use crate::platform::metal::texture;
-#[cfg(target_os = "macos")]
-pub use crate::platform::metal::Renderer;
-#[cfg(target_os = "macos")]
-pub use crate::platform::metal::Scene;
+pub use crate::platform::metal as rendering_platform;
 
 #[cfg(target_os = "windows")]
 pub use crate::platform::d3d11 as rendering_platform;
@@ -138,10 +130,10 @@ impl Renderer {
         return 900;
     }
 
-    pub fn begin_scene(&self, camera: Box<dyn Camera>) -> Option<Scene> {
+    pub fn begin_scene(&self) -> Option<Scene> {
         let scene = Scene {
             renderer: self,
-            camera_view_projection_matrix: camera.get_view_projection_matrix(),
+            camera_view_projection_matrix: Matrix4::identity(),
             platform_scene: self.platform_renderer.begin_scene().unwrap(),
         };
 
@@ -156,6 +148,14 @@ pub struct Scene<'a> {
 }
 
 impl Scene<'_> {
+    pub fn bind_camera(&mut self, camera: &dyn Camera) {
+        self.camera_view_projection_matrix = camera.get_view_projection_matrix();
+    }
+
+    pub fn unbind_camera(&mut self) {
+        self.camera_view_projection_matrix = Matrix4::identity();
+    }
+
     pub fn end(self) {
         self.platform_scene.end();
     }
@@ -175,7 +175,7 @@ impl Scene<'_> {
 
         renderable.bind(&self);
 
-        &self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
+        self.draw_indexed(renderable.index_buffer());
     }
 
     pub fn submit(
@@ -204,7 +204,7 @@ impl Scene<'_> {
 
         if let Some(no_mat_ibuf) = &obj_model.no_material_index_buffer {
             no_mat_ibuf.bind(&self);
-            &self.draw_indexed_tris(no_mat_ibuf.num_indices, &no_mat_ibuf);
+            self.draw_indexed_tris(no_mat_ibuf.num_indices, &no_mat_ibuf);
         }
 
         obj_model.submeshes.iter().for_each(|submesh| {
@@ -270,7 +270,7 @@ impl Scene<'_> {
 
         shape.bind(&self);
 
-        &self.draw_indexed(shape.num_indices(), shape.index_buffer());
+        self.draw_indexed(shape.index_buffer());
     }
 
     pub fn submit_gui_texture(&self, texture: &Texture, transform: Matrix4<f32>) {
@@ -309,7 +309,7 @@ impl Scene<'_> {
 
         shape.bind(&self);
 
-        self.draw_indexed(shape.num_indices(), shape.index_buffer());
+        self.draw_indexed(shape.index_buffer());
     }
 
     pub fn bind_font(&self, font: &'static str) {
@@ -326,9 +326,7 @@ impl Scene<'_> {
         texture: &Texture,
         matrix: Matrix4<f32>,
     ) {
-        let shader = self.renderer.get_shader("imgui");
-        shader.bind(&self);
-        shader.upload_vertex_uniform_mat4(&self, 0, matrix);
+        self.bind_shader_with_uniforms("imgui", vec![ShaderUniform::Mat4(matrix)], vec![]);
         let vertex_buffer =
             VertexBuffer::new::<[f32; 8]>(&self.renderer, imgui_shader_layout(), 0, vbuf.clone());
         vertex_buffer.bind(&self);
@@ -339,15 +337,16 @@ impl Scene<'_> {
         self.draw_indexed_tris(count as u64, &index_buffer);
     }
 
-    pub fn draw_indexed(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
+    pub fn draw_indexed(&self, index_buffer: &buffers::IndexBuffer) {
         self.platform_scene
-            .draw_indexed(num_indices, &index_buffer.platform_buffer);
+            .draw_indexed(index_buffer.num_indices, &index_buffer.platform_buffer);
     }
 
     pub fn draw_indexed_tris(&self, num_indices: u64, index_buffer: &buffers::IndexBuffer) {
         self.platform_scene
             .draw_indexed_tris(num_indices, &index_buffer.platform_buffer);
     }
+
     pub fn draw_tri_strip(&self, num_verts: u64) {
         self.platform_scene.draw_tri_strip(num_verts);
     }

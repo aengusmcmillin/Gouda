@@ -10,9 +10,11 @@ gouda_ecs = { path = "../gouda_ecs" }
 gouda_transform = { path = "../gouda_transform" }
 gouda_rendering = { path = "../gouda_rendering" }
 gouda_types = { path = "../gouda_types" }
+gouda_layer = { path = "../gouda_layer" }
 gouda_images = { path = "../gouda_images" }
 gouda_math = { path = "../gouda_math" }
 gouda_platform = { path = "../gouda_platform" }
+gouda_editor = { path = "../gouda_editor" }
 enum-map = "*"
 enum-map-derive = "*"
 compress = "0.1.2"

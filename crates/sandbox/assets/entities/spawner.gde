@@ -1,0 +1,3 @@
+MESH = {
+    name = "spawner_mesh"
+}

@@ -26,7 +26,6 @@ pub struct GoudaImguiRenderer {
 
 impl GoudaImguiRenderer {
     pub fn create(renderer: &Renderer, context: &mut Context) -> GoudaImguiRenderer {
-        println!("Building imgui renderer");
         let font_texture = GoudaImguiRenderer::upload_font_texture(renderer, &mut context.fonts());
 
         context.set_renderer_name("gouda-imgui-renderer".to_string());
@@ -76,25 +75,7 @@ impl GoudaImguiRenderer {
                 0.,
             ));
             let matrix = scale * translate;
-            // let matrix = Matrix4::new(
 
-            //     (2.0 / (right - left)),
-            //     0.0,
-            //     0.0,
-            //     0.0,
-            //     0.0,
-            //     (2.0 / (top - bottom)),
-            //     0.0,
-            //     0.0,
-            //     0.0,
-            //     0.0,
-            //     -1.0,
-            //     0.0,
-            //     (right + left) / (left - right),
-            //     (top + bottom) / (bottom - top),
-            //     0.0,
-            //     1.0,
-            // );
             for cmd in draw_list.commands() {
                 match cmd {
                     DrawCmd::Elements {

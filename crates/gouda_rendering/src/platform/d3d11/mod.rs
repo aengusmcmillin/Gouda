@@ -180,7 +180,7 @@ impl PlatformRenderer {
             // back_buffer = Box::from_raw(back_buffer_ptr);
             render_target = Box::from_raw(render_target_ptr);
 
-            let mut res = PlatformRenderer {
+            let res = PlatformRenderer {
                 swap_chain,
                 device: Box::into_raw(device),
                 device_context: Box::into_raw(device_context),
