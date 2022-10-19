@@ -1,16 +1,17 @@
-use crate::images::Image;
-use crate::platform::metal::{Renderer, Scene};
+use gouda_images::Image;
 use metal::{MTLOrigin, MTLPixelFormat, MTLRegion, MTLSize, Texture, TextureDescriptor};
 use std::mem;
 use std::os::raw::c_void;
 
+use super::{PlatformRenderer, PlatformScene};
+
 #[derive(Debug)]
-pub struct RenderableTexture {
+pub struct PlatformTexture {
     metal_texture: Texture,
 }
 
-impl RenderableTexture {
-    pub fn new(renderer: &Renderer, image: &Image) -> RenderableTexture {
+impl PlatformTexture {
+    pub fn new(renderer: &PlatformRenderer, image: &Image) -> PlatformTexture {
         let width = image.width as u64;
         let height = image.height as u64;
 
@@ -35,7 +36,7 @@ impl RenderableTexture {
         return result;
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         scene
             .encoder
             .set_fragment_texture(0, Some(&self.metal_texture));

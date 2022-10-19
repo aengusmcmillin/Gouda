@@ -2,52 +2,12 @@ use std::fmt::{Error, Formatter};
 
 use crate::buffers::{BufferLayout, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::camera::matrix_to_vec;
-use crate::rendering_platform::shader::{PlatformFragmentShader, PlatformVertexShader};
+use crate::rendering_platform::shader::PlatformShader;
 use crate::{Renderer, Scene};
 use cgmath::Matrix4;
 
-pub struct VertexShader {
-    platform_vertex_shader: PlatformVertexShader,
-}
-
-impl VertexShader {
-    pub fn new(renderer: &Renderer, layout: BufferLayout, vertex_src: &str) -> VertexShader {
-        return VertexShader {
-            platform_vertex_shader: PlatformVertexShader::new(
-                &renderer.platform_renderer,
-                layout,
-                vertex_src,
-            ),
-        };
-    }
-
-    pub fn bind(&self, scene: &Scene) {
-        self.platform_vertex_shader.bind(&scene.platform_scene);
-    }
-}
-
-pub struct FragmentShader {
-    platform_fragment_shader: PlatformFragmentShader,
-}
-
-impl FragmentShader {
-    pub fn new(renderer: &Renderer, fragment_src: &str) -> FragmentShader {
-        return FragmentShader {
-            platform_fragment_shader: PlatformFragmentShader::new(
-                &renderer.platform_renderer,
-                fragment_src,
-            ),
-        };
-    }
-
-    pub fn bind(&self, scene: &Scene) {
-        self.platform_fragment_shader.bind(&scene.platform_scene);
-    }
-}
-
 pub struct Shader {
-    vertex_shader: VertexShader,
-    fragment_shader: FragmentShader,
+    platform_shader: PlatformShader,
 }
 
 #[derive(Clone, Copy)]
@@ -62,19 +22,22 @@ pub enum ShaderUniform {
 impl Shader {
     pub fn new(
         renderer: &Renderer,
-        buffer_layout: BufferLayout,
+        layout: BufferLayout,
         vertex_src: &str,
         fragment_src: &str,
     ) -> Shader {
         return Shader {
-            vertex_shader: VertexShader::new(renderer, buffer_layout, vertex_src),
-            fragment_shader: FragmentShader::new(renderer, fragment_src),
+            platform_shader: PlatformShader::new(
+                &renderer.platform_renderer,
+                layout,
+                vertex_src,
+                fragment_src,
+            ),
         };
     }
 
     pub fn bind(&self, scene: &Scene) {
-        self.vertex_shader.bind(scene);
-        self.fragment_shader.bind(scene);
+        self.platform_shader.bind(scene);
     }
 
     pub fn upload_vertex_uniform(&self, scene: &Scene, offset: u32, uniform: ShaderUniform) {

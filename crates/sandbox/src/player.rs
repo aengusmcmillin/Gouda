@@ -1,6 +1,6 @@
 use crate::tilemap::Tilemap;
 use gouda::ecs::{Entity, Mutation, Mutations, ECS};
-use gouda::platform::input::{GameInput, LetterKeys};
+use gouda::input::{GameInput, LetterKeys};
 use gouda::rendering::drawable::QuadDrawable;
 use gouda::rendering::sprites::SpriteSheetComponent;
 use gouda::rendering::{Renderer, Scene};

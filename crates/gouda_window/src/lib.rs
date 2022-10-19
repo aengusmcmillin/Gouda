@@ -1,30 +1,44 @@
-use crate::input::GameInput;
+use gouda_input::GameInput;
+
+#[cfg(target_os = "macos")]
+pub mod osx;
+
+#[cfg(target_os = "macos")]
+use osx::PlatformWindow;
+
+#[cfg(target_os = "windows")]
+pub mod win32;
+
+#[cfg(target_os = "windows")]
+use osx::PlatformWindow;
+
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
 
 pub struct GameWindow {
-    pub game_window_impl: Box<dyn GameWindowImpl>,
+    pub platform_window: PlatformWindow,
 }
 
 impl GameWindow {
-    pub fn new(platform_impl: Box<dyn GameWindowImpl>) -> Self {
-        Self {
-            game_window_impl: platform_impl,
-        }
+    pub fn new(platform_window: PlatformWindow) -> Self {
+        Self { platform_window }
     }
 
     pub fn capture_events(&mut self) -> Vec<WindowEvent> {
-        self.game_window_impl.capture_events()
+        self.platform_window.capture_events()
     }
 
     pub fn capture_input(&mut self) -> GameInput {
-        self.game_window_impl.capture_input()
+        self.platform_window.capture_input()
     }
 
     pub fn get_width(&self) -> usize {
-        self.game_window_impl.get_width()
+        self.platform_window.get_width()
     }
 
     pub fn get_height(&self) -> usize {
-        self.game_window_impl.get_height()
+        self.platform_window.get_height()
     }
 }
 

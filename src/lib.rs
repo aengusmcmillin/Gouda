@@ -31,3 +31,11 @@ pub mod images {
 pub mod platform {
     pub use gouda_platform::*;
 }
+
+pub mod window {
+    pub use gouda_window::*;
+}
+
+pub mod input {
+    pub use gouda_input::*;
+}

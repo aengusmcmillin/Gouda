@@ -1,5 +1,3 @@
-use crate::window::{GameWindowImpl, WindowEvent, WindowProps};
-
 extern crate libc;
 
 extern crate coreaudio_sys;
@@ -13,22 +11,22 @@ use cocoa::foundation::{
     NSAutoreleasePool, NSDate, NSDefaultRunLoopMode, NSPoint, NSRect, NSSize, NSString,
 };
 
+use gouda_input::osx::{osx_process_key, osx_process_keyboard_message};
+use gouda_input::GameInput;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel, YES};
 
-use crate::input::GameInput;
-use crate::platform::osx::osx_input::{osx_process_key, osx_process_keyboard_message};
-use crate::rendering::Renderer;
 use cocoa::appkit::{NSView, NSViewHeightSizable, NSViewWidthSizable};
-use std::mem;
 
-pub struct OsxWindow {
-    cocoa_window: CocoaWindow,
+use crate::{WindowEvent, WindowProps};
+
+pub struct PlatformWindow {
+    pub cocoa_window: CocoaWindow,
     props: WindowProps,
     input: GameInput,
 }
 
-impl OsxWindow {
+impl PlatformWindow {
     pub fn new(props: WindowProps) -> Self {
         create_menu_bar(&props.title);
         let frame_rect = NSRect {
@@ -45,15 +43,106 @@ impl OsxWindow {
         let mut input = GameInput::default();
         input.seconds_to_advance_over_update = props.target_ms_per_frame / 1000.;
 
-        OsxWindow {
+        PlatformWindow {
             cocoa_window,
             props,
             input,
         }
     }
 
-    pub fn attach_renderer(&self, renderer: &Renderer) {
-        self.cocoa_window.attach_renderer(renderer);
+    pub fn capture_events(&mut self) -> Vec<WindowEvent> {
+        return self.cocoa_window.process_events();
+    }
+
+    pub fn capture_input(&mut self) -> GameInput {
+        unsafe {
+            self.input = GameInput::from(&self.input);
+
+            let pool2 = NSAutoreleasePool::new(nil);
+            let mut event = NSApp().nextEventMatchingMask_untilDate_inMode_dequeue_(
+                NSEventMask::NSAnyEventMask.bits(),
+                NSDate::distantPast(nil),
+                NSDefaultRunLoopMode,
+                YES,
+            );
+            while !(event == nil) {
+                match event.eventType() {
+                    NSEventType::NSKeyDown | NSEventType::NSKeyUp => {
+                        let key_down = event.eventType() == NSEventType::NSKeyDown;
+
+                        let mut keyboard = &mut self.input.keyboard;
+                        let chars = event.charactersIgnoringModifiers();
+                        let bytes = chars.UTF8String() as *const u8;
+                        let objc_string =
+                            std::str::from_utf8(std::slice::from_raw_parts(bytes, chars.len()))
+                                .unwrap();
+                        let u16_char = objc_string.encode_utf16().next().unwrap();
+
+                        osx_process_key(&mut keyboard, u16_char, key_down);
+                    }
+                    NSEventType::NSFlagsChanged => {
+                        let mut keyboard = &mut self.input.keyboard;
+
+                        let modifiers = event.modifierFlags();
+                        let is_cmd_down =
+                            modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
+                        let is_alternate_down =
+                            modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
+                        let is_control_down =
+                            modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
+                        let is_shift_down =
+                            modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
+
+                        let keycode = event.keyCode();
+                        if keycode == 56 {
+                            keyboard.shift_down = is_shift_down;
+                        } else if keycode == 59 {
+                            keyboard.ctrl_down = is_control_down;
+                        } else if keycode == 58 {
+                            keyboard.alt_down = is_alternate_down;
+                        } else if keycode == 55 {
+                            keyboard.cmd_down = is_cmd_down;
+                        }
+                    }
+                    NSEventType::NSMouseMoved => {
+                        let location = self.cocoa_window.mouse_location_outside_of_event_stream();
+                        self.input.mouse.x = location.x as i32;
+                        self.input.mouse.y = self.props.height as i32 - location.y as i32;
+                        NSApp().sendEvent_(event);
+                    }
+                    NSEventType::NSLeftMouseUp | NSEventType::NSLeftMouseDown => {
+                        let is_down = event.eventType() == NSEventType::NSLeftMouseDown;
+                        osx_process_keyboard_message(&mut self.input.mouse.buttons[0], is_down);
+                        NSApp().sendEvent_(event);
+                    }
+                    NSEventType::NSRightMouseUp | NSEventType::NSRightMouseDown => {
+                        let is_down = event.eventType() == NSEventType::NSRightMouseDown;
+                        osx_process_keyboard_message(&mut self.input.mouse.buttons[2], is_down);
+                        NSApp().sendEvent_(event);
+                    }
+                    _ => {
+                        NSApp().sendEvent_(event);
+                    }
+                }
+
+                event = NSApp().nextEventMatchingMask_untilDate_inMode_dequeue_(
+                    NSEventMask::NSAnyEventMask.bits(),
+                    NSDate::distantPast(nil),
+                    NSDefaultRunLoopMode,
+                    YES,
+                );
+            }
+            let _: () = msg_send![pool2, release];
+            return self.input.clone();
+        }
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.props.width as usize
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.props.height as usize
     }
 }
 
@@ -151,7 +240,7 @@ fn show_window(title: &String, width: f64, height: f64) -> CocoaWindow {
 
 pub struct CocoaWindow {
     window: id,
-    view: Option<id>,
+    pub view: Option<id>,
     delegate: id,
 }
 
@@ -183,14 +272,6 @@ impl CocoaWindow {
         }
     }
 
-    pub fn attach_renderer(&self, renderer: &Renderer) {
-        unsafe {
-            self.view
-                .unwrap()
-                .setLayer(mem::transmute(renderer.get_layer()));
-        }
-    }
-
     pub fn current_size(&self) -> (f32, f32) {
         unsafe {
             let w = (*self.delegate).get_ivar::<f32>("width");
@@ -216,102 +297,5 @@ impl CocoaWindow {
             }
         }
         return events;
-    }
-}
-
-impl GameWindowImpl for OsxWindow {
-    fn capture_events(&mut self) -> Vec<WindowEvent> {
-        return self.cocoa_window.process_events();
-    }
-
-    fn capture_input(&mut self) -> GameInput {
-        unsafe {
-            self.input = GameInput::from(&self.input);
-
-            let pool2 = NSAutoreleasePool::new(nil);
-            let mut event = NSApp().nextEventMatchingMask_untilDate_inMode_dequeue_(
-                NSEventMask::NSAnyEventMask.bits(),
-                NSDate::distantPast(nil),
-                NSDefaultRunLoopMode,
-                YES,
-            );
-            while !(event == nil) {
-                match event.eventType() {
-                    NSEventType::NSKeyDown | NSEventType::NSKeyUp => {
-                        let key_down = event.eventType() == NSEventType::NSKeyDown;
-
-                        let mut keyboard = &mut self.input.keyboard;
-                        let chars = event.charactersIgnoringModifiers();
-                        let bytes = chars.UTF8String() as *const u8;
-                        let objc_string =
-                            std::str::from_utf8(std::slice::from_raw_parts(bytes, chars.len()))
-                                .unwrap();
-                        let u16_char = objc_string.encode_utf16().next().unwrap();
-
-                        osx_process_key(&mut keyboard, u16_char, key_down);
-                    }
-                    NSEventType::NSFlagsChanged => {
-                        let mut keyboard = &mut self.input.keyboard;
-
-                        let modifiers = event.modifierFlags();
-                        let is_cmd_down =
-                            modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
-                        let is_alternate_down =
-                            modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
-                        let is_control_down =
-                            modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
-                        let is_shift_down =
-                            modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
-
-                        let keycode = event.keyCode();
-                        if keycode == 56 {
-                            keyboard.shift_down = is_shift_down;
-                        } else if keycode == 59 {
-                            keyboard.ctrl_down = is_control_down;
-                        } else if keycode == 58 {
-                            keyboard.alt_down = is_alternate_down;
-                        } else if keycode == 55 {
-                            keyboard.cmd_down = is_cmd_down;
-                        }
-                    }
-                    NSEventType::NSMouseMoved => {
-                        let location = self.cocoa_window.mouse_location_outside_of_event_stream();
-                        self.input.mouse.x = location.x as i32;
-                        self.input.mouse.y = self.props.height as i32 - location.y as i32;
-                        NSApp().sendEvent_(event);
-                    }
-                    NSEventType::NSLeftMouseUp | NSEventType::NSLeftMouseDown => {
-                        let is_down = event.eventType() == NSEventType::NSLeftMouseDown;
-                        osx_process_keyboard_message(&mut self.input.mouse.buttons[0], is_down);
-                        NSApp().sendEvent_(event);
-                    }
-                    NSEventType::NSRightMouseUp | NSEventType::NSRightMouseDown => {
-                        let is_down = event.eventType() == NSEventType::NSRightMouseDown;
-                        osx_process_keyboard_message(&mut self.input.mouse.buttons[2], is_down);
-                        NSApp().sendEvent_(event);
-                    }
-                    _ => {
-                        NSApp().sendEvent_(event);
-                    }
-                }
-
-                event = NSApp().nextEventMatchingMask_untilDate_inMode_dequeue_(
-                    NSEventMask::NSAnyEventMask.bits(),
-                    NSDate::distantPast(nil),
-                    NSDefaultRunLoopMode,
-                    YES,
-                );
-            }
-            let _: () = msg_send![pool2, release];
-            return self.input.clone();
-        }
-    }
-
-    fn get_width(&self) -> usize {
-        self.props.width as usize
-    }
-
-    fn get_height(&self) -> usize {
-        self.props.height as usize
     }
 }

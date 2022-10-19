@@ -29,7 +29,17 @@ struct VertexUniforms {
 };
 
 struct VertexIn {
-    float2 xy   [[attribute(0)]];
+    float4 position   [[attribute(0)]];
+    float2 texcoord   [[attribute(1)]];
+    float3 normal   [[attribute(2)]];
+};
+
+struct ViewProjection {
+    float4x4 mat;
+};
+
+struct ModelTransform {
+    float4x4 mat;
 };
 
 vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
@@ -37,7 +47,7 @@ vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
                                  constant ModelTransform &modelTransform [[buffer(2)]],
                                  uint vid [[vertex_id]])
 {
-    return float4(in[vid].xy) * transformation.mat * projection.mat;
+    return float4(in[vid].position) * modelTransform.mat * viewProjection.mat;
 }
 ";
 

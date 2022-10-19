@@ -1,14 +1,11 @@
 [package]
-name = "gouda_platform"
+name = "gouda_window"
 version = "0.1.0"
 authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-enum-map = "*"
-enum-map-derive = "*"
-gouda_rendering = { path = "../gouda_rendering" }
-gouda_window = { path = "../gouda_window" }
+gouda_input = { path = "../gouda_input" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2"

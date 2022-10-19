@@ -18,6 +18,7 @@ use cgmath::{Matrix4, SquareMatrix};
 use font::Font;
 use font_library::FontLibrary;
 use gouda_images::Image;
+use gouda_window::osx::PlatformWindow;
 use model::ObjModel;
 use rendering_platform::texture::PlatformTexture;
 use rendering_platform::{PlatformRenderer, PlatformScene};
@@ -25,7 +26,6 @@ use shader_lib::imgui_shader::imgui_shader_layout;
 use shader_lib::ShaderLibrary;
 use shaders::{Shader, ShaderUniform};
 use shapes::{Shape2d, ShapeLibrary};
-use winapi::shared::windef::HWND;
 
 #[cfg(target_os = "macos")]
 pub use crate::platform::metal as rendering_platform;
@@ -76,8 +76,8 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(hwnd: HWND) -> Result<Renderer, String> {
-        let platform_renderer = PlatformRenderer::new(hwnd);
+    pub fn new(window: &mut PlatformWindow) -> Result<Renderer, String> {
+        let platform_renderer = PlatformRenderer::new(window);
 
         match platform_renderer {
             Ok(platform_renderer) => {

@@ -1,17 +1,14 @@
 #![cfg(target_os = "macos")]
 
-use crate::platform::osx::osx_window::OsxWindow;
-use crate::rendering::Renderer;
-use crate::window::{GameWindow, WindowProps};
 use cocoa::appkit::NSApplicationActivationPolicy::NSApplicationActivationPolicyRegular;
 use cocoa::appkit::{NSApp, NSApplication, NSApplicationPresentationOptions};
 use cocoa::base::{id, nil};
 use cocoa::foundation::NSAutoreleasePool;
+use gouda_rendering::Renderer;
+use gouda_window::osx::PlatformWindow;
+use gouda_window::{GameWindow, WindowProps};
 use objc::runtime::YES;
 use std::rc::Rc;
-
-pub mod osx_input;
-pub mod osx_window;
 
 #[allow(dead_code)]
 pub struct OSXPlatformLayer {
@@ -34,13 +31,13 @@ impl OSXPlatformLayer {
             NSApp().activateIgnoringOtherApps_(YES);
         }
 
-        let mut window = OsxWindow::new(props);
-        let renderer = Renderer::new(&mut window);
-        window.attach_renderer(&renderer);
+        let mut window = PlatformWindow::new(props);
+        let renderer = Renderer::new(&mut window).unwrap();
+        renderer.platform_renderer.attach_renderer(&window);
 
         OSXPlatformLayer {
             pool,
-            window: GameWindow::new(Box::new(window)),
+            window: GameWindow::new(window),
             renderer: Rc::new(renderer),
         }
     }

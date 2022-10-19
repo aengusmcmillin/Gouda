@@ -1,40 +1,26 @@
 #![cfg(target_os = "macos")]
 
-use crate::camera::Camera;
-use crate::platform::metal::buffers::IndexBuffer;
-use crate::platform::osx::osx_window::OsxWindow;
-use crate::rendering::shapes::ShapeLibrary;
-use crate::shader_lib::ShaderLibrary;
-use crate::window::GameWindowImpl;
-use cgmath::Matrix4;
+use cocoa::appkit::NSView;
 use core_graphics::geometry::CGSize;
+use gouda_window::osx::PlatformWindow;
 use metal::*;
-use std::f32;
 use std::mem::size_of;
+use std::{f32, mem};
 
-use self::shader::Shader;
-use self::texture::RenderableTexture;
+use self::buffers::PlatformIndexBuffer;
 
 pub mod buffers;
 pub mod drawable;
 pub mod shader;
 pub mod texture;
 
-pub struct Scene<'a> {
+pub struct PlatformScene<'a> {
     encoder: &'a RenderCommandEncoderRef,
     command_buffer: &'a CommandBufferRef,
     drawable: &'a DrawableRef,
-    pub renderer: &'a Renderer,
-    pub camera_view_projection_matrix: Matrix4<f32>,
 }
 
-pub trait Renderable {
-    fn bind(&self, scene: &Scene);
-    fn num_indices(&self) -> u64;
-    fn index_buffer(&self) -> &IndexBuffer;
-}
-
-impl Scene<'_> {
+impl PlatformScene<'_> {
     pub fn end(self) {
         self.encoder.end_encoding();
 
@@ -42,70 +28,24 @@ impl Scene<'_> {
         self.command_buffer.commit();
     }
 
-    pub fn submit(
-        &self,
-        shader: &Shader,
-        renderable: &impl Renderable,
-        transform: Matrix4<f32>,
-        color: [f32; 4],
-    ) {
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
-        shader.upload_vertex_uniform_mat4(self, 1, transform);
-        shader.upload_fragment_uniform_float4(self, 0, color);
-
-        renderable.bind(self);
-
-        self.draw_indexed(renderable.num_indices(), renderable.index_buffer());
+    pub fn draw_indexed(&self, num_indices: u64, index_buffer: &PlatformIndexBuffer) {
+        self.encoder.draw_indexed_primitives(
+            MTLPrimitiveType::TriangleStrip,
+            num_indices,
+            MTLIndexType::UInt16,
+            &index_buffer.data,
+            0,
+        );
     }
 
-    pub fn submit_shape_by_name(
-        &self,
-        shader_name: &str,
-        shape_name: &str,
-        transform: Matrix4<f32>,
-        color: [f32; 4],
-    ) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get(shader_name.to_string())
-            .unwrap();
-        let shape = self
-            .renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .get(shape_name.to_string())
-            .unwrap();
-        self.submit(shader, shape, transform, color);
-    }
-
-    pub fn submit_texture(&self, texture: &RenderableTexture, transform: Matrix4<f32>) {
-        let shader = self
-            .renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .get("texture".to_string())
-            .unwrap();
-        let shape = self
-            .renderer
-            .shape_lib
-            .as_ref()
-            .unwrap()
-            .get("texture".to_string())
-            .unwrap();
-        texture.bind(self);
-        shader.bind(self);
-        shader.upload_vertex_uniform_mat4(self, 0, self.camera_view_projection_matrix);
-        shader.upload_vertex_uniform_mat4(self, 1, transform);
-
-        shape.bind(self);
-
-        self.draw_indexed(shape.num_indices(), shape.index_buffer());
+    pub fn draw_indexed_tris(&self, num_indices: u64, index_buffer: &PlatformIndexBuffer) {
+        self.encoder.draw_indexed_primitives(
+            MTLPrimitiveType::Triangle,
+            num_indices,
+            MTLIndexType::UInt16,
+            &index_buffer.data,
+            0,
+        );
     }
 
     pub fn draw_tri_strip(&self, num_verts: u64) {
@@ -116,34 +56,6 @@ impl Scene<'_> {
     pub fn draw_triangles(&self, num_verts: u64) {
         self.encoder
             .draw_primitives(MTLPrimitiveType::Triangle, 0, num_verts);
-    }
-
-    pub fn draw_indexed(&self, index_count: u64, index_buffer: &IndexBuffer) {
-        self.encoder.draw_indexed_primitives(
-            MTLPrimitiveType::TriangleStrip,
-            index_count,
-            MTLIndexType::UInt16,
-            &index_buffer.data,
-            0,
-        );
-    }
-
-    pub fn draw_line(&self, index_count: u64, index_buffer: &IndexBuffer) {
-        self.encoder.draw_indexed_primitives(
-            MTLPrimitiveType::LineStrip,
-            index_count,
-            MTLIndexType::UInt16,
-            &index_buffer.data,
-            0,
-        );
-    }
-
-    pub fn bind_shader(&self, shader: String) {
-        self.renderer
-            .shader_lib
-            .as_ref()
-            .unwrap()
-            .bind_shader(self, shader);
     }
 }
 
@@ -156,18 +68,26 @@ fn prepare_render_pass_descriptor(descriptor: &RenderPassDescriptorRef, texture:
     color_attachment.set_store_action(MTLStoreAction::Store);
 }
 
-pub struct Renderer {
+pub struct PlatformRenderer {
     device: Device,
     layer: CoreAnimationLayer,
     command_queue: CommandQueue,
     width: usize,
     height: usize,
-    pub shader_lib: Option<ShaderLibrary>,
-    pub shape_lib: Option<ShapeLibrary>,
 }
 
-impl Renderer {
-    pub fn new(window: &mut OsxWindow) -> Self {
+impl PlatformRenderer {
+    pub fn attach_renderer(&self, window: &PlatformWindow) {
+        unsafe {
+            window
+                .cocoa_window
+                .view
+                .unwrap()
+                .setLayer(mem::transmute(self.get_layer()));
+        }
+    }
+
+    pub fn new(window: &mut PlatformWindow) -> Result<Self, String> {
         let device = Device::system_default().unwrap();
         let layer = CoreAnimationLayer::new();
         layer.set_device(&device);
@@ -180,22 +100,14 @@ impl Renderer {
 
         let command_queue = device.new_command_queue();
 
-        let mut res = Renderer {
+        let mut res = PlatformRenderer {
             device,
             layer,
             command_queue,
             width,
             height,
-            shader_lib: None,
-            shape_lib: None,
         };
-
-        let shader_lib = ShaderLibrary::construct(&res);
-        res.shader_lib = Some(shader_lib);
-
-        let shape_lib = ShapeLibrary::construct(&res);
-        res.shape_lib = Some(shape_lib);
-        return res;
+        return Ok(res);
     }
 
     pub fn resize(&mut self, width: f32, height: f32) {
@@ -214,7 +126,7 @@ impl Renderer {
         self.height
     }
 
-    pub fn begin_scene(&self, camera: Box<dyn Camera>) -> Option<Scene> {
+    pub fn begin_scene(&self) -> Option<PlatformScene> {
         if let Some(drawable) = self.layer.next_drawable() {
             let render_pass_descriptor = RenderPassDescriptor::new();
             prepare_render_pass_descriptor(&render_pass_descriptor, drawable.texture());
@@ -222,12 +134,10 @@ impl Renderer {
             let command_buffer = self.command_queue.new_command_buffer();
 
             let encoder = command_buffer.new_render_command_encoder(render_pass_descriptor);
-            let scene = Scene {
+            let scene = PlatformScene {
                 encoder,
                 command_buffer,
                 drawable,
-                renderer: self,
-                camera_view_projection_matrix: camera.get_view_projection_matrix(),
             };
             return Some(scene);
         } else {
@@ -235,7 +145,7 @@ impl Renderer {
         }
     }
 
-    pub fn end_scene(&self, scene: Scene) {
+    pub fn end_scene(&self, scene: PlatformScene) {
         scene.end();
     }
 

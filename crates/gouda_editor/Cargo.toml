@@ -10,5 +10,7 @@ gouda_ecs = { path = "../gouda_ecs" }
 gouda_platform = { path = "../gouda_platform" }
 gouda_rendering = { path = "../gouda_rendering" }
 gouda_images = { path = "../gouda_images" }
+gouda_window = { path = "../gouda_window" }
+gouda_input = { path = "../gouda_input" }
 cgmath = "0.18.0"
 imgui = "0.8.2"

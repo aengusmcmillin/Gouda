@@ -32,8 +32,8 @@ struct VertexIn {
 
 vertex float4 vertex_main(
     const VertexIn vIn [[ stage_in ]],
-    constant ViewProjection& viewProjection [[buffer(1)]],
-    constant ModelTransform& modelTransform [[buffer(2)]]) {
+    constant ModelTransform& modelTransform [[buffer(1)]],
+    constant ViewProjection& viewProjection [[buffer(2)]]) {
     return viewProjection.vp * modelTransform.transform * float4(vIn.position, 0, 1);
 }
 ";

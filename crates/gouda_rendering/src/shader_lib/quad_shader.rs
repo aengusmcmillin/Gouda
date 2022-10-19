@@ -28,12 +28,20 @@ struct VertexIn {
     float2 xy   [[attribute(0)]];
 };
 
+struct ViewProjection {
+    float4x4 mat;
+};
+
+struct ModelTransform {
+    float4x4 mat;
+};
+
 vertex float4 vertex_main(constant VertexIn *in [[buffer(0)]],
                                  constant ViewProjection &viewProjection [[buffer(1)]],
                                  constant ModelTransform &modelTransform [[buffer(2)]],
                                  uint vid [[vertex_id]])
 {
-    return float4(in[vid].xy) * transformation.mat * projection.mat;
+    return (viewProjection.mat * modelTransform.mat) * float4(in[vid].xy, 0.0, 1.0);
 }
 ";
 

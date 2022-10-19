@@ -210,7 +210,7 @@ pub fn load_obj_file(path: &'static str) -> Result<ObjFile, Box<dyn Error>> {
                 "mtllib" => {
                     material_file_names.push(line[1].to_string());
                 }
-                default => {}
+                _default => {}
             }
         }
         _ => (),

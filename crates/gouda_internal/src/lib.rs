@@ -1,21 +1,17 @@
 use gouda_ecs::{GameSceneId, ECS};
 use gouda_editor::EditorLayer;
+use gouda_input::{GameInput, LetterKeys};
 use gouda_layer::Layer;
-use gouda_platform::input::{GameInput, LetterKeys};
-use gouda_platform::window::{WindowEvent, WindowProps};
 use gouda_platform::PlatformLayer;
 use gouda_rendering::font_library::FontLibrary;
 use gouda_rendering::shader_lib::ShaderLibrary;
 use gouda_rendering::shapes::ShapeLibrary;
 use gouda_rendering::{Renderer, Scene};
+use gouda_window::{WindowEvent, WindowProps};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::time;
 use std::time::Instant;
-
-#[cfg(target_os = "macos")]
-#[macro_use]
-extern crate objc;
 
 pub use gouda_images::{bmp, png};
 use gouda_rendering::camera::Camera;
