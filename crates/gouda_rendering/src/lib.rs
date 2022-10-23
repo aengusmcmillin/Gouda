@@ -13,11 +13,12 @@ pub mod sprites;
 pub mod texture_library;
 
 use buffers::{IndexBuffer, VertexBuffer};
-use camera::Camera;
+use camera::{Camera, OrthographicCamera};
 use cgmath::{Matrix4, SquareMatrix};
 use font::Font;
 use font_library::FontLibrary;
 use gouda_images::Image;
+use gouda_transform::TransformComponent;
 use gouda_window::osx::PlatformWindow;
 use model::ObjModel;
 use rendering_platform::texture::PlatformTexture;
@@ -148,8 +149,10 @@ pub struct Scene<'a> {
 }
 
 impl Scene<'_> {
-    pub fn bind_camera(&mut self, camera: &dyn Camera) {
-        self.camera_view_projection_matrix = camera.get_view_projection_matrix();
+    pub fn bind_camera(&mut self, camera: &OrthographicCamera, transform: &TransformComponent) {
+        self.camera_view_projection_matrix = camera
+            .calculate_view_projection_matrix(transform.position, transform.rotation.z)
+            .unwrap();
     }
 
     pub fn unbind_camera(&mut self) {

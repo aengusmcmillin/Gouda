@@ -11,6 +11,7 @@ use gouda::gui::constraints::{Constraint, GuiConstraints};
 use gouda::gui::{GuiComponent, GuiText};
 use gouda::mouse_capture::{ActiveCaptureLayer, MouseCaptureArea, MouseCaptureLayer};
 use gouda::rendering::Scene;
+use gouda::transform::TransformComponent;
 use gouda::types::{Bounds, Color};
 use gouda::{GameScene, RenderLayer};
 
@@ -40,7 +41,8 @@ impl GameScene for StartMenuScene {
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
         ecs.build_entity()
-            .add(OrthographicCamera::new(-8., 8., -8., 8.));
+            .add(OrthographicCamera::new(8.))
+            .add(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {
@@ -49,6 +51,9 @@ impl GameScene for StartMenuScene {
         ecs.remove_component::<ActiveCaptureLayer>(&capture_layer);
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.remove_component::<ActiveCaptureLayer>(&button_layer);
+        let camera = ecs.read1::<OrthographicCamera>();
+        let cam = camera.get(0).unwrap().1;
+        ecs.delete_entity(&cam);
     }
 
     fn render_scene(&self, ecs: &ECS, scene: &Scene) {

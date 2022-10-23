@@ -1,4 +1,4 @@
-use cgmath::Vector2;
+use cgmath::{Vector2, Vector3};
 use gouda::ecs::{Entity, Mutation, ECS};
 use gouda::rendering::sprites::SpriteComponent;
 use gouda::transform::TransformComponent;
@@ -29,7 +29,7 @@ pub struct TurretSelectMutation {
 impl Mutation for TurretSelectMutation {
     fn apply(&self, ecs: &mut ECS) {
         let mut loc = *ecs.read::<TransformComponent>(&self.turret_e).unwrap();
-        loc.scale = Vector2::new(3.0, 3.0);
+        loc.scale = Vector3::new(3.0, 3.0, 1.);
         let range_sprite =
             SpriteComponent::new(ecs, "./assets/bitmap/range_indicator.png".to_string());
         let range_indicator = Some(ecs.build_entity().add(range_sprite).add(loc).entity());

@@ -1,3 +1,4 @@
+use camera::{camera_control_system, CameraComponent};
 use gouda::camera::{Camera, OrthographicCamera};
 use gouda::ecs::{Entity, GameSceneId, Mutation, Mutations, ECS};
 use gouda::input::{GameInput, LetterKeys};
@@ -30,6 +31,7 @@ use rand::{thread_rng, Rng};
 use std::collections::HashMap;
 
 mod building;
+mod camera;
 mod cursor;
 mod game_stage;
 mod gui;
@@ -131,6 +133,7 @@ fn register_core_systems(ecs: &mut ECS) {
     ecs.add_system(Box::new(player_move_system));
     ecs.add_system(Box::new(mouse_capture_system));
     ecs.add_system(Box::new(game_gui_system));
+    ecs.add_system(Box::new(camera_control_system))
 }
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
@@ -181,7 +184,9 @@ impl GameScene for MainGameScene {
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
         ecs.build_entity()
-            .add(OrthographicCamera::new(-6., 6., -6., 6.));
+            .add(OrthographicCamera::new(6.))
+            .add(CameraComponent::new())
+            .add(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {
@@ -284,7 +289,9 @@ impl GameScene for DayGameScene {
         ecs.add_system(Box::new(mouse_cursor_system));
         ecs.add_system(Box::new(day_state_countdown));
         ecs.build_entity()
-            .add(OrthographicCamera::new(-6., 6., -6., 6.));
+            .add(OrthographicCamera::new(6.))
+            .add(CameraComponent::new())
+            .add(TransformComponent::builder().build());
 
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_day(ecs);
@@ -346,7 +353,9 @@ impl GameScene for NightGameScene {
         ecs.add_system(Box::new(monster_damage_system));
         ecs.add_system(Box::new(day_state_countdown));
         ecs.build_entity()
-            .add(OrthographicCamera::new(-6., 6., -6., 6.));
+            .add(OrthographicCamera::new(6.))
+            .add(CameraComponent::new())
+            .add(TransformComponent::builder().build());
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_night(ecs);
         }
@@ -406,7 +415,9 @@ impl GameScene for MainMenuGameScene {
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
         ecs.build_entity()
-            .add(OrthographicCamera::new(-6., 6., -6., 6.));
+            .add(OrthographicCamera::new(6.))
+            .add(CameraComponent::new())
+            .add(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {

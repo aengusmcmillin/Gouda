@@ -3,6 +3,7 @@ use cgmath::{SquareMatrix, Vector4};
 use gouda_ecs::{Entity, Mutation, Mutations, ECS};
 use gouda_input::GameInput;
 use gouda_rendering::camera::{Camera, OrthographicCamera};
+use gouda_transform::TransformComponent;
 use gouda_types::Bounds;
 
 #[derive(Debug)]
@@ -146,7 +147,7 @@ impl Mutation for ClearOthersMutation {
 }
 
 pub fn mouse_capture_system(ecs: &ECS, _dt: f32) -> Mutations {
-    let camera = ecs.read1::<OrthographicCamera>()[0].0;
+    let (camera, transform, _) = ecs.read2::<OrthographicCamera, TransformComponent>()[0];
 
     let mut layers = ecs.read2::<MouseCaptureLayer, ActiveCaptureLayer>();
     layers.sort_by(|a, b| b.0.sort_index.cmp(&a.0.sort_index));
@@ -156,7 +157,11 @@ pub fn mouse_capture_system(ecs: &ECS, _dt: f32) -> Mutations {
     let mouse_y = 900 - input.mouse.y;
     let screen_mouse_x = mouse_x as f32 / 450. - 1.;
     let screen_mouse_y = mouse_y as f32 / 450. - 1.;
-    let mut mouse_world_pos = camera.get_view_projection_matrix().invert().unwrap()
+    let mut mouse_world_pos = camera
+        .calculate_view_projection_matrix(transform.position, transform.rotation.z)
+        .unwrap()
+        .invert()
+        .unwrap()
         * Vector4::new(screen_mouse_x, screen_mouse_y, 0., 1.);
     mouse_world_pos.w = 1.0 / mouse_world_pos.w;
     mouse_world_pos.x /= mouse_world_pos.w;
