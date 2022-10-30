@@ -7,3 +7,6 @@ edition = "2018"
 [dependencies]
 enum-map = "*"
 enum-map-derive = "*"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3.8", features = ["xinput"] }

@@ -27,13 +27,13 @@ impl MaterialLibrary {}
 
 impl Material {
     pub fn from_mtl(mtl_material_definition: MtlMaterialDefinition) {
-        match mtl_material_definition.illumination {
-            0 => {}
-            1 => {}
-            2 => {}
-            3 => {}
-            4 => {}
-            5 => {}
-        }
+        // match mtl_material_definition.illumination {
+        //     0 => {}
+        //     1 => {}
+        //     2 => {}
+        //     3 => {}
+        //     4 => {}
+        //     5 => {}
+        // }
     }
 }

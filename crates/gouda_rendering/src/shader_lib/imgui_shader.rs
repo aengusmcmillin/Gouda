@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn imgui_shader_layout() -> BufferLayout {
@@ -16,6 +16,8 @@ pub fn imgui_shader(renderer: &Renderer) -> Shader {
         imgui_shader_layout(),
         IMGUI_VERTEX_SHADER,
         IMGUI_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

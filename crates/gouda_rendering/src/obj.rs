@@ -73,7 +73,7 @@ impl ObjMesh {
         let objs = indices_by_material
             .into_iter()
             .map(|(material, indices)| {
-                if let Some(material) = mtl_file.material_definitions.get(&material) {
+                if let Some(material) = mtl_file.materials.get(&material) {
                     let index_buffer = IndexBuffer::new(renderer, indices);
                     Some(ObjMeshSubset {
                         index_buffer,
@@ -335,6 +335,6 @@ pub fn load_mtl_file(path: &'static str) -> Result<MtlFile, Box<dyn Error>> {
         .map(|item| (item.name.clone(), item))
         .collect();
     return Ok(MtlFile {
-        material_definitions,
+        materials: material_definitions,
     });
 }

@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn texture_shader_layout() -> BufferLayout {
@@ -15,6 +15,8 @@ pub fn texture_shader(renderer: &Renderer) -> Shader {
         texture_shader_layout(),
         TEXTURE_VERTEX_SHADER,
         TEXTURE_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

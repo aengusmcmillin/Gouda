@@ -2,7 +2,9 @@ use std::fmt::{Error, Formatter};
 
 use crate::buffers::{BufferLayout, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::camera::matrix_to_vec;
-use crate::rendering_platform::shader::PlatformShader;
+use crate::rendering_platform::shader::{
+    PlatformFragmentShader, PlatformShader, PlatformVertexShader,
+};
 use crate::{Renderer, Scene};
 use cgmath::Matrix4;
 
@@ -20,7 +22,7 @@ pub struct UniformSpec {
 }
 
 pub struct ShaderUniformSpec {
-    uniforms: Vec<UniformSpec>,
+    pub uniforms: Vec<UniformSpec>,
 }
 
 pub struct VertexShader {

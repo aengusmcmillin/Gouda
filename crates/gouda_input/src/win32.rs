@@ -1,4 +1,4 @@
-use crate::input::{GameButtonState, KeyboardInput, LetterKeys, NumberKeys, SpecialKeys};
+use crate::{GameButtonState, KeyboardInput, LetterKeys, NumberKeys, SpecialKeys};
 use winapi::um::winuser::{VK_DOWN, VK_LEFT, VK_RETURN, VK_RIGHT, VK_SPACE, VK_UP};
 
 pub fn win32_process_keyboard(

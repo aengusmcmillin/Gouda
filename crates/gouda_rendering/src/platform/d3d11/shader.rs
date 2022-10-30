@@ -1,5 +1,6 @@
 use crate::buffers::{BufferLayout, ShaderDataType};
 pub use crate::platform::d3d11::PlatformScene;
+use crate::Scene;
 use std::ffi::OsStr;
 use std::iter::once;
 use std::mem;
@@ -34,6 +35,35 @@ impl ShaderDataType {
     }
 }
 
+#[derive(Debug)]
+pub struct PlatformShader {
+    vertex_shader: PlatformVertexShader,
+    fragment_shader: PlatformFragmentShader,
+}
+
+impl PlatformShader {
+    pub fn new(
+        gfx: &PlatformRenderer,
+        buffer_layout: BufferLayout,
+        vertex_src: &str,
+        fragment_src: &str,
+    ) -> PlatformShader {
+        let vx = PlatformVertexShader::new(gfx, &buffer_layout, vertex_src);
+        let fx = PlatformFragmentShader::new(gfx, fragment_src);
+
+        return PlatformShader {
+            vertex_shader: vx,
+            fragment_shader: fx,
+        };
+    }
+
+    pub fn bind(&self, scene: &Scene) {
+        self.vertex_shader.bind(&scene.platform_scene);
+        self.fragment_shader.bind(&scene.platform_scene);
+    }
+}
+
+#[derive(Debug)]
 pub struct PlatformVertexShader {
     vertex_shader: *mut ID3D11VertexShader,
     input_layout: *mut ID3D11InputLayout,
@@ -150,6 +180,7 @@ impl PlatformVertexShader {
     }
 }
 
+#[derive(Debug)]
 pub struct PlatformFragmentShader {
     fragment_shader: *mut ID3D11PixelShader,
 }

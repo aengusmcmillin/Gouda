@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn basic_shader_layout() -> BufferLayout {
@@ -15,6 +15,8 @@ pub fn basic_shader(renderer: &Renderer) -> Shader {
         basic_shader_layout(),
         BASIC_VERTEX_SHADER,
         BASIC_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

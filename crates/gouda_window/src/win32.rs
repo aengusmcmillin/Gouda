@@ -1,7 +1,7 @@
 extern crate winapi;
 
-use crate::input::GameInput;
-use crate::window::{GameWindowImpl, WindowProps};
+use crate::{GameWindowImpl, WindowProps};
+use gouda_input::GameInput;
 
 use self::winapi::shared::minwindef::{__some_function, DWORD};
 use self::winapi::um::libloaderapi::{GetProcAddress, LoadLibraryW};
@@ -20,7 +20,7 @@ use winapi::um::winuser::{
 };
 use winapi::um::xinput::{XINPUT_STATE, XINPUT_VIBRATION};
 
-use super::win32_input::{win32_process_keyboard, win32_process_keyboard_message};
+use gouda_input::win32::{win32_process_keyboard, win32_process_keyboard_message};
 
 trait Empty {
     fn empty() -> Self;
@@ -45,14 +45,14 @@ impl Empty for POINT {
     }
 }
 
-pub struct Window {
+pub struct PlatformWindow {
     pub hwnd: HWND,
     props: WindowProps,
     input: GameInput,
 }
 
-impl Window {
-    pub fn new(props: WindowProps) -> Window {
+impl PlatformWindow {
+    pub fn new(props: WindowProps) -> PlatformWindow {
         let window = create_window(
             "GoudaWindowClass",
             props.title.as_str(),
@@ -73,7 +73,7 @@ impl Window {
     }
 }
 
-impl GameWindowImpl for Window {
+impl GameWindowImpl for PlatformWindow {
     fn capture_input(&mut self) -> GameInput {
         self.input = GameInput::from(&self.input);
         let mut msg = MSG::empty();
@@ -129,7 +129,7 @@ impl GameWindowImpl for Window {
         return self.props.height as usize;
     }
 
-    fn capture_events(&mut self) -> Vec<crate::window::WindowEvent> {
+    fn capture_events(&mut self) -> Vec<crate::WindowEvent> {
         return vec![];
     }
 }

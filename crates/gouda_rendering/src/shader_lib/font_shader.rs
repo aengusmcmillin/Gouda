@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn font_shader_layout() -> BufferLayout {
@@ -15,6 +15,8 @@ pub fn font_shader(renderer: &Renderer) -> Shader {
         font_shader_layout(),
         FONT_VERTEX_SHADER,
         FONT_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

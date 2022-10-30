@@ -4,13 +4,13 @@ use gouda_input::GameInput;
 pub mod osx;
 
 #[cfg(target_os = "macos")]
-use osx::PlatformWindow;
+pub use osx::PlatformWindow;
 
 #[cfg(target_os = "windows")]
 pub mod win32;
 
 #[cfg(target_os = "windows")]
-use osx::PlatformWindow;
+pub use win32::PlatformWindow;
 
 #[cfg(target_os = "macos")]
 #[macro_use]

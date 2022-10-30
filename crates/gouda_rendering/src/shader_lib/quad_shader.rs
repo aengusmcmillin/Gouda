@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn quad_shader_layout() -> BufferLayout {
@@ -12,6 +12,8 @@ pub fn quad_shader(renderer: &Renderer) -> Shader {
         quad_shader_layout(),
         QUAD_VERTEX_SHADER,
         QUAD_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

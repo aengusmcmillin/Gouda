@@ -174,12 +174,12 @@ pub struct PlatformFragmentConstantBuffer {
 impl PlatformFragmentConstantBuffer {
     pub fn new<T>(
         renderer: &PlatformRenderer,
-        offset: u32,
+        offset: u64,
         data: Vec<T>,
     ) -> PlatformFragmentConstantBuffer {
         PlatformFragmentConstantBuffer {
             buffer: PlatformConstantBuffer::new(renderer, data),
-            offset,
+            offset: offset as u32,
         }
     }
 

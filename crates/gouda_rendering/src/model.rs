@@ -67,12 +67,12 @@ impl Mesh {
             index = index + numverts as u16;
         }
 
-        let submeshes: Vec<Submesh> = vec![];
+        let mut submeshes: Vec<Submesh> = vec![];
 
         let vertex_buffer =
             VertexBuffer::new::<Vert>(renderer, obj_model_shader_layout(), 0, verts);
 
-        let all_indices: Vec<u16> = vec![];
+        let mut all_indices: Vec<u16> = vec![];
         let mut submesh_idx = 0;
         if no_material_indices.len() > 0 {
             let len = no_material_indices.len() as u32;
@@ -87,7 +87,7 @@ impl Mesh {
 
         indices_by_material
             .into_iter()
-            .for_each(|(material, indices)| {
+            .for_each(|(material, mut indices)| {
                 let len = indices.len() as u32;
                 submeshes.push(Submesh {
                     starting_index: submesh_idx,

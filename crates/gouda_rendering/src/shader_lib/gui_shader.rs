@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn gui_shader_layout() -> BufferLayout {
@@ -12,6 +12,8 @@ pub fn gui_shader(renderer: &Renderer) -> Shader {
         gui_shader_layout(),
         GUI_VERTEX_SHADER,
         GUI_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

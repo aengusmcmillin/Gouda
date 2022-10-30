@@ -3,7 +3,7 @@ use gouda::camera::{Camera, OrthographicCamera};
 use gouda::ecs::{Entity, GameSceneId, Mutation, Mutations, ECS};
 use gouda::input::{GameInput, LetterKeys};
 use gouda::rendering::drawable::ShapeDrawable;
-use gouda::rendering::model::{load_mtl_file, load_obj_file, ObjModel};
+use gouda::rendering::obj::{load_mtl_file, load_obj_file, ObjMesh};
 use gouda::rendering::sprites::{ColorBoxComponent, SpriteComponent, SpriteSheetComponent};
 use gouda::rendering::{Renderer, Scene};
 use gouda::transform::TransformComponent;
@@ -514,7 +514,7 @@ impl GameLogic for Game {
         let renderer = ecs.read_res::<Rc<Renderer>>();
         let objfile = load_obj_file("./assets/models/tree.obj").unwrap();
         let mtlfile = load_mtl_file("./assets/models/tree.mtl").unwrap();
-        let model = ObjModel::new(renderer, objfile, mtlfile);
+        let model = ObjMesh::new(renderer, objfile, mtlfile);
 
         ecs.add_res(StateTimer { countdown_s: 0. });
 

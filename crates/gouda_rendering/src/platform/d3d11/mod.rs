@@ -1,5 +1,6 @@
 #![cfg(target_os = "windows")]
 
+use gouda_window::PlatformWindow;
 use std::mem;
 use winapi::shared::dxgi::*;
 use winapi::shared::dxgiformat::*;
@@ -25,7 +26,7 @@ pub struct PlatformRenderer {
 }
 
 impl PlatformRenderer {
-    pub fn new(hwnd: HWND) -> Result<PlatformRenderer, String> {
+    pub fn new(platform_window: &PlatformWindow) -> Result<PlatformRenderer, String> {
         unsafe {
             let factory: *mut IDXGIFactory = null_mut();
             let result = CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory));
@@ -107,7 +108,7 @@ impl PlatformRenderer {
                 },
                 BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
                 BufferCount: 1,
-                OutputWindow: hwnd,
+                OutputWindow: platform_window.hwnd,
                 Windowed: 1,
                 SwapEffect: DXGI_SWAP_EFFECT_DISCARD,
                 Flags: 0,

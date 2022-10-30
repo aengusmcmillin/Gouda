@@ -131,7 +131,7 @@ impl VertexBuffer {
         return VertexBuffer {
             platform_vertex_buffer: PlatformVertexBuffer::new(
                 &renderer.platform_renderer,
-                &layout,
+                layout,
                 offset,
                 data,
             ),
@@ -144,7 +144,7 @@ impl VertexBuffer {
 
     pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
         self.platform_vertex_buffer
-            .bind_to_offset(&scene.platform_scene, offset as u64);
+            .bind_to_offset(&scene.platform_scene, offset);
     }
 }
 
@@ -158,7 +158,7 @@ impl VertexConstantBuffer {
         return VertexConstantBuffer {
             platform_buffer: PlatformVertexConstantBuffer::new(
                 &renderer.platform_renderer,
-                offset as u64,
+                offset,
                 data,
             ),
         };
@@ -171,7 +171,7 @@ impl VertexConstantBuffer {
 
     pub fn bind_to_offset(&self, scene: &Scene, offset: u32) {
         self.platform_buffer
-            .bind_to_offset(&scene.platform_scene, offset as u64);
+            .bind_to_offset(&scene.platform_scene, offset);
     }
 
     pub fn bind(&self, scene: &Scene) {

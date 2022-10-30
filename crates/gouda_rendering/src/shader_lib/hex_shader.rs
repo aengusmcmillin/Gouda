@@ -1,5 +1,5 @@
 use crate::buffers::{BufferElement, BufferLayout, ShaderDataType};
-use crate::shaders::Shader;
+use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn hex_shader(renderer: &Renderer) -> Shader {
@@ -10,6 +10,8 @@ pub fn hex_shader(renderer: &Renderer) -> Shader {
         buffer_layout,
         HEX_VERTEX_SHADER,
         HEX_FRAGMENT_SHADER,
+        ShaderUniformSpec { uniforms: vec![] },
+        ShaderUniformSpec { uniforms: vec![] },
     );
     return shader;
 }

@@ -1,14 +1,10 @@
 #![cfg(target_os = "windows")]
 
-pub mod win32_input;
-pub mod window;
-
 use gouda_rendering::Renderer;
 
 use std::rc::Rc;
 
-use crate::win32::window::Window;
-use crate::window::{GameWindow, WindowProps};
+use gouda_window::{GameWindow, PlatformWindow, WindowProps};
 
 pub struct Win32PlatformLayer {
     window: GameWindow,
@@ -17,11 +13,11 @@ pub struct Win32PlatformLayer {
 
 impl Win32PlatformLayer {
     pub fn new(props: WindowProps) -> Self {
-        let window = Window::new(props);
+        let mut window = PlatformWindow::new(props);
         let hwnd = window.hwnd;
-        let game_window = GameWindow::new(Box::new(window));
+        let renderer = Renderer::new(&mut window);
+        let game_window = GameWindow::new(window);
         println!("building renderer");
-        let renderer = Renderer::new(hwnd);
         println!("renderer built");
         Self {
             window: game_window,
