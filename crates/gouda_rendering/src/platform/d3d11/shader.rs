@@ -42,7 +42,7 @@ pub struct PlatformVertexShader {
 impl PlatformVertexShader {
     pub fn new(
         renderer: &PlatformRenderer,
-        layout: BufferLayout,
+        layout: &BufferLayout,
         vertex_src: &str,
     ) -> PlatformVertexShader {
         unsafe {

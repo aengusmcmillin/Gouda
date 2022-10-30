@@ -6,37 +6,124 @@ use crate::rendering_platform::shader::{PlatformFragmentShader, PlatformVertexSh
 use crate::{Renderer, Scene};
 use cgmath::Matrix4;
 
+pub enum UniformType {
+    Mat4,
+    Float4,
+    Float3,
+    Float2,
+    Float,
+}
+
+pub struct UniformSpec {
+    name: &'static str,
+    uniform_type: UniformType,
+}
+
+pub struct ShaderUniformSpec {
+    uniforms: Vec<UniformSpec>,
+}
+
 pub struct VertexShader {
     platform_vertex_shader: PlatformVertexShader,
+    layout: BufferLayout,
+    uniform_spec: ShaderUniformSpec,
+    uniform_buffers: Vec<VertexConstantBuffer>,
 }
 
 impl VertexShader {
-    pub fn new(renderer: &Renderer, layout: BufferLayout, vertex_src: &str) -> VertexShader {
+    pub fn new(
+        renderer: &Renderer,
+        layout: BufferLayout,
+        uniform_spec: ShaderUniformSpec,
+        vertex_src: &str,
+    ) -> VertexShader {
+        let uniform_buffers = uniform_spec
+            .uniforms
+            .iter()
+            .enumerate()
+            .map(|(index, spec)| {
+                return match spec.uniform_type {
+                    UniformType::Float => {
+                        VertexConstantBuffer::new(renderer, index as u32, vec![0.])
+                    }
+                    UniformType::Float2 => {
+                        VertexConstantBuffer::new(renderer, index as u32, vec![0.; 2])
+                    }
+                    UniformType::Float3 => {
+                        VertexConstantBuffer::new(renderer, index as u32, vec![0.; 3])
+                    }
+                    UniformType::Float4 => {
+                        VertexConstantBuffer::new(renderer, index as u32, vec![0.; 4])
+                    }
+                    UniformType::Mat4 => {
+                        VertexConstantBuffer::new(renderer, index as u32, vec![0.; 16])
+                    }
+                };
+            })
+            .collect();
         return VertexShader {
             platform_vertex_shader: PlatformVertexShader::new(
                 &renderer.platform_renderer,
-                layout,
+                &layout,
                 vertex_src,
             ),
+            layout,
+            uniform_spec,
+            uniform_buffers,
         };
     }
 
     pub fn bind(&self, scene: &Scene) {
+        self.uniform_buffers
+            .iter()
+            .for_each(|buffer| buffer.bind(scene));
         self.platform_vertex_shader.bind(&scene.platform_scene);
     }
 }
 
 pub struct FragmentShader {
     platform_fragment_shader: PlatformFragmentShader,
+    uniform_spec: ShaderUniformSpec,
+    uniform_buffers: Vec<FragmentConstantBuffer>,
 }
 
 impl FragmentShader {
-    pub fn new(renderer: &Renderer, fragment_src: &str) -> FragmentShader {
+    pub fn new(
+        renderer: &Renderer,
+        uniform_spec: ShaderUniformSpec,
+        fragment_src: &str,
+    ) -> FragmentShader {
+        let uniform_buffers = uniform_spec
+            .uniforms
+            .iter()
+            .enumerate()
+            .map(|(index, spec)| {
+                return match spec.uniform_type {
+                    UniformType::Float => {
+                        FragmentConstantBuffer::new(renderer, index as u32, vec![0.])
+                    }
+                    UniformType::Float2 => {
+                        FragmentConstantBuffer::new(renderer, index as u32, vec![0.; 2])
+                    }
+                    UniformType::Float3 => {
+                        FragmentConstantBuffer::new(renderer, index as u32, vec![0.; 3])
+                    }
+                    UniformType::Float4 => {
+                        FragmentConstantBuffer::new(renderer, index as u32, vec![0.; 4])
+                    }
+                    UniformType::Mat4 => {
+                        FragmentConstantBuffer::new(renderer, index as u32, vec![0.; 16])
+                    }
+                };
+            })
+            .collect();
         return FragmentShader {
             platform_fragment_shader: PlatformFragmentShader::new(
                 &renderer.platform_renderer,
                 fragment_src,
             ),
+            uniform_spec,
+            uniform_buffers,
         };
     }
 
@@ -65,10 +152,17 @@ impl Shader {
         buffer_layout: BufferLayout,
         vertex_src: &str,
         fragment_src: &str,
+        vertex_uniform_spec: ShaderUniformSpec,
+        fragment_uniform_spec: ShaderUniformSpec,
     ) -> Shader {
         return Shader {
-            vertex_shader: VertexShader::new(renderer, buffer_layout, vertex_src),
-            fragment_shader: FragmentShader::new(renderer, fragment_src),
+            vertex_shader: VertexShader::new(
+                renderer,
+                buffer_layout,
+                vertex_uniform_spec,
+                vertex_src,
+            ),
+            fragment_shader: FragmentShader::new(renderer, fragment_uniform_spec, fragment_src),
         };
     }
 

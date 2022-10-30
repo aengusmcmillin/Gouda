@@ -73,7 +73,7 @@ VSOut VSMain(VertexIn vertexIn)
     vso.position = mul(worldViewProj, vertexIn.position);
     vso.fragPos = mul(transformation, vertexIn.position);
     vso.texcoord = vertexIn.texcoord;
-    vso.normal = vertexIn.normal;
+    vso.normal = mul(transformation, vertexIn.normal);
     return vso;
 }
 ";
