@@ -5,6 +5,7 @@ pub mod font;
 pub mod font_library;
 pub mod material_library;
 pub mod model;
+pub mod obj;
 pub mod platform;
 pub mod shader_lib;
 pub mod shaders;
@@ -18,7 +19,8 @@ use cgmath::{Matrix4, SquareMatrix};
 use font::Font;
 use font_library::FontLibrary;
 use gouda_images::Image;
-use model::ObjModel;
+use material_library::Material;
+use model::Model;
 use rendering_platform::texture::PlatformTexture;
 use rendering_platform::{PlatformRenderer, PlatformScene};
 use shader_lib::imgui_shader::imgui_shader_layout;
@@ -194,28 +196,41 @@ impl Scene<'_> {
         );
     }
 
-    pub fn submit_obj(&self, obj_model: &ObjModel, transform: Matrix4<f32>) {
-        let shader = self.renderer.get_shader("obj_model");
-        shader.bind(&self);
-        shader.upload_vertex_uniform_mat4(&self, 0, self.camera_view_projection_matrix);
-        shader.upload_vertex_uniform_mat4(&self, 1, transform);
-
-        obj_model.vertex_buffer.bind(&self);
-
-        if let Some(no_mat_ibuf) = &obj_model.no_material_index_buffer {
-            no_mat_ibuf.bind(&self);
-            self.draw_indexed_tris(no_mat_ibuf.num_indices, &no_mat_ibuf);
-        }
-
-        obj_model.submeshes.iter().for_each(|submesh| {
-            shader.upload_fragment_uniform_float3(&self, 0, submesh.ambient);
-            shader.upload_fragment_uniform_float3(&self, 1, submesh.diffuse);
-            shader.upload_fragment_uniform_float3(&self, 2, [3., 0.5, -2.5]);
-
-            submesh.index_buffer.bind(&self);
-            self.draw_indexed_tris(submesh.index_buffer.num_indices, &submesh.index_buffer);
-        });
+    pub fn submit_model(&self, model: Model) {
+        model
+            .mesh
+            .submeshes
+            .iter()
+            .enumerate()
+            .for_each(|(index, submesh)| {
+                let mat = model.materials.get(index).unwrap();
+            })
     }
+
+    pub fn bind_material(&self, material: &Material) {}
+
+    // pub fn submit_obj(&self, obj_model: &ObjModel, transform: Matrix4<f32>) {
+    //     let shader = self.renderer.get_shader("obj_model");
+    //     shader.bind(&self);
+    //     shader.upload_vertex_uniform_mat4(&self, 0, self.camera_view_projection_matrix);
+    //     shader.upload_vertex_uniform_mat4(&self, 1, transform);
+
+    //     obj_model.vertex_buffer.bind(&self);
+
+    //     if let Some(no_mat_ibuf) = &obj_model.no_material_index_buffer {
+    //         no_mat_ibuf.bind(&self);
+    //         self.draw_indexed_tris(no_mat_ibuf.num_indices, &no_mat_ibuf);
+    //     }
+
+    //     obj_model.submeshes.iter().for_each(|submesh| {
+    //         shader.upload_fragment_uniform_float3(&self, 0, submesh.ambient);
+    //         shader.upload_fragment_uniform_float3(&self, 1, submesh.diffuse);
+    //         shader.upload_fragment_uniform_float3(&self, 2, [3., 0.5, -2.5]);
+
+    //         submesh.index_buffer.bind(&self);
+    //         self.draw_indexed_tris(submesh.index_buffer.num_indices, &submesh.index_buffer);
+    //     });
+    // }
 
     pub fn submit_shape_gui(
         &self,
