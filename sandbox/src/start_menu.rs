@@ -3,17 +3,18 @@ use crate::main_menu::MainMenu;
 use crate::player::Player;
 use crate::start_menu::StartMenuButtonId::Start;
 use crate::tilemap::Tilemap;
-use crate::{register_core_systems, LastScene, MAIN_GAME_SCENE};
+use crate::{register_core_systems, LastState, DAY_GAME_STATE};
 use gouda::camera::{Camera, OrthographicCamera};
-use gouda::ecs::{Entity, GameSceneId, Mutation, Mutations, ECS};
+use gouda::ecs::{Entity, GameStateId, Mutation, Mutations, ECS};
+use gouda::font::Font;
 use gouda::gui::constraints::Constraint::{CenterConstraint, RelativeConstraint};
 use gouda::gui::constraints::{Constraint, GuiConstraints};
 use gouda::gui::{GuiComponent, GuiText};
 use gouda::mouse_capture::{ActiveCaptureLayer, MouseCaptureArea, MouseCaptureLayer};
 use gouda::rendering::Scene;
-use gouda::transform::TransformComponent;
 use gouda::types::{Bounds, Color};
-use gouda::{GameScene, RenderLayer};
+use gouda::{GameState, RenderLayer};
+use std::rc::Rc;
 
 pub struct StartMenuScreen {
     pub entity: Entity,
@@ -28,12 +29,12 @@ pub enum StartMenuButtonId {
     Start,
 }
 
-pub const START_MENU_SCENE: GameSceneId = 3;
+pub const START_MENU_GAME_STATE: GameStateId = 3;
 
-pub struct StartMenuScene {}
+pub struct StartMenuGameState {}
 
-impl GameScene for StartMenuScene {
-    fn on_scene_start(&self, ecs: &mut ECS) {
+impl GameState for StartMenuGameState {
+    fn on_state_start(&self, ecs: &mut ECS) {
         register_core_systems(ecs);
         ecs.add_system(Box::new(start_menu_mouse_system));
         let capture_layer = ecs.read_res::<StartMenuScreen>().capture_layer;
@@ -41,35 +42,32 @@ impl GameScene for StartMenuScene {
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
         ecs.build_entity()
-            .add(OrthographicCamera::new(8.))
+            .add(OrthographicCamera::new(1.))
             .add(TransformComponent::builder().build());
     }
 
-    fn on_scene_stop(&self, ecs: &mut ECS) {
-        ecs.add_res(LastScene(START_MENU_SCENE));
+    fn on_state_stop(&self, ecs: &mut ECS) {
+        ecs.add_res(LastState(START_MENU_GAME_STATE));
         let capture_layer = ecs.read_res::<StartMenuScreen>().capture_layer;
         ecs.remove_component::<ActiveCaptureLayer>(&capture_layer);
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.remove_component::<ActiveCaptureLayer>(&button_layer);
-        let camera = ecs.read1::<OrthographicCamera>();
-        let cam = camera.get(0).unwrap().1;
-        ecs.delete_entity(&cam);
     }
 
-    fn render_scene(&self, ecs: &ECS, scene: &Scene) {
+    fn render_state(&self, ecs: &ECS, scene: &Scene) {
         let menu = ecs.read_res::<StartMenuScreen>();
         let menugui = ecs.read::<GuiComponent>(&menu.entity);
         menugui.unwrap().render(&ecs, &scene);
     }
 
-    fn next_scene(&self, ecs: &ECS) -> Option<u32> {
+    fn next_state(&self, ecs: &ECS) -> Option<u32> {
         if ecs.events::<StartEvent>().len() > 0 {
-            return Some(MAIN_GAME_SCENE);
+            return Some(DAY_GAME_STATE);
         }
         return None;
     }
 
-    fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
+    fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![String::from("GUI")];
     }
 
@@ -98,7 +96,7 @@ impl Mutation for MenuClickMutation {
     }
 }
 
-pub fn start_menu_mouse_system(ecs: &ECS, _dt: f32) -> Mutations {
+pub fn start_menu_mouse_system(ecs: &ECS, dt: f32) -> Mutations {
     let mut mutations: Mutations = vec![];
     for (capture_area, button, _) in ecs.read2::<MouseCaptureArea, StartMenuButtonId>() {
         if capture_area.clicked_buttons[0] {
@@ -113,7 +111,7 @@ fn add_menu_button(
     text: &str,
     menu_layer: Entity,
     bounds: Bounds,
-    _y: f32,
+    y: f32,
     ecs: &mut ECS,
     menu_screen_entity: Entity,
 ) {
@@ -123,7 +121,7 @@ fn add_menu_button(
         Some(bounds),
         GuiConstraints::new(
             Constraint::CenterConstraint,
-            Constraint::CenterConstraint,
+            RelativeConstraint { size: y },
             RelativeConstraint { size: 0.6 },
             RelativeConstraint { size: 0.12 },
         ),
@@ -134,11 +132,12 @@ fn add_menu_button(
     ecs.add_component(&button, button_id);
 
     let comp = ecs.read::<GuiComponent>(&button).unwrap();
+    let font = ecs.read_res::<Rc<Font>>();
     let text = GuiText::create(
         ecs,
         Some(comp.calculated_bounds),
         String::from(text),
-        "segoe",
+        font.clone(),
         true,
         true,
         32.,

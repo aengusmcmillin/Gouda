@@ -1,5 +1,7 @@
-use crate::platform::buffers2::ShaderDataType;
-use crate::platform::metal::{Renderer, Scene};
+use crate::{
+    buffers::{BufferLayout, ShaderDataType},
+    platform::metal::{PlatformRenderer, PlatformScene},
+};
 use metal::*;
 use std::mem;
 
@@ -18,7 +20,7 @@ impl ShaderDataType {
     }
 }
 
-fn create_buffer<T>(renderer: &Renderer, data: Vec<T>) -> Buffer {
+fn create_buffer<T>(renderer: &PlatformRenderer, data: Vec<T>) -> Buffer {
     let buffer = renderer.device.new_buffer_with_data(
         unsafe { mem::transmute(data.as_ptr()) },
         (data.len() * mem::size_of::<T>()) as u64,
@@ -38,101 +40,116 @@ fn update_buffer<T>(buffer: &Buffer, mut data: Vec<T>) {
 }
 
 #[derive(Debug)]
-pub struct IndexBuffer {
+pub struct PlatformIndexBuffer {
     pub data: Buffer,
 }
 
-impl IndexBuffer {
-    pub fn new(renderer: &Renderer, indices: Vec<i16>) -> IndexBuffer {
-        return IndexBuffer {
+impl PlatformIndexBuffer {
+    pub fn new(renderer: &PlatformRenderer, indices: Vec<u16>) -> PlatformIndexBuffer {
+        return PlatformIndexBuffer {
             data: create_buffer(renderer, indices),
         };
     }
 
-    pub fn bind(&self, _scene: &Scene) {}
+    pub fn bind(&self, _scene: &PlatformScene) {}
+
+    pub fn bind_with_offset(&self, _scene: &PlatformScene, offset: u32) {}
 }
 
 #[derive(Debug)]
-pub struct FragmentConstantBuffer {
+pub struct PlatformFragmentConstantBuffer {
     data: Buffer,
     offset: u64,
 }
 
-impl FragmentConstantBuffer {
-    pub fn new<T>(renderer: &Renderer, offset: u64, data: Vec<T>) -> FragmentConstantBuffer {
-        return FragmentConstantBuffer {
+impl PlatformFragmentConstantBuffer {
+    pub fn new<T>(
+        renderer: &PlatformRenderer,
+        offset: u64,
+        data: Vec<T>,
+    ) -> PlatformFragmentConstantBuffer {
+        return PlatformFragmentConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
         };
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         scene
             .encoder
             .set_fragment_buffer(self.offset, Some(&self.data), 0);
     }
 
-    pub fn update_data<T>(&self, data: Vec<T>) {
+    pub fn update_data<T>(&self, renderer: &PlatformRenderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }
 
 #[derive(Debug)]
-pub struct VertexConstantBuffer {
+pub struct PlatformVertexConstantBuffer {
     data: Buffer,
     offset: u64,
 }
 
-impl VertexConstantBuffer {
-    pub fn new<T>(renderer: &Renderer, offset: u64, data: Vec<T>) -> VertexConstantBuffer {
-        return VertexConstantBuffer {
+impl PlatformVertexConstantBuffer {
+    pub fn new<T>(
+        renderer: &PlatformRenderer,
+        offset: u64,
+        data: Vec<T>,
+    ) -> PlatformVertexConstantBuffer {
+        return PlatformVertexConstantBuffer {
             offset,
             data: create_buffer(renderer, data),
         };
     }
 
-    pub fn bind_to_offset(&self, scene: &Scene, offset: u64) {
+    pub fn bind_to_offset(&self, scene: &PlatformScene, offset: u64) {
         scene
             .encoder
             .set_vertex_buffer(offset + 1, Some(&self.data), 0);
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         scene
             .encoder
             .set_vertex_buffer(self.offset + 1, Some(&self.data), 0);
     }
 
-    pub fn update_data<T>(&self, data: Vec<T>) {
+    pub fn update_data<T>(&self, renderer: &PlatformRenderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }
 
 #[derive(Debug)]
-pub struct VertexBuffer {
+pub struct PlatformVertexBuffer {
     data: Buffer,
-    offset: u64,
+    offset: u32,
 }
 
-impl VertexBuffer {
-    pub fn new<T>(renderer: &Renderer, offset: u64, position_data: Vec<T>) -> VertexBuffer {
-        return VertexBuffer {
+impl PlatformVertexBuffer {
+    pub fn new<T>(
+        renderer: &PlatformRenderer,
+        layout: &BufferLayout,
+        offset: u32,
+        position_data: Vec<T>,
+    ) -> PlatformVertexBuffer {
+        return PlatformVertexBuffer {
             offset,
             data: create_buffer(renderer, position_data),
         };
     }
 
-    pub fn bind_to_offset(&self, scene: &Scene, offset: u64) {
+    pub fn bind_to_offset(&self, scene: &PlatformScene, offset: u64) {
         scene.encoder.set_vertex_buffer(offset, Some(&self.data), 0);
     }
 
-    pub fn bind(&self, scene: &Scene) {
+    pub fn bind(&self, scene: &PlatformScene) {
         scene
             .encoder
-            .set_vertex_buffer(self.offset, Some(&self.data), 0);
+            .set_vertex_buffer(self.offset as u64, Some(&self.data), 0);
     }
 
-    pub fn update_data<T>(&self, _renderer: &Renderer, data: Vec<T>) {
+    pub fn update_data<T>(&self, _renderer: &PlatformRenderer, data: Vec<T>) {
         update_buffer(&self.data, data);
     }
 }

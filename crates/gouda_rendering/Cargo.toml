@@ -10,6 +10,7 @@ gouda_math = { path = "../gouda_math" }
 gouda_images = { path = "../gouda_images" }
 gouda_ecs = { path = "../gouda_ecs" }
 gouda_transform = { path = "../gouda_transform" }
+gouda_window = { path = "../gouda_window" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2"

@@ -19,6 +19,28 @@ pub type Mutations = Vec<Box<dyn Mutation>>;
 pub type System = dyn Fn(&ECS, f32) -> Mutations;
 pub type GameSceneId = u32;
 
+#[derive(Debug)]
+pub struct ChildOfComponent {
+    pub parent: Entity,
+}
+
+impl ChildOfComponent {
+    pub fn of(parent: Entity) -> Self {
+        Self { parent }
+    }
+}
+
+#[derive(Debug)]
+pub struct HasChildrenComponent {
+    pub children: Vec<Entity>,
+}
+
+impl HasChildrenComponent {
+    pub fn new(children: Vec<Entity>) -> Self {
+        Self { children }
+    }
+}
+
 pub struct ECS {
     entity_allocator: GenIndexAllocator,
     components: AnyMap,

@@ -16,3 +16,5 @@ gouda_rendering = { path = "./crates/gouda_rendering" }
 gouda_types = { path = "./crates/gouda_types" }
 gouda_images = { path = "./crates/gouda_images" }
 gouda_platform = { path = "./crates/gouda_platform" }
+gouda_window = { path = "./crates/gouda_window" }
+gouda_input = { path = "./crates/gouda_input" }

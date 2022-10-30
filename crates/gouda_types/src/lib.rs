@@ -1,3 +1,5 @@
+use gouda_ecs::Entity;
+
 #[derive(Debug, Eq, PartialEq)]
 pub enum Direction {
     Top,

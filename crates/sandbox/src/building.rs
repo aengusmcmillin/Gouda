@@ -1,7 +1,7 @@
 use crate::monster::Monster;
 use crate::tilemap::Tile;
 use gouda::ecs::{Entity, Mutation, Mutations, ECS};
-use gouda::platform::input::GameInput;
+use gouda::input::GameInput;
 use gouda::rendering::sprites::SpriteComponent;
 use gouda::transform::TransformComponent;
 

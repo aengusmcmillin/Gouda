@@ -1,24 +1,22 @@
+use cgmath::Transform;
 use gouda_ecs::{GameSceneId, ECS};
 use gouda_editor::EditorLayer;
+use gouda_input::{GameInput, LetterKeys};
 use gouda_layer::Layer;
-use gouda_platform::input::{GameInput, LetterKeys};
-use gouda_platform::window::{WindowEvent, WindowProps};
 use gouda_platform::PlatformLayer;
 use gouda_rendering::font_library::FontLibrary;
 use gouda_rendering::shader_lib::ShaderLibrary;
 use gouda_rendering::shapes::ShapeLibrary;
 use gouda_rendering::{Renderer, Scene};
+use gouda_transform::TransformComponent;
+use gouda_window::{WindowEvent, WindowProps};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::time;
 use std::time::Instant;
 
-#[cfg(target_os = "macos")]
-#[macro_use]
-extern crate objc;
-
 pub use gouda_images::{bmp, png};
-use gouda_rendering::camera::Camera;
+use gouda_rendering::camera::{Camera, OrthographicCamera};
 pub mod gui;
 pub mod mouse_capture;
 
@@ -176,9 +174,11 @@ impl<T: GameLogic> Gouda<T> {
 
             let game_scene = self.game_scenes.get(&self.active_scene.unwrap()).unwrap();
             let renderer = platform.get_renderer();
-            let camera = game_scene.camera(&self.ecs);
+            let cameras = self.ecs.read2::<OrthographicCamera, TransformComponent>();
+            let camera = cameras[0].0;
+            let transform = cameras[0].1;
             if let Some(mut scene) = renderer.begin_scene() {
-                scene.bind_camera(camera.as_ref());
+                scene.bind_camera(camera, transform);
                 game_scene.render_scene(&self.ecs, &scene);
                 let mut ecs = &mut self.ecs;
                 self.layers

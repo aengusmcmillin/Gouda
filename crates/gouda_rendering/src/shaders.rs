@@ -2,7 +2,7 @@ use std::fmt::{Error, Formatter};
 
 use crate::buffers::{BufferLayout, FragmentConstantBuffer, VertexConstantBuffer};
 use crate::camera::matrix_to_vec;
-use crate::rendering_platform::shader::{PlatformFragmentShader, PlatformVertexShader};
+use crate::rendering_platform::shader::PlatformShader;
 use crate::{Renderer, Scene};
 use cgmath::Matrix4;
 
@@ -133,8 +133,7 @@ impl FragmentShader {
 }
 
 pub struct Shader {
-    vertex_shader: VertexShader,
-    fragment_shader: FragmentShader,
+    platform_shader: PlatformShader,
 }
 
 #[derive(Clone, Copy)]
@@ -149,26 +148,24 @@ pub enum ShaderUniform {
 impl Shader {
     pub fn new(
         renderer: &Renderer,
-        buffer_layout: BufferLayout,
+        layout: BufferLayout,
         vertex_src: &str,
         fragment_src: &str,
         vertex_uniform_spec: ShaderUniformSpec,
         fragment_uniform_spec: ShaderUniformSpec,
     ) -> Shader {
         return Shader {
-            vertex_shader: VertexShader::new(
-                renderer,
-                buffer_layout,
-                vertex_uniform_spec,
+            platform_shader: PlatformShader::new(
+                &renderer.platform_renderer,
+                layout,
                 vertex_src,
+                fragment_src,
             ),
-            fragment_shader: FragmentShader::new(renderer, fragment_uniform_spec, fragment_src),
         };
     }
 
     pub fn bind(&self, scene: &Scene) {
-        self.vertex_shader.bind(scene);
-        self.fragment_shader.bind(scene);
+        self.platform_shader.bind(scene);
     }
 
     pub fn upload_vertex_uniform(&self, scene: &Scene, offset: u32, uniform: ShaderUniform) {

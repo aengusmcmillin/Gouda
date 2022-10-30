@@ -3,11 +3,10 @@ use std::time::Duration;
 
 use crate::imgui::platform::GoudaImguiPlatform;
 use crate::imgui::renderer::GoudaImguiRenderer;
-use ::imgui::{Context, FontConfig, FontSource, Ui, Window};
+use ::imgui::{Context, FontConfig, FontSource, Ui};
 use gouda_ecs::ECS;
+use gouda_input::GameInput;
 use gouda_layer::Layer;
-use gouda_platform::input::GameInput;
-use gouda_platform::window::GameWindow;
 use gouda_rendering::{Renderer, Scene};
 
 mod imgui;

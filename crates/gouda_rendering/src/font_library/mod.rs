@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use crate::font::Font;
-use crate::platform::d3d11::PlatformRenderer;
 use crate::Renderer;
 
 pub struct FontLibrary {

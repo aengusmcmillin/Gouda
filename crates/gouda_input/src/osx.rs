@@ -1,4 +1,4 @@
-use crate::input::*;
+use crate::{GameButtonState, KeyboardInput, LetterKeys, NumberKeys, SpecialKeys};
 
 pub fn osx_process_keyboard_message(new_state: &mut GameButtonState, is_down: bool) {
     if new_state.ended_down != is_down {

@@ -199,14 +199,9 @@ impl GuiComponent {
                 constraints.calculate_bounds(Bounds { x: 0., y: 0., w, h })
             }
         };
-        let drawable = GuiDrawable::new(
-            renderer,
-            corner_radius,
-            bounds,
-            [color.r, color.g, color.b, color.a],
-        );
+        let drawable =
+            GuiDrawable::new(corner_radius, bounds, [color.r, color.g, color.b, color.a]);
         let hover_drawable = Some(GuiDrawable::new(
-            renderer,
             corner_radius,
             bounds,
             [hover_color.r, hover_color.g, hover_color.b, hover_color.a],
@@ -253,12 +248,8 @@ impl GuiComponent {
                 constraints.calculate_bounds(Bounds { x: 0., y: 0., w, h })
             }
         };
-        let drawable = GuiDrawable::new(
-            renderer,
-            corner_radius,
-            bounds,
-            [color.r, color.g, color.b, color.a],
-        );
+        let drawable =
+            GuiDrawable::new(corner_radius, bounds, [color.r, color.g, color.b, color.a]);
         let component = GuiComponent {
             calculated_bounds: bounds,
             corner_radius,
@@ -286,7 +277,6 @@ impl GuiComponent {
     pub fn change_color(&mut self, renderer: &Renderer, color: Color) {
         self.color = color;
         let drawable = GuiDrawable::new(
-            renderer,
             self.corner_radius,
             self.calculated_bounds,
             [self.color.r, self.color.g, self.color.b, self.color.a],
@@ -356,7 +346,7 @@ pub struct GuiDrawable {
 }
 
 impl GuiDrawable {
-    pub fn new(renderer: &Renderer, radius: f32, bounds: Bounds, color: [f32; 4]) -> Self {
+    pub fn new(radius: f32, bounds: Bounds, color: [f32; 4]) -> Self {
         return Self {
             bounds,
             color,

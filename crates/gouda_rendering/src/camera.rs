@@ -9,63 +9,63 @@ pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
 }
 
 pub trait Camera {
-    fn set_position(&mut self, position: Vector3<f32>);
-    fn set_rotation(&mut self, rotation: f32);
-    fn get_view_projection_matrix(&self) -> Matrix4<f32>;
+    fn get_projection_matrix(&self) -> Matrix4<f32>;
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct OrthographicCamera {
     projection_matrix: Matrix4<f32>,
-    view_matrix: Matrix4<f32>,
-    view_projection_matrix: Matrix4<f32>,
-
-    pub position: Vector3<f32>,
-    pub rotation: f32,
+    size: f32,
 }
 
 impl Camera for OrthographicCamera {
-    fn set_position(&mut self, position: Vector3<f32>) {
-        self.position = position;
-        self.recalculate();
-    }
-
-    fn set_rotation(&mut self, rotation: f32) {
-        self.rotation = rotation;
-        self.recalculate();
-    }
-
-    fn get_view_projection_matrix(&self) -> Matrix4<f32> {
-        return self.view_projection_matrix;
+    fn get_projection_matrix(&self) -> Matrix4<f32> {
+        return self.projection_matrix;
     }
 }
 
 impl OrthographicCamera {
-    pub fn new(left: f32, right: f32, bottom: f32, top: f32) -> Self {
+    pub fn set_size(&mut self, size: f32) {
+        self.size = size;
+        self.recalculate();
+    }
+
+    pub fn get_size(&self) -> f32 {
+        self.size
+    }
+
+    pub fn new(size: f32) -> Self {
         let mut res = Self {
-            projection_matrix: Matrix4::new(
-                1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.,
-            ) * ortho(left, right, bottom, top, -1., 1.),
-            view_matrix: Matrix4::identity(),
-            view_projection_matrix: Matrix4::identity(),
-            position: Vector3::new(0., 0., 0.),
-            rotation: 0.,
+            projection_matrix: Matrix4::identity(),
+            size: size,
         };
         res.recalculate();
         return res;
     }
 
     fn recalculate(&mut self) {
-        let transform = Matrix4::from_translation(Vector3::new(
-            self.position.x,
-            self.position.y,
-            self.position.z,
-        )) * Matrix4::from_angle_z(Deg(self.rotation));
+        let size = self.size;
+        let near = -1.;
+        let far = 1.;
+        self.projection_matrix = Matrix4::new(
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.,
+        ) * ortho(-size, size, -size, size, near, far);
+    }
+
+    pub fn calculate_view_projection_matrix(
+        &self,
+        translation: Vector3<f32>,
+        rotation_z: f32,
+    ) -> Option<Matrix4<f32>> {
+        let transform =
+            Matrix4::from_translation(translation) * Matrix4::from_angle_z(Deg(rotation_z));
         let inverse = transform.invert();
         if let Some(inverted) = inverse {
-            self.view_matrix = inverted;
-            self.view_projection_matrix = self.projection_matrix * self.view_matrix
+            let view_matrix = inverted;
+            let view_projection_matrix = self.projection_matrix * view_matrix;
+            return Some(view_projection_matrix);
         }
+        return None;
     }
 }
 

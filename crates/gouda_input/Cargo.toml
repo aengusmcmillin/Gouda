@@ -1,0 +1,9 @@
+[package]
+name = "gouda_input"
+version = "0.1.0"
+authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+enum-map = "*"
+enum-map-derive = "*"

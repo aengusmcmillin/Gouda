@@ -258,11 +258,13 @@ version = "0.1.0"
 dependencies = [
  "gouda_ecs",
  "gouda_images",
+ "gouda_input",
  "gouda_internal",
  "gouda_platform",
  "gouda_rendering",
  "gouda_transform",
  "gouda_types",
+ "gouda_window",
 ]
 
 [[package]]
@@ -281,9 +283,11 @@ dependencies = [
  "cgmath",
  "gouda_ecs",
  "gouda_images",
+ "gouda_input",
  "gouda_layer",
  "gouda_platform",
  "gouda_rendering",
+ "gouda_window",
  "imgui",
 ]
 
@@ -294,6 +298,14 @@ dependencies = [
  "compress",
  "gouda_types",
  "png",
+]
+
+[[package]]
+name = "gouda_input"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "enum-map-derive",
 ]
 
 [[package]]
@@ -308,12 +320,14 @@ dependencies = [
  "gouda_ecs",
  "gouda_editor",
  "gouda_images",
+ "gouda_input",
  "gouda_layer",
  "gouda_math",
  "gouda_platform",
  "gouda_rendering",
  "gouda_transform",
  "gouda_types",
+ "gouda_window",
  "imgui",
 ]
 
@@ -339,6 +353,7 @@ dependencies = [
  "enum-map",
  "enum-map-derive",
  "gouda_rendering",
+ "gouda_window",
  "libc",
  "metal",
  "objc",
@@ -356,6 +371,7 @@ dependencies = [
  "gouda_images",
  "gouda_math",
  "gouda_transform",
+ "gouda_window",
  "libc",
  "metal",
  "objc",
@@ -374,6 +390,20 @@ name = "gouda_types"
 version = "0.0.0"
 dependencies = [
  "gouda_ecs",
+]
+
+[[package]]
+name = "gouda_window"
+version = "0.1.0"
+dependencies = [
+ "cocoa",
+ "core-graphics",
+ "coreaudio-sys",
+ "gouda_input",
+ "libc",
+ "metal",
+ "objc",
+ "winapi",
 ]
 
 [[package]]

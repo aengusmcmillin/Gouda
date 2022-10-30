@@ -1,3 +1,9 @@
+#[cfg(target_os = "macos")]
+pub mod osx;
+
+#[cfg(target_os = "windows")]
+pub mod win32;
+
 #[derive(Default, Clone)]
 pub struct GameButtonState {
     pub half_transition_count: i32,

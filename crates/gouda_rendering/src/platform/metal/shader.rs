@@ -1,22 +1,20 @@
-use crate::camera::matrix_to_vec;
-use crate::platform::metal::{Renderer, Scene};
-use cgmath::Matrix4;
+use crate::{buffers::BufferLayout, Scene};
 use metal::*;
 
-use super::buffers::{BufferLayout, FragmentConstantBuffer, VertexConstantBuffer};
+use super::PlatformRenderer;
 
 #[derive(Debug)]
-pub struct Shader {
+pub struct PlatformShader {
     pipeline_state: RenderPipelineState,
 }
 
-impl Shader {
+impl PlatformShader {
     pub fn new(
-        gfx: &Renderer,
+        gfx: &PlatformRenderer,
         buffer_layout: BufferLayout,
         vertex_src: &str,
         fragment_src: &str,
-    ) -> Shader {
+    ) -> PlatformShader {
         let vert = gfx
             .device
             .new_library_with_source(&vertex_src, &CompileOptions::new())
@@ -75,22 +73,13 @@ impl Shader {
             .new_render_pipeline_state(&pipeline_state_descriptor)
             .unwrap();
 
-        return Shader { pipeline_state };
+        return PlatformShader { pipeline_state };
     }
 
     pub fn bind(&self, scene: &Scene) {
         scene
+            .platform_scene
             .encoder
             .set_render_pipeline_state(&self.pipeline_state);
-    }
-
-    pub fn upload_vertex_uniform_mat4(&self, scene: &Scene, offset: u64, matrix: Matrix4<f32>) {
-        let buffer = VertexConstantBuffer::new(scene.renderer, offset, matrix_to_vec(matrix));
-        buffer.bind(scene);
-    }
-
-    pub fn upload_fragment_uniform_float4(&self, scene: &Scene, offset: u64, uniform: [f32; 4]) {
-        let buffer = FragmentConstantBuffer::new(scene.renderer, offset, uniform.to_vec());
-        buffer.bind(scene);
     }
 }
