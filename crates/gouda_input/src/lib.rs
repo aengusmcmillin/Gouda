@@ -106,6 +106,8 @@ pub struct KeyboardInput {
     pub shift_down: bool,
 }
 
+
+#[derive(Debug, Clone, Copy)]
 pub enum AnyKey {
     Letter(LetterKeys),
     Special(SpecialKeys),
@@ -145,9 +147,29 @@ impl KeyboardInput {
         new_keyboard
     }
 
+    pub fn key_pressed(&self, key: AnyKey) -> bool {
+        match key {
+            AnyKey::Letter(letter) => self.letter_pressed(letter),
+            AnyKey::Special(special) => self.special_key_pressed(special),
+            AnyKey::Number(number) => self.number_pressed(number.into_usize()),
+        }
+    }
+
+    pub fn key_down(&self, key: AnyKey) -> bool {
+        match key {
+            AnyKey::Letter(letter) => self.letter_down(letter),
+            AnyKey::Special(special) => self.special_key_down(special),
+            AnyKey::Number(number) => self.number_down(number.into_usize()),
+        }
+    }
+
     pub fn number_pressed(&self, number: usize) -> bool {
         return self.number_keys[NumberKeys::from_usize(number)].ended_down
             && self.number_keys[NumberKeys::from_usize(number)].half_transition_count > 0;
+    }
+
+    pub fn number_down(&self, number: usize) -> bool {
+        return self.number_keys[NumberKeys::from_usize(number)].ended_down;
     }
 
     pub fn letter_pressed(&self, letter: LetterKeys) -> bool {
@@ -162,6 +184,10 @@ impl KeyboardInput {
     pub fn special_key_pressed(&self, special: SpecialKeys) -> bool {
         return self.special_keys[special].ended_down
             && self.special_keys[special].half_transition_count > 0;
+    }
+
+    pub fn special_key_down(&self, special: SpecialKeys) -> bool {
+        return self.special_keys[special].ended_down;
     }
 }
 

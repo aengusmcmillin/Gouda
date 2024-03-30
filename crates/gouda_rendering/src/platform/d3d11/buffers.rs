@@ -73,8 +73,8 @@ impl PlatformVertexBuffer {
 }
 
 #[derive(Debug)]
-struct PlatformConstantBuffer {
-    buffer: *mut ID3D11Buffer,
+pub struct PlatformConstantBuffer {
+    pub buffer: *mut ID3D11Buffer,
 }
 
 impl PlatformConstantBuffer {

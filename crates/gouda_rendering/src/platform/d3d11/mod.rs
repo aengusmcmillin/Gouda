@@ -3,6 +3,7 @@
 use gouda_window::PlatformWindow;
 use std::mem;
 use winapi::shared::dxgi::*;
+use winapi::shared::dxgi1_2::*;
 use winapi::shared::dxgiformat::*;
 use winapi::shared::dxgitype::*;
 use winapi::um::d3d11::*;
@@ -28,7 +29,7 @@ pub struct PlatformRenderer {
 impl PlatformRenderer {
     pub fn new(platform_window: &PlatformWindow) -> Result<PlatformRenderer, String> {
         unsafe {
-            let factory: *mut IDXGIFactory = null_mut();
+            let factory: *mut IDXGIFactory2 = null_mut();
             let result = CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory));
             if FAILED(result) {
                 return Err("Failed to create".to_string());

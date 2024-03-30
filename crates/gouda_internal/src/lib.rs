@@ -1,6 +1,5 @@
 use cgmath::Transform;
 use gouda_ecs::{GameSceneId, ECS};
-use gouda_editor::EditorLayer;
 use gouda_input::{GameInput, LetterKeys};
 use gouda_layer::Layer;
 use gouda_platform::PlatformLayer;
@@ -61,7 +60,7 @@ impl<T: GameLogic> Gouda<T> {
             ecs: ECS::new(),
             game_scenes: HashMap::new(),
             active_scene: None,
-            layers: vec![Box::new(EditorLayer::new())],
+            layers: vec![],
             shader_lib: None,
             shape_lib: None,
             font_lib: None,
@@ -70,9 +69,11 @@ impl<T: GameLogic> Gouda<T> {
 
     fn setup_engine(&mut self) {
         self.ecs.add_res(GameInput::new());
+        self.ecs.add_res::<Vec<WindowEvent>>(vec![]);
     }
 
     fn setup_game(&mut self) {
+        self.register_core_events();
         self.game_logic.register_events(&mut self.ecs);
         self.game_logic.setup(&mut self.ecs);
 
@@ -83,6 +84,18 @@ impl<T: GameLogic> Gouda<T> {
             .get(&scene)
             .unwrap()
             .on_scene_start(&mut self.ecs);
+    }
+
+    fn register_core_events(&mut self) {
+        self.ecs.register_event_type::<QuitEvent>();
+    }
+
+    fn migrate_core_events(&mut self) {
+        self.ecs.migrate_events::<QuitEvent>();
+    }
+
+    pub fn push_layer(&mut self, layer: Box<dyn Layer>) {
+        self.layers.push(layer);
     }
 
     fn get_active_scene(&self) -> &Box<dyn GameScene> {
@@ -140,6 +153,7 @@ impl<T: GameLogic> Gouda<T> {
             let dt = delta.as_millis() as f32 / 1000.;
             now = next;
 
+            self.migrate_core_events();
             self.game_logic.migrate_events(&mut self.ecs);
             let window = platform.get_window();
 
@@ -184,7 +198,8 @@ impl<T: GameLogic> Gouda<T> {
                 self.layers
                     .iter_mut()
                     .for_each(|layer| layer.render(&mut ecs, &mut scene));
-                scene.end();
+                scene.unbind_camera();
+                renderer.end_scene(scene);
             }
         }
     }

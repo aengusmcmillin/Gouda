@@ -5,7 +5,7 @@ use crate::gui::constraints::GuiConstraints;
 use crate::mouse_capture::{MouseCaptureArea, MouseCaptureLayer};
 use gouda_ecs::{Entity, ECS};
 use gouda_images::Image;
-use gouda_rendering::font::TextDrawable;
+use gouda_rendering::font::{TextConfig, TextDrawable};
 use gouda_rendering::{Renderer, Scene, Texture};
 use gouda_types::{Bounds, Color};
 use std::rc::Rc;
@@ -112,14 +112,16 @@ impl GuiText {
         let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];
         let drawable = TextDrawable::new(
             renderer,
-            pos,
-            size,
-            center_x,
-            center_y,
-            font,
-            [color.r, color.g, color.b],
-            text,
-            font_size,
+            TextConfig {
+                position: pos,
+                size,
+                center_x,
+                center_y,
+                font_name: font,
+                color: [color.r, color.g, color.b],
+                text,
+                font_size,
+            }
         );
         let text = GuiText {
             calculated_bounds: bounds,
@@ -139,14 +141,16 @@ impl GuiText {
         let size = [(bounds.w as f32) / 450., (bounds.h as f32) / 450.];
         let drawable = TextDrawable::new(
             renderer,
-            pos,
-            size,
-            self.center_x,
-            self.center_y,
-            font,
-            [self.color.r, self.color.g, self.color.b],
-            text,
-            16.,
+            TextConfig {
+                position: pos,
+                size,
+                center_x: self.center_x,
+                center_y: self.center_y,
+                font_name: font,
+                color: [self.color.r, self.color.g, self.color.b],
+                text,
+                font_size: 16.
+            }
         );
         self.drawable = drawable;
     }

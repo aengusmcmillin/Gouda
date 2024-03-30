@@ -29,11 +29,11 @@ fn paeth(a: i32, b: i32, c: i32) -> u8 {
     let pc = (p - c).abs();
 
     if pa <= pb && pa <= pc {
-        return a as u8;
+        a as u8
     } else if pb <= pc {
-        return b as u8;
+        b as u8
     } else {
-        return c as u8;
+        c as u8
     }
 }
 
@@ -62,13 +62,13 @@ impl PNG {
 
     pub fn from_buffer(buf: &[u8]) -> Option<PNG> {
         let decoder = png::Decoder::new(buf);
-        let (info, mut reader) = decoder.read_info().unwrap();
-        let mut buf = vec![0; info.buffer_size()];
+        let mut reader = decoder.read_info().unwrap();
+        let mut buf = vec![0; reader.info().raw_bytes()];
         reader.next_frame(&mut buf).unwrap();
         return Some(PNG {
             header_chunk: PNGHeader {
-                width: info.width,
-                height: info.height,
+                width: reader.info().width,
+                height: reader.info().height,
             },
             data: buf,
         });
@@ -77,17 +77,18 @@ impl PNG {
     pub fn from_file(path: &str) -> Option<PNG> {
         if true {
             let decoder = png::Decoder::new(File::open(path).unwrap());
-            let (info, mut reader) = decoder.read_info().unwrap();
-            let mut buf = vec![0; info.buffer_size()];
+            let mut reader = decoder.read_info().unwrap();
+            let mut buf = vec![0; reader.info().raw_bytes()];
             reader.next_frame(&mut buf).unwrap();
             return Some(PNG {
                 header_chunk: PNGHeader {
-                    width: info.width,
-                    height: info.height,
+                    width: reader.info().width,
+                    height: reader.info().height,
                 },
                 data: buf,
             });
         }
+
 
         let file = File::open(path);
         if let Ok(mut file) = file {
@@ -232,11 +233,11 @@ impl PNG {
                 data: result_bytes,
             });
         }
-        return None;
+        None
     }
 }
 
-fn parse_chunk(c: &Vec<u8>, i: usize) -> Chunk {
+fn parse_chunk(c: &[u8], i: usize) -> Chunk {
     let length = u32_from_bytes([c[i], c[i + 1], c[i + 2], c[i + 3]]);
     let mut chunk_type = String::from("");
     chunk_type.push(c[i + 4].into());
@@ -250,9 +251,9 @@ fn parse_chunk(c: &Vec<u8>, i: usize) -> Chunk {
         bytes.push(byte);
     }
 
-    return Chunk {
+    Chunk {
         length,
         chunk_type,
         chunk_data: bytes,
-    };
+    }
 }

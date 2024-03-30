@@ -121,7 +121,7 @@ impl Renderer {
         return self.font_lib.get(name).unwrap();
     }
 
-    pub fn end_scene(&self, scene: PlatformScene) {
+    pub fn end_scene(&self, scene: Scene) {
         scene.end();
     }
 

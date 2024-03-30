@@ -39,3 +39,11 @@ pub mod window {
 pub mod input {
     pub use gouda_input::*;
 }
+
+pub mod imgui {
+    pub use gouda_imgui::*;
+}
+
+pub mod layer {
+    pub use gouda_layer::*;
+}

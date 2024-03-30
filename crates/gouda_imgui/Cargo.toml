@@ -1,22 +1,16 @@
 [package]
-name = "gouda_internal"
+name = "gouda_imgui"
 version = "0.1.0"
 authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-anymap = "0.12.1"
-gouda_ecs = { path = "../gouda_ecs" }
-gouda_transform = { path = "../gouda_transform" }
-gouda_rendering = { path = "../gouda_rendering" }
-gouda_types = { path = "../gouda_types" }
 gouda_layer = { path = "../gouda_layer" }
-gouda_images = { path = "../gouda_images" }
-gouda_math = { path = "../gouda_math" }
+gouda_ecs = { path = "../gouda_ecs" }
 gouda_platform = { path = "../gouda_platform" }
+gouda_rendering = { path = "../gouda_rendering" }
+gouda_images = { path = "../gouda_images" }
 gouda_window = { path = "../gouda_window" }
 gouda_input = { path = "../gouda_input" }
-enum-map = "*"
-enum-map-derive = "*"
-compress = "0.1.2"
 cgmath = "0.18.0"
+imgui = { version = "0.11.0", features = ["docking"] }

@@ -133,7 +133,6 @@ fn register_core_systems(ecs: &mut ECS) {
     ecs.add_system(Box::new(player_move_system));
     ecs.add_system(Box::new(mouse_capture_system));
     ecs.add_system(Box::new(game_gui_system));
-    ecs.add_system(Box::new(camera_control_system))
 }
 
 fn draw_everything(ecs: &ECS, scene: &Scene) {
@@ -522,7 +521,6 @@ impl GameLogic for Game {
 
         GameGui::create(ecs);
         ecs.add_res(generate_days());
-        ecs.add_res::<Vec<WindowEvent>>(vec![]);
         ecs.add_res(Supplies::new());
         StartMenu::create(ecs);
     }

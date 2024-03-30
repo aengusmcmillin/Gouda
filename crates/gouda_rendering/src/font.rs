@@ -22,31 +22,35 @@ pub struct TextDrawable {
     pub color: FragmentConstantBuffer,
 }
 
+pub struct TextConfig {
+    pub position: [f32; 2],
+    pub size: [f32; 2],
+    pub center_x: bool,
+    pub center_y: bool,
+    pub font_name: &'static str,
+    pub color: [f32; 3],
+    pub text: String,
+    pub font_size: f32,
+}
+
 impl TextDrawable {
     pub fn new(
         renderer: &Renderer,
-        position: [f32; 2],
-        size: [f32; 2],
-        center_x: bool,
-        center_y: bool,
-        font_name: &'static str,
-        color: [f32; 3],
-        text: String,
-        font_size: f32,
+        config: TextConfig,
     ) -> Self {
-        let font = renderer.get_font(font_name);
+        let font = renderer.get_font(config.font_name);
         let mut vertices = vec![];
 
-        let scaling = 1. / font.base_size * font_size / font.size;
+        let scaling = 1. / font.base_size * config.font_size / font.size;
         let mut cursor = 0.;
-        let mut base = position[1] + size[1];
-        let start = position[0];
+        let mut base = config.position[1] + config.size[1];
+        let start = config.position[0];
 
-        let max_line_length = size[0];
+        let max_line_length = config.size[0];
         let mut line_start_index = 0;
         let mut current_char_index = 0;
         let line_height = font.line_height * scaling;
-        for text_char in text.chars() {
+        for text_char in config.text.chars() {
             let char_val = text_char as u32;
             let character = &font.characters[&char_val];
 
@@ -92,9 +96,9 @@ impl TextDrawable {
             cursor += character.xadvance as f32 * scaling;
 
             if cursor > max_line_length {
-                if center_x {
+                if config.center_x {
                     let line_width = cursor;
-                    let offset = size[0] - line_width;
+                    let offset = config.size[0] - line_width;
                     let offset = offset / 2.;
 
                     for i in line_start_index..current_char_index {
@@ -109,9 +113,9 @@ impl TextDrawable {
             }
         }
 
-        if center_x {
+        if config.center_x {
             let line_width = cursor;
-            let offset = size[0] - line_width;
+            let offset = config.size[0] - line_width;
             let offset = offset / 2.;
 
             for i in line_start_index..current_char_index {
@@ -119,9 +123,9 @@ impl TextDrawable {
             }
         }
 
-        if center_y {
-            let text_height = position[1] + size[1] - base + line_height;
-            let offset = size[1] - text_height;
+        if config.center_y {
+            let text_height = config.position[1] + config.size[1] - base + line_height;
+            let offset = config.size[1] - text_height;
             let offset = offset / 2.;
 
             for i in 0..vertices.len() {
@@ -137,15 +141,15 @@ impl TextDrawable {
         let vertices = VertexBuffer::new(renderer, font_shader_layout(), 0, adjusted_vertices);
 
         let color =
-            FragmentConstantBuffer::new(renderer, 0, vec![[color[0], color[1], color[2], 0.0]]);
+            FragmentConstantBuffer::new(renderer, 0, vec![[config.color[0], config.color[1], config.color[2], 0.0]]);
 
-        return TextDrawable {
-            text,
-            font_size: font_size as u32,
-            font: font_name,
+        TextDrawable {
+            text: config.text,
+            font_size: config.font_size as u32,
+            font: config.font_name,
             vertices,
             color,
-        };
+        }
     }
 
     pub fn draw(&self, scene: &Scene) {

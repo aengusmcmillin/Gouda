@@ -25,7 +25,7 @@ impl GoudaImguiPlatform {
         io[Key::Space] = 12;
         io[Key::Enter] = 13;
         io[Key::Escape] = 14;
-        io[Key::KeyPadEnter] = 15;
+        io[Key::KeypadEnter] = 15;
         io[Key::A] = 16;
         io[Key::C] = 17;
         io[Key::V] = 18;

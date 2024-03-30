@@ -37,19 +37,19 @@ impl ObjMesh {
         for face in obj_file.faces {
             let numverts = face.verts.len();
             for vert in face.verts {
-                let vertex = obj_file.vertices.get(vert.index - 1).unwrap();
-                let normal = obj_file.vertex_normals.get(vert.normal_index - 1).unwrap();
-                let uv = obj_file.tex_coords.get(vert.texcoord_index - 1).unwrap();
+                let vertex = obj_file.vertices[vert.index - 1];
+                let normal = obj_file.vertex_normals[vert.normal_index - 1];
+                let uv = obj_file.tex_coords[vert.texcoord_index - 1];
 
                 verts.push(Vert {
-                    pos: *vertex,
+                    pos: vertex,
                     tex: [uv[0], uv[1]],
-                    normal: *normal,
+                    normal,
                 });
             }
 
             let indices = match face.material {
-                Some(material) => indices_by_material.entry(material).or_insert(vec![]),
+                Some(material) => indices_by_material.entry(material).or_default(),
                 None => &mut no_material_indices,
             };
 
@@ -59,12 +59,12 @@ impl ObjMesh {
                 indices.push(index + i as u16 + 2);
             }
 
-            index = index + numverts as u16;
+            index += numverts as u16;
         }
 
         let vertex_buffer =
             VertexBuffer::new::<Vert>(renderer, obj_model_shader_layout(), 0, verts);
-        let index_buffer = if no_material_indices.len() > 0 {
+        let index_buffer = if !no_material_indices.is_empty() {
             Some(IndexBuffer::new(renderer, no_material_indices))
         } else {
             None
@@ -72,7 +72,7 @@ impl ObjMesh {
 
         let objs = indices_by_material
             .into_iter()
-            .map(|(material, indices)| {
+            .filter_map(|(material, indices)| {
                 if let Some(material) = mtl_file.materials.get(&material) {
                     let index_buffer = IndexBuffer::new(renderer, indices);
                     Some(ObjMeshSubset {
@@ -84,14 +84,13 @@ impl ObjMesh {
                     None
                 }
             })
-            .filter_map(|x| x)
             .collect();
 
-        return ObjMesh {
+        ObjMesh {
             vertex_buffer,
             no_material_index_buffer: index_buffer,
             submeshes: objs,
-        };
+        }
     }
 }
 
@@ -123,89 +122,86 @@ pub fn load_obj_file(path: &'static str) -> Result<ObjFile, Box<dyn Error>> {
     let mut active_material = None;
     let mut faces = vec![];
 
-    file.lines().for_each(|l| match l {
-        Ok(line) => {
-            if line.is_empty() || line.starts_with("#") {
-                return;
-            }
-
-            let line: Vec<&str> = line.split(" ").collect();
-
-            match line[0] {
-                "v" => {
-                    let x = line[1].parse::<f32>().unwrap();
-                    let y = line[2].parse::<f32>().unwrap();
-                    let z = line[3].parse::<f32>().unwrap();
-                    vertices.push([x, y, z, 1.]);
-                }
-                "vt" => {
-                    let u = line[1].parse::<f32>().unwrap();
-                    let v = if line.len() > 2 {
-                        line[2].parse::<f32>().unwrap()
-                    } else {
-                        0.
-                    };
-                    let w = if line.len() > 3 {
-                        line[3].parse::<f32>().unwrap()
-                    } else {
-                        0.
-                    };
-                    tex_coords.push([u, v, w])
-                }
-                "vn" => {
-                    let x = line[1].parse::<f32>().unwrap();
-                    let y = line[2].parse::<f32>().unwrap();
-                    let z = line[3].parse::<f32>().unwrap();
-                    vertex_normals.push([x, y, z]);
-                }
-                "vp" => {}
-                "f" => {
-                    let num_verts = line.len() - 1;
-                    let mut verts = vec![];
-                    for i in 0..num_verts {
-                        let vert: Vec<&str> = line[i + 1].split('/').collect();
-                        let index = vert[0].parse::<u32>().unwrap();
-                        let texcoord_index = if vert.len() > 1 {
-                            vert[1].parse::<u32>().unwrap()
-                        } else {
-                            0
-                        };
-                        let normal_index = if vert.len() > 2 {
-                            vert[2].parse::<u32>().unwrap()
-                        } else {
-                            0
-                        };
-                        let vert = ObjVert {
-                            index: index as usize,
-                            normal_index: normal_index as usize,
-                            texcoord_index: texcoord_index as usize,
-                        };
-                        verts.push(vert);
-                    }
-                    let face = ObjFace {
-                        verts,
-                        material: active_material.clone(),
-                    };
-                    faces.push(face);
-                }
-                "usemtl" => {
-                    active_material = Some(line[1].to_string());
-                }
-                "mtllib" => {
-                    material_file_names.push(line[1].to_string());
-                }
-                default => {}
-            }
+    file.lines().for_each(|l| if let Ok(line) = l {
+        if line.is_empty() || line.starts_with('#') {
+            return;
         }
-        _ => (),
+
+        let line: Vec<&str> = line.split(' ').collect();
+
+        match line[0] {
+            "v" => {
+                let x = line[1].parse::<f32>().unwrap();
+                let y = line[2].parse::<f32>().unwrap();
+                let z = line[3].parse::<f32>().unwrap();
+                vertices.push([x, y, z, 1.]);
+            }
+            "vt" => {
+                let u = line[1].parse::<f32>().unwrap();
+                let v = if line.len() > 2 {
+                    line[2].parse::<f32>().unwrap()
+                } else {
+                    0.
+                };
+                let w = if line.len() > 3 {
+                    line[3].parse::<f32>().unwrap()
+                } else {
+                    0.
+                };
+                tex_coords.push([u, v, w])
+            }
+            "vn" => {
+                let x = line[1].parse::<f32>().unwrap();
+                let y = line[2].parse::<f32>().unwrap();
+                let z = line[3].parse::<f32>().unwrap();
+                vertex_normals.push([x, y, z]);
+            }
+            "vp" => {}
+            "f" => {
+                let num_verts = line.len() - 1;
+                let mut verts = vec![];
+                for i in 0..num_verts {
+                    let vert: Vec<&str> = line[i + 1].split('/').collect();
+                    let index = vert[0].parse::<u32>().unwrap();
+                    let texcoord_index = if vert.len() > 1 {
+                        vert[1].parse::<u32>().unwrap()
+                    } else {
+                        0
+                    };
+                    let normal_index = if vert.len() > 2 {
+                        vert[2].parse::<u32>().unwrap()
+                    } else {
+                        0
+                    };
+                    let vert = ObjVert {
+                        index: index as usize,
+                        normal_index: normal_index as usize,
+                        texcoord_index: texcoord_index as usize,
+                    };
+                    verts.push(vert);
+                }
+                let face = ObjFace {
+                    verts,
+                    material: active_material.clone(),
+                };
+                faces.push(face);
+            }
+            "usemtl" => {
+                active_material = Some(line[1].to_string());
+            }
+            "mtllib" => {
+                material_file_names.push(line[1].to_string());
+            }
+            _default => {}
+        }
     });
 
-    return Ok(ObjFile {
+    Ok(ObjFile {
         vertices,
         tex_coords,
         vertex_normals,
         faces,
-    });
+    })
 }
 
 pub struct MtlFile {
@@ -239,82 +235,79 @@ pub fn load_mtl_file(path: &'static str) -> Result<MtlFile, Box<dyn Error>> {
     let mut dissolve = 0.;
     let mut illumination = 0;
 
-    file.lines().for_each(|l| match l {
-        Ok(line) => {
-            if line.is_empty() || line.starts_with("#") {
-                return;
-            }
-
-            let line: Vec<&str> = line.split(" ").collect();
-
-            match line[0] {
-                "newmtl" => {
-                    if let Some(name) = &name {
-                        materials.push(MtlMaterialDefinition {
-                            name: name.clone(),
-                            ambient_color,
-                            diffuse_color,
-                            specular_color,
-                            emission_color,
-                            specular_highlights,
-                            optical_density,
-                            dissolve,
-                            illumination,
-                        });
-                        ambient_color = [0.; 3];
-                        diffuse_color = [0.; 3];
-                        specular_color = [0.; 3];
-                        specular_highlights = 0.;
-                        optical_density = 0.;
-                        dissolve = 0.;
-                        illumination = 0;
-                    }
-                    name = Some(line[1].to_string());
-                }
-                "Ns" => {
-                    specular_highlights = line[1].parse::<f32>().unwrap();
-                }
-                "Ka" => {
-                    ambient_color = [
-                        line[1].parse::<f32>().unwrap(),
-                        line[2].parse::<f32>().unwrap(),
-                        line[3].parse::<f32>().unwrap(),
-                    ];
-                }
-                "Kd" => {
-                    diffuse_color = [
-                        line[1].parse::<f32>().unwrap(),
-                        line[2].parse::<f32>().unwrap(),
-                        line[3].parse::<f32>().unwrap(),
-                    ];
-                }
-                "Ks" => {
-                    specular_color = [
-                        line[1].parse::<f32>().unwrap(),
-                        line[2].parse::<f32>().unwrap(),
-                        line[3].parse::<f32>().unwrap(),
-                    ];
-                }
-                "Ke" => {
-                    emission_color = [
-                        line[1].parse::<f32>().unwrap(),
-                        line[2].parse::<f32>().unwrap(),
-                        line[3].parse::<f32>().unwrap(),
-                    ];
-                }
-                "Ni" => {
-                    optical_density = line[1].parse::<f32>().unwrap();
-                }
-                "d" => {
-                    dissolve = line[1].parse::<f32>().unwrap();
-                }
-                "illum" => {
-                    illumination = line[1].parse::<u8>().unwrap();
-                }
-                _default => {}
-            }
+    file.lines().for_each(|l| if let Ok(line) = l {
+        if line.is_empty() || line.starts_with('#') {
+            return;
         }
-        _ => (),
+
+        let line: Vec<&str> = line.split(' ').collect();
+
+        match line[0] {
+            "newmtl" => {
+                if let Some(name) = &name {
+                    materials.push(MtlMaterialDefinition {
+                        name: name.clone(),
+                        ambient_color,
+                        diffuse_color,
+                        specular_color,
+                        emission_color,
+                        specular_highlights,
+                        optical_density,
+                        dissolve,
+                        illumination,
+                    });
+                    ambient_color = [0.; 3];
+                    diffuse_color = [0.; 3];
+                    specular_color = [0.; 3];
+                    specular_highlights = 0.;
+                    optical_density = 0.;
+                    dissolve = 0.;
+                    illumination = 0;
+                }
+                name = Some(line[1].to_string());
+            }
+            "Ns" => {
+                specular_highlights = line[1].parse::<f32>().unwrap();
+            }
+            "Ka" => {
+                ambient_color = [
+                    line[1].parse::<f32>().unwrap(),
+                    line[2].parse::<f32>().unwrap(),
+                    line[3].parse::<f32>().unwrap(),
+                ];
+            }
+            "Kd" => {
+                diffuse_color = [
+                    line[1].parse::<f32>().unwrap(),
+                    line[2].parse::<f32>().unwrap(),
+                    line[3].parse::<f32>().unwrap(),
+                ];
+            }
+            "Ks" => {
+                specular_color = [
+                    line[1].parse::<f32>().unwrap(),
+                    line[2].parse::<f32>().unwrap(),
+                    line[3].parse::<f32>().unwrap(),
+                ];
+            }
+            "Ke" => {
+                emission_color = [
+                    line[1].parse::<f32>().unwrap(),
+                    line[2].parse::<f32>().unwrap(),
+                    line[3].parse::<f32>().unwrap(),
+                ];
+            }
+            "Ni" => {
+                optical_density = line[1].parse::<f32>().unwrap();
+            }
+            "d" => {
+                dissolve = line[1].parse::<f32>().unwrap();
+            }
+            "illum" => {
+                illumination = line[1].parse::<u8>().unwrap();
+            }
+            _default => {}
+        }
     });
     if let Some(name) = name {
         materials.push(MtlMaterialDefinition {
@@ -334,7 +327,7 @@ pub fn load_mtl_file(path: &'static str) -> Result<MtlFile, Box<dyn Error>> {
         .into_iter()
         .map(|item| (item.name.clone(), item))
         .collect();
-    return Ok(MtlFile {
+    Ok(MtlFile {
         materials: material_definitions,
-    });
+    })
 }

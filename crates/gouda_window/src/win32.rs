@@ -49,6 +49,7 @@ pub struct PlatformWindow {
     pub hwnd: HWND,
     props: WindowProps,
     input: GameInput,
+    events: Vec<crate::WindowEvent>
 }
 
 impl PlatformWindow {
@@ -61,15 +62,19 @@ impl PlatformWindow {
         )
         .unwrap();
 
+
         let mut input = GameInput::default();
         input.seconds_to_advance_over_update = props.target_ms_per_frame / 1000.;
 
         unsafe { ShowWindow(window, SW_SHOW) };
-        Self {
+        let result = Self {
             hwnd: window,
             props,
             input,
-        }
+            events: Vec::new(),
+        };
+
+        result
     }
 }
 
@@ -77,6 +82,7 @@ impl GameWindowImpl for PlatformWindow {
     fn capture_input(&mut self) -> GameInput {
         self.input = GameInput::from(&self.input);
         let mut msg = MSG::empty();
+        self.events = Vec::new();
         while unsafe { PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) != 0 } {
             match msg.message {
                 WM_MOUSEMOVE => {
@@ -112,10 +118,14 @@ impl GameWindowImpl for PlatformWindow {
                     let is_down = (msg.lParam & (1 << 31)) == 0;
                     win32_process_keyboard(&mut self.input.keyboard, vkcode, was_down, is_down);
                 }
-                _ => unsafe {
-                    TranslateMessage(&msg);
-                    DispatchMessageW(&msg);
-                },
+                WM_QUIT => {
+                    self.events.push(crate::WindowEvent::CloseEvent)
+                }
+                _ => {},
+            }
+            unsafe {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
             }
         }
         return self.input.clone();
@@ -130,7 +140,7 @@ impl GameWindowImpl for PlatformWindow {
     }
 
     fn capture_events(&mut self) -> Vec<crate::WindowEvent> {
-        return vec![];
+        return self.events.clone();
     }
 }
 
@@ -140,13 +150,13 @@ unsafe extern "system" fn win32_handle_proc(
     wparam: WPARAM,
     lparam: LPARAM,
 ) -> LRESULT {
-    match message {
-        WM_CLOSE => 0,
-        _ => {
-            return DefWindowProcW(window, message, wparam, lparam);
-        }
+    if message == WM_CLOSE || message == WM_DESTROY {
+        PostQuitMessage(0);
     }
+
+    DefWindowProcW(window, message, wparam, lparam)
 }
+
 fn win32_string(value: &str) -> Vec<u16> {
     OsStr::new(value).encode_wide().chain(once(0)).collect()
 }
@@ -201,7 +211,7 @@ fn create_window(class_name: &str, title: &str, width: u32, height: u32) -> Opti
         hInstance: handle_instance,
         lpszClassName: class_name.as_ptr(),
         hIcon: null_mut(),
-        hCursor: unsafe { LoadCursorW(handle_instance, MAKEINTRESOURCEW(230)) },
+        hCursor: unsafe { LoadCursorW(null_mut(), IDC_ARROW) },
         hbrBackground: null_mut(),
         lpszMenuName: null_mut(),
     };

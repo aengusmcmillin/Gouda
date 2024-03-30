@@ -61,6 +61,14 @@ impl SpriteSheetComponent {
         let texture = self.textures.get(self.active).unwrap();
         scene.submit_texture(&texture, location.transform_matrix())
     }
+
+    pub fn next(&mut self) {
+        if self.active == self.textures.len() - 1 {
+            self.active = 0;
+        } else {
+            self.active += 1;
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -95,7 +103,7 @@ pub struct ColorBoxComponent {
 }
 
 impl ColorBoxComponent {
-    pub fn new(_ecs: &mut ECS, color: [f32; 3]) -> ColorBoxComponent {
+    pub fn new(color: [f32; 3]) -> ColorBoxComponent {
         return ColorBoxComponent {
             color: [color[0], color[1], color[2], 1.],
         };

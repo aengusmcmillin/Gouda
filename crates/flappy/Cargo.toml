@@ -1,8 +1,10 @@
 [package]
-name = "gouda_editor"
+name = "flappy"
 version = "0.1.0"
 authors = ["Aengus McMillin <aengusmcmillin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 gouda = { path = "../../" }
+rand = "0.7.2"
+cgmath = "0.18.0"

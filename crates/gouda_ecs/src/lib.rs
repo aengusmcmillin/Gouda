@@ -55,7 +55,7 @@ macro_rules! impl_read {
         ( $fn_name:ident, [$($r:ident),*] ) => {
             pub fn $fn_name<$($r: 'static),*>(&self) -> Vec<($(&$r),*, Entity)> {
 
-            let mut minlen = 1000;
+            let mut minlen = 100000;
         $(
             let $r = self.components.get::<EntityMap<$r>>();
             if $r.is_none() {

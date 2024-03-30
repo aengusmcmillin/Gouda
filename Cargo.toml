@@ -6,7 +6,9 @@ edition = "2018"
 exclude = ["crates/"]
 
 [workspace]
-members = ["crates/*"]
+members = [ 
+    "crates/*", 
+    ]
 
 [dependencies]
 gouda_ecs = { path = "./crates/gouda_ecs" }
@@ -18,3 +20,5 @@ gouda_images = { path = "./crates/gouda_images" }
 gouda_platform = { path = "./crates/gouda_platform" }
 gouda_window = { path = "./crates/gouda_window" }
 gouda_input = { path = "./crates/gouda_input" }
+gouda_imgui = { path = "./crates/gouda_imgui" }
+gouda_layer = { path = "./crates/gouda_layer" }

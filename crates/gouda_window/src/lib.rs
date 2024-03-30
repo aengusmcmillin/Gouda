@@ -56,6 +56,7 @@ pub struct WindowProps {
     pub target_ms_per_frame: f32,
 }
 
+#[derive(Clone, Copy)]
 pub enum WindowEvent {
     ResizeEvent { width: f32, height: f32 },
     CloseEvent,

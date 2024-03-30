@@ -1,15 +1,18 @@
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::imgui::platform::GoudaImguiPlatform;
-use crate::imgui::renderer::GoudaImguiRenderer;
-use ::imgui::{Context, FontConfig, FontSource, Ui};
-use gouda_ecs::ECS;
-use gouda_input::GameInput;
-use gouda_layer::Layer;
-use gouda_rendering::{Renderer, Scene};
-
-mod imgui;
+use gouda::ecs::ECS;
+use gouda::imgui::platform::*;
+use gouda::imgui::renderer::*;
+use gouda::imgui::ConfigFlags;
+use gouda::imgui::Context;
+use gouda::imgui::FontConfig;
+use gouda::imgui::Ui;
+use gouda::input::GameInput;
+use gouda::rendering::Renderer;
+use gouda::rendering::Scene;
+use gouda::layer::Layer;
+use gouda::imgui::FontSource;
 
 pub struct EditorLayer {
     imgui: Option<Context>,
@@ -38,15 +41,23 @@ impl Layer for EditorLayer {
                 io.mouse_pos = [input.mouse.x as f32, input.mouse.y as f32];
                 io.mouse_down[0] = input.mouse.buttons[0].ended_down;
             }
+
+            let mut opened: bool = false;
+            let ui: &mut Ui = imgui.new_frame();
+
+            if let Some(menu_bar) = ui.begin_main_menu_bar() {
+                if let Some(menu) = ui.begin_menu("File") {
+                    ui.menu_item("Save");
+                    menu.end()
+                }
+                menu_bar.end()
+            }
         }
     }
 
     fn render(&mut self, ecs: &mut ECS, scene: &mut Scene) {
         if let Some(imgui) = self.imgui.as_mut() {
-            let ui: Ui = imgui.frame();
-
-            let draw_data = ui.render();
-            scene.unbind_camera();
+            let draw_data = imgui.render();
             if let Some(imgui_renderer) = self.imgui_renderer.as_ref() {
                 imgui_renderer.render(&scene, draw_data);
             }
@@ -57,6 +68,8 @@ impl Layer for EditorLayer {
         let renderer = gouda.read_res::<Rc<Renderer>>();
         let mut imgui = Context::create();
         imgui.set_ini_filename(None);
+        imgui.io_mut().config_flags |= ConfigFlags::DOCKING_ENABLE;
+        imgui.io_mut().config_flags |= ConfigFlags::VIEWPORTS_ENABLE;
 
         GoudaImguiPlatform::init(&mut imgui);
 
