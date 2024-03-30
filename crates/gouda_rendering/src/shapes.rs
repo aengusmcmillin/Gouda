@@ -48,32 +48,112 @@ impl Shape2d {
 
         let ib = IndexBuffer::new(renderer, vec![0, 3, 2, 0, 1, 2]);
 
-        return Shape2d {
+        Shape2d {
             vertex_buffer: vb,
             index_buffer: ib,
             num_indices: 6,
-        };
+        }
     }
     pub fn square(renderer: &Renderer) -> Shape2d {
-        let vb = VertexBuffer::new::<[f32; 2]>(
+        let vb = VertexBuffer::new::<[f32; 3]>(
             renderer,
             quad_shader_layout(),
             0,
             vec![
-                [-0.5, -0.5], // bottom left
-                [0.5, -0.5],  // bottom right
-                [0.5, 0.5],   // top right
-                [-0.5, 0.5],  // top left
+                [-0.5, -0.5, 0.], // bottom left
+                [0.5, -0.5, 0.],  // bottom right
+                [0.5, 0.5, 0.],   // top right
+                [-0.5, 0.5, 0.],  // top left
             ],
         );
 
         let ib = IndexBuffer::new(renderer, vec![0, 3, 2, 0, 1, 2]);
 
-        return Shape2d {
+        Shape2d {
             vertex_buffer: vb,
             index_buffer: ib,
             num_indices: 6,
-        };
+        }
+    }
+
+    pub fn triangle(renderer: &Renderer) -> Shape2d {
+        let vb = VertexBuffer::new::<[f32; 3]>(
+            renderer,
+            quad_shader_layout(),
+            0,
+            vec![
+                [-0.5, -0.5, 0.],
+                [0.5, -0.5, 0.],
+                [0.0, 0.5, 0.],
+            ]
+        );
+
+        let ib = IndexBuffer::new(renderer, vec![0, 2, 1]);
+
+        Shape2d {
+            vertex_buffer: vb,
+            index_buffer: ib,
+            num_indices: 3,
+        }
+    }
+
+    pub fn cube(renderer: &Renderer) -> Shape2d {
+        let vb = VertexBuffer::new::<[f32; 3]>(
+            renderer,
+            quad_shader_layout(),
+            0,
+            vec![
+                [-0.5, -0.5, -0.5],
+                [0.5, -0.5, -0.5],
+                [0.5,  0.5, -0.5], 
+                [0.5,  0.5, -0.5], 
+                [-0.5,  0.5, -0.5], 
+                [-0.5, -0.5, -0.5], 
+
+                [-0.5, -0.5,  0.5],  
+                [0.5, -0.5,  0.5],  
+                [0.5,  0.5,  0.5],  
+                [0.5,  0.5,  0.5],  
+                [-0.5,  0.5,  0.5],  
+                [-0.5, -0.5,  0.5],  
+
+                [-0.5,  0.5,  0.5],  
+                [-0.5,  0.5, -0.5],  
+                [-0.5, -0.5, -0.5],  
+                [-0.5, -0.5, -0.5],  
+                [-0.5, -0.5,  0.5],  
+                [-0.5,  0.5,  0.5],  
+
+                [0.5,  0.5,  0.5],  
+                [0.5,  0.5, -0.5],  
+                [0.5, -0.5, -0.5],  
+                [0.5, -0.5, -0.5],  
+                [0.5, -0.5,  0.5],  
+                [0.5,  0.5,  0.5],  
+
+                [-0.5, -0.5, -0.5],  
+                [0.5, -0.5, -0.5],  
+                [0.5, -0.5,  0.5],  
+                [0.5, -0.5,  0.5],  
+                [-0.5, -0.5,  0.5],  
+                [-0.5, -0.5, -0.5],  
+
+                [-0.5,  0.5, -0.5],  
+                [0.5,  0.5, -0.5],  
+                [0.5,  0.5,  0.5],  
+                [0.5,  0.5,  0.5],  
+                [-0.5,  0.5,  0.5],  
+                [-0.5,  0.5, -0.5],  
+            ]
+        );
+
+        let ib = IndexBuffer::new(renderer, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]);
+
+        Shape2d {
+            vertex_buffer: vb,
+            index_buffer: ib,
+            num_indices: 36,
+        }
     }
 
     pub fn texture_quad(renderer: &Renderer) -> Shape2d {
@@ -91,11 +171,11 @@ impl Shape2d {
 
         let ib = IndexBuffer::new(renderer, vec![0, 3, 2, 0, 1, 2]);
 
-        return Shape2d {
+        Shape2d {
             vertex_buffer: vb,
             index_buffer: ib,
             num_indices: 6,
-        };
+        }
     }
 
     pub fn hex(renderer: &Renderer) -> Shape2d {
@@ -103,7 +183,7 @@ impl Shape2d {
             let deg = 60. * i;
             let rad = PI / 180. * deg;
 
-            return [rad.cos(), rad.sin()];
+            [rad.cos(), rad.sin()]
         }
 
         let verts = vec![
@@ -120,11 +200,11 @@ impl Shape2d {
         let vb = VertexBuffer::new(renderer, basic_shader_layout(), 0, verts);
 
         let ib = IndexBuffer::new(renderer, indices);
-        return Shape2d {
+        Shape2d {
             vertex_buffer: vb,
             index_buffer: ib,
             num_indices: num_indices as u64,
-        };
+        }
     }
 }
 
@@ -132,15 +212,23 @@ pub struct ShapeLibrary {
     shapes2d: HashMap<&'static str, Shape2d>,
 }
 
+impl Default for ShapeLibrary {
+    fn default() -> Self {
+        ShapeLibrary::new()
+    }
+}
+
 impl ShapeLibrary {
     pub fn new() -> ShapeLibrary {
-        return ShapeLibrary {
+        ShapeLibrary {
             shapes2d: HashMap::new(),
-        };
+        }
     }
 
     pub fn initialize(&mut self, renderer: &Renderer) {
         self.add_2d_shape("square", Shape2d::square(renderer));
+        self.add_2d_shape("triangle", Shape2d::triangle(renderer));
+        self.add_2d_shape("cube", Shape2d::cube(renderer));
         self.add_2d_shape("gui", Shape2d::gui(renderer));
         self.add_2d_shape("quad", Shape2d::square(renderer));
         self.add_2d_shape("hex", Shape2d::hex(renderer));

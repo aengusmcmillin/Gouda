@@ -15,6 +15,8 @@ use gouda::{
 use log::trace;
 use rand::seq::SliceRandom;
 
+mod terrain;
+
 pub const START_MENU_SCENE: GameSceneId = 0;
 
 pub static PERMUTATIONS: [usize; 256] = [ 151,160,137,91,90,15,                 
@@ -112,7 +114,7 @@ const RESOLUTION: i32 = 50;
 impl GameScene for MainGameScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
         ecs.build_entity()
-            .add(OrthographicCamera::new(RESOLUTION as f32))
+            .add(Camera::Orthographic(OrthographicCamera::new(RESOLUTION as f32)))
             .add(TransformComponent::builder().build());
 
         let mut p: [usize; 512] = [0; 512];
@@ -151,11 +153,6 @@ impl GameScene for MainGameScene {
 
     fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         vec![]
-    }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = *ecs.read1::<OrthographicCamera>()[0].0;
-        Box::new(cam)
     }
 }
 struct Game {}

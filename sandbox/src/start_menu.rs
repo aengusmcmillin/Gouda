@@ -70,11 +70,6 @@ impl GameState for StartMenuGameState {
     fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         return vec![String::from("GUI")];
     }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
-    }
 }
 
 pub struct MenuClickMutation {

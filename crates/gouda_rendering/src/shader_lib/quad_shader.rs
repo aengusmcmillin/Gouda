@@ -3,7 +3,7 @@ use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn quad_shader_layout() -> BufferLayout {
-    return BufferLayout::new(vec![BufferElement::new("POSITION", ShaderDataType::Float2)]);
+    return BufferLayout::new(vec![BufferElement::new("POSITION", ShaderDataType::Float3)]);
 }
 
 pub fn quad_shader(renderer: &Renderer) -> Shader {
@@ -62,11 +62,11 @@ cbuffer CBuf2
     matrix transformation;
 };
 
-VSOut VSMain(float2 pos : Position)
+VSOut VSMain(float3 pos : Position)
 {
     VSOut vso;
     float4x4 worldViewProj = mul(projection, transformation);
-    vso.position = mul(worldViewProj, float4(pos.x, pos.y, 0.0f, 1.0f));
+    vso.position = mul(worldViewProj, float4(pos.x, pos.y, pos.z, 1.0f));
     return vso;
 }
 ";

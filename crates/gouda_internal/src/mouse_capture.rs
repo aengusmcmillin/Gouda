@@ -147,7 +147,7 @@ impl Mutation for ClearOthersMutation {
 }
 
 pub fn mouse_capture_system(ecs: &ECS, _dt: f32) -> Mutations {
-    let (camera, transform, _) = ecs.read2::<OrthographicCamera, TransformComponent>()[0];
+    let (camera, transform, _) = ecs.read2::<Camera, TransformComponent>()[0];
 
     let mut layers = ecs.read2::<MouseCaptureLayer, ActiveCaptureLayer>();
     layers.sort_by(|a, b| b.0.sort_index.cmp(&a.0.sort_index));

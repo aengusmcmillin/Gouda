@@ -17,7 +17,7 @@ impl TransformComponent {
     }
 
     pub fn transform_matrix(&self) -> Matrix4<f32> {
-        return Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, 0.))
+        return Matrix4::from_translation(Vector3::new(self.position.x, self.position.y, self.position.z))
             * Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, 1.)
             * Matrix4::from_angle_x(Deg(self.rotation.x))
             * Matrix4::from_angle_y(Deg(self.rotation.y));
@@ -44,6 +44,11 @@ impl TransformComponentBuilder {
         self
     }
 
+    pub fn position3d(mut self, x: f32, y: f32, z: f32) -> TransformComponentBuilder {
+        self.position = Vector3::new(x, y, z);
+        self
+    }
+
     pub fn scale(mut self, scale_x: f32, scale_y: f32) -> TransformComponentBuilder {
         self.scale = Vector3::new(scale_x, scale_y, 1.);
         self
@@ -51,6 +56,11 @@ impl TransformComponentBuilder {
 
     pub fn rotation(mut self, rot_x: f32, rot_y: f32) -> TransformComponentBuilder {
         self.rotation = Vector3::new(rot_x, rot_y, 0.);
+        self
+    }
+
+    pub fn rotation3d(mut self, rot_x: f32, rot_y: f32, rot_z: f32) -> TransformComponentBuilder {
+        self.rotation = Vector3::new(rot_x, rot_y, rot_z);
         self
     }
 

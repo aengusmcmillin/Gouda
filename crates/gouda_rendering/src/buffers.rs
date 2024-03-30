@@ -44,7 +44,7 @@ impl BufferLayout {
             stride: 0,
         };
         res.calculate_offsets_and_stride();
-        return res;
+        res
     }
 
     fn calculate_offsets_and_stride(&mut self) {
@@ -70,24 +70,24 @@ pub struct BufferElement {
 impl BufferElement {
     pub fn new_normalized(name: &'static str, data_type: ShaderDataType) -> BufferElement {
         let size = data_type.size();
-        return BufferElement {
+        BufferElement {
             name,
             data_type,
             offset: 0,
-            size: size,
+            size,
             normalized: true,
-        };
+        }
     }
 
     pub fn new(name: &'static str, data_type: ShaderDataType) -> BufferElement {
         let size = data_type.size();
-        return BufferElement {
+        BufferElement {
             name,
             data_type,
             offset: 0,
-            size: size,
+            size,
             normalized: false,
-        };
+        }
     }
 }
 
@@ -100,10 +100,10 @@ pub struct IndexBuffer {
 impl IndexBuffer {
     pub fn new(renderer: &Renderer, indices: Vec<u16>) -> IndexBuffer {
         let num_indices = indices.len() as u64;
-        return IndexBuffer {
+        IndexBuffer {
             platform_buffer: PlatformIndexBuffer::new(&renderer.platform_renderer, indices),
             num_indices,
-        };
+        }
     }
 
     pub fn bind(&self, scene: &Scene) {
@@ -128,14 +128,14 @@ impl VertexBuffer {
         offset: u32,
         data: Vec<T>,
     ) -> VertexBuffer {
-        return VertexBuffer {
+        VertexBuffer {
             platform_vertex_buffer: PlatformVertexBuffer::new(
                 &renderer.platform_renderer,
                 layout,
                 offset,
                 data,
             ),
-        };
+        }
     }
 
     pub fn bind(&self, scene: &Scene) {
@@ -155,13 +155,13 @@ pub struct VertexConstantBuffer {
 
 impl VertexConstantBuffer {
     pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> VertexConstantBuffer {
-        return VertexConstantBuffer {
+        VertexConstantBuffer {
             platform_buffer: PlatformVertexConstantBuffer::new(
                 &renderer.platform_renderer,
                 offset,
                 data,
             ),
-        };
+        }
     }
 
     pub fn update_data<T>(&self, renderer: &Renderer, data: Vec<T>) {
@@ -186,13 +186,13 @@ pub struct FragmentConstantBuffer {
 
 impl FragmentConstantBuffer {
     pub fn new<T>(renderer: &Renderer, offset: u32, data: Vec<T>) -> FragmentConstantBuffer {
-        return FragmentConstantBuffer {
+        FragmentConstantBuffer {
             platform_buffer: PlatformFragmentConstantBuffer::new(
                 &renderer.platform_renderer,
                 offset as u64,
                 data,
             ),
-        };
+        }
     }
 
     pub fn update_data<T>(&mut self, renderer: &Renderer, data: Vec<T>) {

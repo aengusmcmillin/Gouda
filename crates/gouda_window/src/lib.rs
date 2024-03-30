@@ -56,6 +56,17 @@ pub struct WindowProps {
     pub target_ms_per_frame: f32,
 }
 
+impl Default for WindowProps {
+    fn default() -> Self {
+        WindowProps {
+            width: 900.,
+            height: 900.,
+            title: "Gouda".to_string(),
+            target_ms_per_frame: 30.,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum WindowEvent {
     ResizeEvent { width: f32, height: f32 },

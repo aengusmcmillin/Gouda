@@ -9,7 +9,6 @@ use winapi::shared::dxgitype::*;
 use winapi::um::d3d11::*;
 use winapi::Interface;
 use winapi::_core::ptr::null_mut;
-use winapi::shared::windef::HWND;
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
 
@@ -18,6 +17,7 @@ use self::buffers::PlatformIndexBuffer;
 pub mod buffers;
 pub mod shader;
 pub mod texture;
+
 
 pub struct PlatformRenderer {
     swap_chain: Box<IDXGISwapChain>,

@@ -3,10 +3,10 @@ use crate::shaders::{Shader, ShaderUniformSpec};
 use crate::Renderer;
 
 pub fn font_shader_layout() -> BufferLayout {
-    return BufferLayout::new(vec![
+    BufferLayout::new(vec![
         BufferElement::new("POSITION", ShaderDataType::Float4),
         BufferElement::new("TEXCOORD", ShaderDataType::Float2),
-    ]);
+    ])
 }
 
 pub fn font_shader(renderer: &Renderer) -> Shader {
@@ -18,7 +18,7 @@ pub fn font_shader(renderer: &Renderer) -> Shader {
         ShaderUniformSpec { uniforms: vec![] },
         ShaderUniformSpec { uniforms: vec![] },
     );
-    return shader;
+    shader
 }
 
 #[cfg(target_os = "macos")]

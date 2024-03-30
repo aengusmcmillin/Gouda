@@ -72,11 +72,6 @@ impl GameScene for StartMenuScene {
     fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![String::from("GUI")];
     }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
-    }
 }
 
 pub struct MenuClickMutation {

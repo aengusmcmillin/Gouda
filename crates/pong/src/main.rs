@@ -245,10 +245,6 @@ impl GameScene for GameOverScene {
     fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer> {
         todo!()
     }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        todo!()
-    }
 }
 pub struct MainGameScene {}
 
@@ -293,11 +289,6 @@ impl GameScene for MainGameScene {
 
     fn active_layers(&self, _ecs: &ECS) -> Vec<RenderLayer> {
         return vec![String::from("Editor")];
-    }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
     }
 }
 struct Game {}

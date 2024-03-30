@@ -1,4 +1,4 @@
-use cgmath::{ortho, Deg, Matrix4, SquareMatrix, Vector3};
+use cgmath::{ortho, perspective, Deg, Matrix4, Rad, SquareMatrix, Vector3};
 
 pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
     return vec![
@@ -8,8 +8,44 @@ pub fn matrix_to_vec<T>(matrix: Matrix4<T>) -> Vec<T> {
     ];
 }
 
-pub trait Camera {
+pub trait CameraTrait {
     fn get_projection_matrix(&self) -> Matrix4<f32>;
+    fn calculate_view_projection_matrix(
+        &self,
+        translation: Vector3<f32>,
+        rotation_z: f32,
+    ) -> Option<Matrix4<f32>>;
+}
+
+#[derive(Debug)]
+pub enum Camera {
+    Orthographic(OrthographicCamera),
+    Perspective(PerspectiveCamera)
+} 
+
+impl Camera {
+    pub fn get_projection_matrix(&self) -> Matrix4<f32> {
+        match self {
+            Camera::Orthographic(orthographicCamera) => orthographicCamera.get_projection_matrix(),
+            Camera::Perspective(perspectiveCamera) => perspectiveCamera.get_projection_matrix(),
+        }
+    }
+
+    pub fn calculate_view_projection_matrix(
+        &self,
+        translation: Vector3<f32>,
+        rotation_z: f32,
+    ) -> Option<Matrix4<f32>> {
+        let transform =
+            Matrix4::from_translation(translation) * Matrix4::from_angle_z(Deg(rotation_z));
+        let inverse = transform.invert();
+        if let Some(inverted) = inverse {
+            let view_matrix = inverted;
+            let view_projection_matrix = self.get_projection_matrix() * view_matrix;
+            return Some(view_projection_matrix);
+        }
+        None
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -18,13 +54,11 @@ pub struct OrthographicCamera {
     size: f32,
 }
 
-impl Camera for OrthographicCamera {
-    fn get_projection_matrix(&self) -> Matrix4<f32> {
+impl OrthographicCamera {
+    pub fn get_projection_matrix(&self) -> Matrix4<f32> {
         return self.projection_matrix;
     }
-}
 
-impl OrthographicCamera {
     pub fn set_size(&mut self, size: f32) {
         self.size = size;
         self.recalculate();
@@ -51,24 +85,42 @@ impl OrthographicCamera {
             1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.,
         ) * ortho(-size, size, -size, size, near, far);
     }
-
-    pub fn calculate_view_projection_matrix(
-        &self,
-        translation: Vector3<f32>,
-        rotation_z: f32,
-    ) -> Option<Matrix4<f32>> {
-        let transform =
-            Matrix4::from_translation(translation) * Matrix4::from_angle_z(Deg(rotation_z));
-        let inverse = transform.invert();
-        if let Some(inverted) = inverse {
-            let view_matrix = inverted;
-            let view_projection_matrix = self.projection_matrix * view_matrix;
-            return Some(view_projection_matrix);
-        }
-        return None;
-    }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct PerspectiveCamera {
+    projection_matrix: Matrix4<f32>,
+    size: f32,
+}
+
+impl PerspectiveCamera {
+    fn get_projection_matrix(&self) -> Matrix4<f32> {
+        return self.projection_matrix;
+    }
+
+    pub fn set_size(&mut self, size: f32) {
+        self.size = size;
+        self.recalculate();
+    }
+
+    pub fn get_size(&self) -> f32 {
+        self.size
+    }
+
+    pub fn new(size: f32) -> Self {
+        let mut res = Self {
+            projection_matrix: Matrix4::identity(),
+            size: size,
+        };
+        res.recalculate();
+        return res;
+    }
+
+    fn recalculate(&mut self) {
+        self.projection_matrix = perspective(Deg(80.), 1., 0.1, 100.);
+    }
+
+}
 // #[derive(Debug)]
 // pub struct NormCamera {
 //     pub projection_matrix: Mat4x4,

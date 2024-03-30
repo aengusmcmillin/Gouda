@@ -158,6 +158,7 @@ fn draw_everything(ecs: &ECS, scene: &Scene) {
     }
 
     ecs.read_res::<Cursor>().draw(&scene);
+    ecs.read_res::<ObjMesh>().draw(&scene);
 
     for (player, _) in ecs.read1::<Player>() {
         player.draw(&scene);
@@ -212,11 +213,6 @@ impl GameScene for MainGameScene {
             String::from("Players"),
             String::from("GUI"),
         ];
-    }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
     }
 }
 
@@ -329,11 +325,6 @@ impl GameScene for DayGameScene {
             String::from("GUI"),
         ];
     }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
-    }
 }
 
 pub const NIGHT_GAME_SCENE: GameSceneId = 11;
@@ -392,11 +383,6 @@ impl GameScene for NightGameScene {
             String::from("GUI"),
         ];
     }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
-    }
 }
 
 pub struct LastScene(GameSceneId);
@@ -453,11 +439,6 @@ impl GameScene for MainMenuGameScene {
             String::from("Players"),
             String::from("GUI"),
         ];
-    }
-
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera> {
-        let cam = ecs.read1::<OrthographicCamera>()[0].0.clone();
-        return Box::new(cam);
     }
 }
 

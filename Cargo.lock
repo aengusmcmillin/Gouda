@@ -850,6 +850,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ogltutorialtest"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "env_logger",
+ "gouda",
+ "log 0.4.21",
+ "rand 0.7.3",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -15,7 +15,7 @@ use std::time;
 use std::time::Instant;
 
 pub use gouda_images::{bmp, png};
-use gouda_rendering::camera::{Camera, OrthographicCamera};
+use gouda_rendering::camera::{Camera, OrthographicCamera, PerspectiveCamera};
 pub mod gui;
 pub mod mouse_capture;
 
@@ -30,7 +30,6 @@ pub trait GameScene {
     fn render_scene(&self, ecs: &ECS, scene: &Scene);
     fn next_scene(&self, ecs: &ECS) -> Option<GameSceneId>;
     fn active_layers(&self, ecs: &ECS) -> Vec<RenderLayer>;
-    fn camera(&self, ecs: &ECS) -> Box<dyn Camera>;
 }
 
 pub trait GameLogic {
@@ -188,7 +187,7 @@ impl<T: GameLogic> Gouda<T> {
 
             let game_scene = self.game_scenes.get(&self.active_scene.unwrap()).unwrap();
             let renderer = platform.get_renderer();
-            let cameras = self.ecs.read2::<OrthographicCamera, TransformComponent>();
+            let cameras = self.ecs.read2::<Camera, TransformComponent>();
             let camera = cameras[0].0;
             let transform = cameras[0].1;
             if let Some(mut scene) = renderer.begin_scene() {
