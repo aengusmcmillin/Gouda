@@ -20,4 +20,9 @@ objc = "0.2.2"
 core-graphics = "0.17.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winapi = { version = "0.3.8", features = ["dxgi", "dxgi1_2", "d3d11", "d3d12", "d3dcompiler", "std", "winuser", "libloaderapi", "winstring", "memoryapi", "dsound", "fileapi", "winbase", "xinput", "errhandlingapi", "ntdef", "handleapi", "windowsx"] }
+winapi = { version = "0.3.8", features = ["dxgi", "dxgi1_2", "dxgi1_4", "d3d11", "d3d12", "d3dcompiler", "std", "winuser", "libloaderapi", "winstring", "memoryapi", "dsound", "fileapi", "winbase", "xinput", "errhandlingapi", "ntdef", "handleapi", "windowsx"] }
+
+
+[features]
+default = []
+use_d3d12 = []

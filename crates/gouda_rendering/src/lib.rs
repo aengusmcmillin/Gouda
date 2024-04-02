@@ -34,8 +34,11 @@ use shapes::{Shape2d, ShapeLibrary};
 #[cfg(target_os = "macos")]
 pub use crate::platform::metal as rendering_platform;
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(feature="use_d3d12")))]
 pub use crate::platform::d3d11 as rendering_platform;
+
+#[cfg(all(target_os = "windows", feature="use_d3d12"))]
+pub use crate::platform::d3d12 as rendering_platform;
 
 pub trait Renderable {
     fn bind(&self, scene: &Scene);
@@ -94,7 +97,7 @@ impl Renderer {
                 renderer.initialize_libs();
                 return Ok(renderer);
             }
-            Err(e) => return Err(e),
+            Err(e) => Err(e.to_string()),
         }
     }
 

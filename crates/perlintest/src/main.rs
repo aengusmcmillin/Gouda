@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 
 use std::{
     collections::HashMap, env

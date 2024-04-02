@@ -17,8 +17,6 @@ impl Win32PlatformLayer {
         let hwnd = window.hwnd;
         let renderer = Renderer::new(&mut window);
         let game_window = GameWindow::new(window);
-        println!("building renderer");
-        println!("renderer built");
         Self {
             window: game_window,
             renderer: Rc::new(renderer.unwrap()),

@@ -1,4 +1,4 @@
-#![cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(feature="use_d3d12")))]
 
 use gouda_window::PlatformWindow;
 use std::mem;
@@ -19,6 +19,25 @@ pub mod shader;
 pub mod texture;
 
 
+pub struct RenderDevice {
+    swap_chain: Box<IDXGISwapChain>,
+    device: *mut ID3D11Device,
+    device_context: *mut ID3D11DeviceContext,
+    render_target: *mut ID3D11RenderTargetView,
+}
+
+impl RenderDevice {
+
+}
+
+pub struct RenderContext {
+
+}
+
+impl RenderContext {
+
+}
+
 pub struct PlatformRenderer {
     swap_chain: Box<IDXGISwapChain>,
     device: *mut ID3D11Device,
@@ -26,20 +45,24 @@ pub struct PlatformRenderer {
     render_target: *mut ID3D11RenderTargetView,
 }
 
+
 impl PlatformRenderer {
     pub fn new(platform_window: &PlatformWindow) -> Result<PlatformRenderer, String> {
         unsafe {
             let factory: *mut IDXGIFactory2 = null_mut();
-            let result = CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory));
-            if FAILED(result) {
-                return Err("Failed to create".to_string());
+            if FAILED(CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory))) {
+                return Err("Failed to create factory".into());
             }
 
             let mut adapter: *mut IDXGIAdapter = null_mut();
-            (*factory).EnumAdapters(0, &mut adapter);
+            if FAILED((*factory).EnumAdapters(0, &mut adapter)) {
+                return Err("Failed to enumerate adapters".into());
+            }
 
             let mut adapter_output: *mut IDXGIOutput = null_mut();
-            (*adapter).EnumOutputs(0, &mut adapter_output);
+            if FAILED((*adapter).EnumOutputs(0, &mut adapter_output)) {
+                return Err("Failed to find output".into());
+            }
 
             let mut num_modes = 0;
             (*adapter_output).GetDisplayModeList(
@@ -96,8 +119,8 @@ impl PlatformRenderer {
                     Width: 0,
                     Height: 0,
                     RefreshRate: DXGI_RATIONAL {
-                        Numerator: 0,
-                        Denominator: 0,
+                        Numerator: 60,
+                        Denominator: 1,
                     },
                     Format: DXGI_FORMAT_B8G8R8A8_UNORM,
                     ScanlineOrdering: DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
@@ -108,7 +131,7 @@ impl PlatformRenderer {
                     Quality: 0,
                 },
                 BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                BufferCount: 1,
+                BufferCount: 2,
                 OutputWindow: platform_window.hwnd,
                 Windowed: 1,
                 SwapEffect: DXGI_SWAP_EFFECT_DISCARD,
