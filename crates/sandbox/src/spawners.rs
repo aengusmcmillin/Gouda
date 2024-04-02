@@ -66,9 +66,9 @@ impl WaveSpawner {
             spawn_current_cd: spawn_cd,
         };
         ecs.build_entity()
-            .add(spawner)
-            .add(transform)
-            .add(color_box);
+            .add_component(spawner)
+            .add_component(transform)
+            .add_component(color_box);
     }
 
     pub fn progress(&mut self, dt: f32) -> Option<MonsterSpec> {

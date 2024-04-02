@@ -51,10 +51,10 @@ pub fn tick_system(ecs: &ECS, dt: f32) -> Mutations {
 impl GameScene for MainGameScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
         ecs.build_entity()
-            .add(Camera::Perspective(PerspectiveCamera::new(1.)))
-            .add(TransformComponent::builder().position3d(0., 0., 15.).build());
+            .add_component(Camera::Perspective(PerspectiveCamera::new(1.)))
+            .add_component(TransformComponent::builder().position3d(0., 0., 15.).build());
 
-        ecs.build_entity().add(GreenLevel {green_value: 0., time_value: 0.});
+        ecs.build_entity().add_component(GreenLevel {green_value: 0., time_value: 0.});
 
         ecs.add_system(Box::new(tick_system));
 

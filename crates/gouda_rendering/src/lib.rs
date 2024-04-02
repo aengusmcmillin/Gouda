@@ -285,12 +285,12 @@ impl Scene<'_> {
     ) {
         let shader = self.renderer.get_shader("texture");
         let shape = self.renderer.get_shape("texture");
-        texture.bind(&self);
-        shader.bind(&self);
-        shader.upload_vertex_uniform_mat4(&self, 0, projection);
-        shader.upload_vertex_uniform_mat4(&self, 1, transform);
+        texture.bind(self);
+        shader.bind(self);
+        shader.upload_vertex_uniform_mat4(self, 0, projection);
+        shader.upload_vertex_uniform_mat4(self, 1, transform);
 
-        shape.bind(&self);
+        shape.bind(self);
 
         self.draw_indexed(shape.index_buffer());
     }

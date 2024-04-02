@@ -59,7 +59,7 @@ impl GuiImage {
             transform,
         };
 
-        ecs.build_entity().add(image).entity()
+        ecs.build_entity().add_component(image).entity()
     }
 
     pub fn hide(&mut self) {
@@ -132,7 +132,7 @@ impl GuiText {
             center_y,
         };
 
-        ecs.build_entity().add(text).entity()
+        ecs.build_entity().add_component(text).entity()
     }
 
     pub fn change_text(&mut self, renderer: &Renderer, text: String, font: &'static str) {
@@ -223,10 +223,10 @@ impl GuiComponent {
             visible: true,
         };
 
-        let mut builder = ecs.build_entity().add(component);
+        let mut builder = ecs.build_entity().add_component(component);
         let entity = builder.entity();
         if let Some(layer) = mouse_layer {
-            builder.add(MouseCaptureArea::new(true, bounds));
+            builder.add_component(MouseCaptureArea::new(true, bounds));
 
             if let Some(layer) = ecs.write::<MouseCaptureLayer>(&layer) {
                 layer.capture_areas.push(entity);
@@ -266,10 +266,10 @@ impl GuiComponent {
             is_hovered: false,
             visible: true,
         };
-        let mut builder = ecs.build_entity().add(component);
+        let mut builder = ecs.build_entity().add_component(component);
         let entity = builder.entity();
         if let Some(layer) = mouse_layer {
-            builder.add(MouseCaptureArea::new(true, bounds));
+            builder.add_component(MouseCaptureArea::new(true, bounds));
 
             if let Some(layer) = ecs.write::<MouseCaptureLayer>(&layer) {
                 layer.capture_areas.push(entity);

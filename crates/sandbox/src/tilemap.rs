@@ -37,10 +37,10 @@ impl Tile {
             .scale(1.0, 1.0)
             .build();
         ecs.build_entity()
-            .add(tile)
-            .add(sprite)
-            .add(transform)
-            .add(MouseCaptureArea::new(
+            .add_component(tile)
+            .add_component(sprite)
+            .add_component(transform)
+            .add_component(MouseCaptureArea::new(
                 false,
                 Bounds {
                     x: x as f32 - 0.5,
@@ -122,8 +122,8 @@ impl Tilemap {
             capture_areas: all_tiles,
         };
         ecs.build_entity()
-            .add(capture_area)
-            .add(ActiveCaptureLayer {});
+            .add_component(capture_area)
+            .add_component(ActiveCaptureLayer {});
         let res = Tilemap { tiles, borders };
         ecs.add_res(res);
 

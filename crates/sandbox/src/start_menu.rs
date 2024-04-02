@@ -41,8 +41,8 @@ impl GameScene for StartMenuScene {
         let button_layer = ecs.read_res::<StartMenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
         ecs.build_entity()
-            .add(OrthographicCamera::new(8.))
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(8.))
+            .add_component(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {
@@ -158,14 +158,14 @@ impl StartMenu {
     pub fn create(ecs: &mut ECS) {
         let main_menu_layer = ecs
             .build_entity()
-            .add(MouseCaptureLayer {
+            .add_component(MouseCaptureLayer {
                 sort_index: 2,
                 capture_areas: vec![],
             })
             .entity();
         let menu_button_layer = ecs
             .build_entity()
-            .add(MouseCaptureLayer {
+            .add_component(MouseCaptureLayer {
                 sort_index: 3,
                 capture_areas: vec![],
             })

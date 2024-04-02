@@ -32,9 +32,9 @@ impl Turret {
 
         let turret_sprite = SpriteComponent::new(ecs, "./assets/bitmap/turret2.png".to_string());
         ecs.build_entity()
-            .add(location)
-            .add(turret_sprite)
-            .add(turret);
+            .add_component(location)
+            .add_component(turret_sprite)
+            .add_component(turret);
     }
 }
 
@@ -49,14 +49,14 @@ impl Arrow {
     pub fn create(ecs: &mut ECS, target: Entity, x: f32, y: f32) {
         let sprite = SpriteComponent::new(ecs, "./assets/bitmap/arrow.png".to_string());
         ecs.build_entity()
-            .add(
+            .add_component(
                 TransformComponent::builder()
                     .position(x, y)
                     .scale(0.3, 0.1)
                     .build(),
             )
-            .add(sprite)
-            .add(Arrow {
+            .add_component(sprite)
+            .add_component(Arrow {
                 target,
                 speed: 5.,
                 damage: 1,

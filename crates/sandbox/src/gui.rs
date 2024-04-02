@@ -101,11 +101,11 @@ impl GameGui {
     pub fn create(ecs: &mut ECS) {
         let mouse_layer = ecs
             .build_entity()
-            .add(MouseCaptureLayer {
+            .add_component(MouseCaptureLayer {
                 sort_index: 1,
                 capture_areas: vec![],
             })
-            .add(ActiveCaptureLayer {})
+            .add_component(ActiveCaptureLayer {})
             .entity();
         let bottom_panel = create_bottom_panel(ecs, mouse_layer);
         let top_bar = create_top_bar(ecs);

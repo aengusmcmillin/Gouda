@@ -37,7 +37,7 @@ impl PlatformRenderer {
 }
 
 pub struct Texture {
-    
+
 }
 
 fn create_texture() {

@@ -58,13 +58,13 @@ impl Bird {
         let sprite = SpriteSheetComponent::new(ecs, "./assets/bitmap/cheese.png".to_owned(), 1, 2);
         let animation = Animation { frame_duration_ms: 200., countdown: 0. };
         ecs.build_entity()
-            .add(collider)
-            .add(velocity)
-            .add(gravity)
-            .add(transform)
-            .add(sprite)
-            .add(animation)
-            .add(Bird {});
+            .add_component(collider)
+            .add_component(velocity)
+            .add_component(gravity)
+            .add_component(transform)
+            .add_component(sprite)
+            .add_component(animation)
+            .add_component(Bird {});
     }
 }
 
@@ -83,10 +83,10 @@ impl Floor {
             height: 3.,
         };
         ecs.build_entity()
-            .add(collider)
-            .add(transform)
-            .add(color)
-            .add(Floor {});
+            .add_component(collider)
+            .add_component(transform)
+            .add_component(color)
+            .add_component(Floor {});
     }
 }
 
@@ -282,7 +282,7 @@ struct PipeSpawner {
 
 impl PipeSpawner {
     pub fn create(ecs: &mut ECS) {
-        ecs.build_entity().add(PipeSpawner {
+        ecs.build_entity().add_component(PipeSpawner {
             last_time: SystemTime::now(),
             generated: VecDeque::new(),
         });
@@ -297,10 +297,10 @@ impl Pipe {
         let color = ColorBoxComponent::new([0.5, 0.5, 0.5]);
         let velocity = Velocity { dx: -3., dy: 0. };
         ecs.build_entity()
-            .add(velocity)
-            .add(Self::generate_transform())
-            .add(color)
-            .add(Pipe {})
+            .add_component(velocity)
+            .add_component(Self::generate_transform())
+            .add_component(color)
+            .add_component(Pipe {})
             .entity()
     }
 
@@ -427,8 +427,8 @@ pub struct MainGameScene {}
 impl GameScene for MainGameScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
         ecs.build_entity()
-            .add(OrthographicCamera::new(8.))
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(8.))
+            .add_component(TransformComponent::builder().build());
 
         Bird::create(ecs);
         Floor::create(ecs);

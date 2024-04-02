@@ -13,6 +13,6 @@ impl Hearth {
             .scale(0.8, 0.8)
             .build();
         let hearth = Hearth {};
-        ecs.build_entity().add(hearth).add(sprite).add(transform);
+        ecs.build_entity().add_component(hearth).add_component(sprite).add_component(transform);
     }
 }

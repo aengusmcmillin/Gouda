@@ -105,14 +105,14 @@ impl MainMenu {
     pub fn create(ecs: &mut ECS) {
         let main_menu_layer = ecs
             .build_entity()
-            .add(MouseCaptureLayer {
+            .add_component(MouseCaptureLayer {
                 sort_index: 2,
                 capture_areas: vec![],
             })
             .entity();
         let menu_button_layer = ecs
             .build_entity()
-            .add(MouseCaptureLayer {
+            .add_component(MouseCaptureLayer {
                 sort_index: 3,
                 capture_areas: vec![],
             })

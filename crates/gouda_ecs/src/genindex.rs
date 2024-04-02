@@ -6,8 +6,14 @@ pub struct GenIndex {
 }
 
 #[derive(Eq, PartialEq, Clone)]
+pub enum GenIndexAllocationStatus {
+    Free,
+    Live,
+}
+
+#[derive(Eq, PartialEq, Clone)]
 struct GenIndexAllocationEntry {
-    is_free: bool,
+    status: GenIndexAllocationStatus,
     generation: u64,
 }
 
@@ -28,46 +34,48 @@ impl GenIndexAllocator {
     pub fn allocate(&mut self) -> GenIndex {
         if self.free.is_empty() {
             self.entries.push(GenIndexAllocationEntry {
-                is_free: false,
+                status: GenIndexAllocationStatus::Live,
                 generation: 1,
             });
             let index = self.entries.len() - 1;
-            return GenIndex {
+            GenIndex {
                 index,
                 generation: 1,
-            };
+            }
         } else {
             let e = self.free.pop().unwrap();
             let entry = self.entries.get_mut(e).unwrap();
-            entry.is_free = false;
+            entry.status = GenIndexAllocationStatus::Live;
             entry.generation += 1;
-            return GenIndex {
+            GenIndex {
                 index: e,
                 generation: entry.generation,
-            };
+            }
         }
     }
 
     pub fn deallocate(&mut self, index: GenIndex) -> bool {
-        let e = self.entries.get_mut(index.index);
-        match e {
-            Some(entry) => {
-                if entry.is_free {
-                    return false;
-                }
-                entry.is_free = true;
-                self.free.push(index.index);
-                return true;
-            }
-            None => {
+        if let Some(entry) = self.entries.get_mut(index.index) {
+            if entry.status == GenIndexAllocationStatus::Free {
                 return false;
             }
+            entry.status = GenIndexAllocationStatus::Free;
+            self.free.push(index.index);
+            true
+        } else {
+            false
         }
     }
 
     pub fn is_live(&self, index: GenIndex) -> bool {
         let e = self.entries.get(index.index).unwrap();
-        return e.generation == index.generation && !e.is_free;
+        e.generation == index.generation && e.status == GenIndexAllocationStatus::Live
+    }
+}
+
+impl Default for GenIndexAllocator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -106,41 +114,92 @@ impl<T> GenIndexArray<T> {
     pub fn get(&self, index: GenIndex) -> Option<&T> {
         let entry = self.0.get(index.index);
         match entry {
-            Some(entry) => match entry {
-                Some(entry) => {
-                    if entry.generation == index.generation {
-                        Some(&entry.value)
-                    } else {
-                        None
-                    }
+            Some(Some(entry)) => {
+                if entry.generation == index.generation {
+                    Some(&entry.value)
+                } else {
+                    None
                 }
-                None => None,
-            },
-            None => None,
+            }
+            _default => None,
         }
     }
 
     pub fn get_mut(&mut self, index: GenIndex) -> Option<&mut T> {
         let entry = self.0.get_mut(index.index);
         match entry {
-            Some(entry) => match entry {
-                Some(entry) => {
-                    if entry.generation == index.generation {
-                        Some(&mut entry.value)
-                    } else {
-                        None
-                    }
+            Some(Some(entry)) => {
+                if entry.generation == index.generation {
+                    Some(&mut entry.value)
+                } else {
+                    None
                 }
-                None => None,
-            },
-            None => None,
+            }
+            _default => None,
         }
+    }
+}
+
+impl<T> Default for GenIndexArray<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{GenIndexAllocator, GenIndexArray};
+
+    #[test]
+    fn test_allocate() {
+        let mut allocator = GenIndexAllocator::new();
+        let index = allocator.allocate();
+        assert!(allocator.is_live(index));
+    }
+
+    #[test]
+    fn test_deallocate() {
+        let mut allocator = GenIndexAllocator::new();
+        let index = allocator.allocate();
+        assert!(allocator.is_live(index));
+        assert!(allocator.deallocate(index));
+        assert!(!allocator.is_live(index));
+    }
+
+    #[test]
+    fn can_clear() {
+        let mut allocator = GenIndexAllocator::new();
+        let mut sut: GenIndexArray<i32> = GenIndexArray::new();
+        let index = allocator.allocate();
+
+        sut.set(index, 5);
+        sut.clear(index);
+        assert!(sut.get(index).is_none())
+    }
+
+    #[test]
+    fn can_get_mut() {
+        let mut allocator = GenIndexAllocator::new();
+        let mut sut: GenIndexArray<i32> = GenIndexArray::new();
+        let index = allocator.allocate();
+
+        sut.set(index, 5);
+        let value = sut.get_mut(index);
+        assert_eq!(value, Some(&mut 5));
+    }
+
+    #[test]
+    fn can_get_mut_modify() {
+        let mut allocator = GenIndexAllocator::new();
+        let mut sut: GenIndexArray<i32> = GenIndexArray::new();
+        let index = allocator.allocate();
+
+        sut.set(index, 5);
+        if let Some(value) = sut.get_mut(index) {
+            *value = 10;
+        }
+        assert_eq!(sut.get(index), Some(&10));
+    }
 
     #[test]
     fn can_set() {
@@ -160,7 +219,6 @@ mod tests {
 
         sut.set(index, 5);
         allocator.deallocate(index);
-        sut.clear(index);
         assert!(sut.get(index) == Some(&5))
     }
 }

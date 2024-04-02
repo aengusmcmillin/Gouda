@@ -13,7 +13,7 @@ pub fn create_tree(ecs: &mut ECS, tile: Entity) {
         .scale(0.4, 0.4)
         .build();
     let tree = TreeComponent { wood: 10 };
-    ecs.build_entity().add(tree).add(sprite).add(loc);
+    ecs.build_entity().add_component(tree).add_component(sprite).add_component(loc);
 }
 
 #[derive(Debug)]

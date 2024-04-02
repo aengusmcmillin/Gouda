@@ -17,9 +17,9 @@ impl Monster {
             .scale(0.8, 0.8)
             .build();
         ecs.build_entity()
-            .add(Monster { health: 2 })
-            .add(shape)
-            .add(transform);
+            .add_component(Monster { health: 2 })
+            .add_component(shape)
+            .add_component(transform);
     }
 
     pub fn take_damage(&mut self, damage: u32) {

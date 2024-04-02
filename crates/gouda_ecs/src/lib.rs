@@ -71,23 +71,18 @@ macro_rules! impl_read {
                     let $r = $r.unwrap().0.get(i);
                 )*
                 match ($($r),*) {
-                    ($(Some($r)),*) => {
-                        match ($($r),*) {
-                            ($(Some($r)),*) => {
-                                let mut generation = 0;
-                                $(
-                                    if generation == 0 {
-                                        generation = $r.generation;
-                                    }
-                                    if generation != $r.generation {
-                                        continue;
-                                    }
-                                )*
-                                let e = Entity {index: i, generation: generation };
-                                res.push(($(&$r.value),*, e));
+                    ($(Some(Some($r))),*) => {
+                        let mut generation = 0;
+                        $(
+                            if generation == 0 {
+                                generation = $r.generation;
                             }
-                            _ => {}
-                        }
+                            if generation != $r.generation {
+                                continue;
+                            }
+                        )*
+                        let e = Entity {index: i, generation };
+                        res.push(($(&$r.value),*, e));
                     }
                     _ => {}
                 }
@@ -117,23 +112,18 @@ macro_rules! impl_get {
                     let $r = $r.unwrap().0.get(i);
                 )*
                 match ($($r),*) {
-                    ($(Some($r)),*) => {
-                        match ($($r),*) {
-                            ($(Some($r)),*) => {
-                                let mut generation = 0;
-                                $(
-                                    if generation == 0 {
-                                        generation = $r.generation;
-                                    }
-                                    if generation != $r.generation {
-                                        continue;
-                                    }
-                                )*
-                                let e = Entity {index: i, generation: generation };
-                                res.push(e);
+                    ($(Some(Some($r))),*) => {
+                        let mut generation = 0;
+                        $(
+                            if generation == 0 {
+                                generation = $r.generation;
                             }
-                            _ => {}
-                        }
+                            if generation != $r.generation {
+                                continue;
+                            }
+                        )*
+                        let e = Entity {index: i, generation };
+                        res.push(e);
                     }
                     _ => {}
                 }
@@ -147,7 +137,7 @@ struct MissingComponentError;
 
 impl From<&str> for MissingComponentError {
     fn from(_: &str) -> MissingComponentError {
-        return MissingComponentError;
+        MissingComponentError
     }
 }
 
@@ -174,7 +164,7 @@ impl ECS {
     pub fn run_systems(&mut self, dt: f32) {
         let num_systems = self.systems.len();
         for i in 0..num_systems {
-            let mutations = self.systems[i](&self, dt);
+            let mutations = self.systems[i](self, dt);
             for mutation in mutations {
                 mutation.apply(self);
             }
@@ -201,7 +191,7 @@ impl ECS {
     }
 
     pub fn delete_entity(&mut self, entity: &Entity) {
-        self.entity_allocator.deallocate(entity.clone());
+        self.entity_allocator.deallocate(*entity);
     }
 
     pub fn add_component<T: 'static + Debug>(&mut self, entity: &Entity, component: T) {
@@ -209,21 +199,15 @@ impl ECS {
         if (comps.is_none()) {
             comps = Some(self.register_component_type::<T>())
         }
-        match comps {
-            Some(comps) => {
-                comps.set(*entity, component);
-            }
-            None => {}
+        if let Some(comps) = comps {
+            comps.set(*entity, component);
         }
     }
 
     pub fn remove_component<T: 'static + Debug>(&mut self, entity: &Entity) {
         let comps = self.components.get_mut::<EntityMap<T>>();
-        match comps {
-            Some(comps) => {
-                comps.clear(*entity);
-            }
-            None => {}
+        if let Some(comps) = comps {
+            comps.clear(*entity);
         }
     }
 
@@ -254,13 +238,18 @@ impl ECS {
     }
 
     pub fn migrate_events<T: 'static>(&mut self) {
-        self.processing_events.get_mut::<Vec<T>>().unwrap().clear();
-        let v = self.queued_events.get_mut::<Vec<T>>().unwrap();
-        while !v.is_empty() {
-            self.processing_events
-                .get_mut::<Vec<T>>()
-                .unwrap()
-                .push(v.pop().unwrap());
+        if let Some(e) = self.processing_events.get_mut::<Vec<T>>() {
+            e.clear();
+        }
+
+        let v = self.queued_events.get_mut::<Vec<T>>();
+        if let Some(v) = v {
+            while let Some(element) = v.pop() {
+                self.processing_events
+                    .get_mut::<Vec<T>>()
+                    .unwrap()
+                    .push(element);
+            }
         }
     }
 
@@ -294,7 +283,7 @@ impl ECS {
                 return Some(&i.value);
             }
         }
-        return None;
+        None
     }
 
     pub fn write<T: 'static>(&mut self, entity: &Entity) -> Option<&mut T> {
@@ -303,7 +292,7 @@ impl ECS {
                 return Some(&mut val.value);
             }
         }
-        return None;
+        None
     }
 
     impl_read!(read1, [t1]);
@@ -343,19 +332,19 @@ pub struct EntityBuilder<'a> {
 }
 
 impl<'a> EntityBuilder<'a> {
-    pub fn add<T: 'static + Debug>(self, c: T) -> EntityBuilder<'a> {
+    pub fn add_component<T: 'static + Debug>(self, c: T) -> EntityBuilder<'a> {
         self.ecs.add_component(&self.entity, c);
         self
     }
 
     pub fn entity(&mut self) -> Entity {
-        self.entity.clone()
+        self.entity
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::ECS;
+    use super::*;
 
     #[derive(Debug)]
     struct TestComponent {}
@@ -367,6 +356,38 @@ mod tests {
         ecs.add_component(&entity, TestComponent {});
 
         let res = ecs.get1::<TestComponent>();
-        assert!(res.get(0) == Some(&entity));
+        assert!(res.first() == Some(&entity));
+    }
+
+    #[test]
+    fn can_remove_component_from_entity() {
+        let mut ecs = ECS::new();
+        let entity = ecs.new_entity();
+        ecs.add_component(&entity, TestComponent {});
+
+        ecs.remove_component::<TestComponent>(&entity);
+
+        let res = ecs.get1::<TestComponent>();
+        assert!(res.is_empty());
+    }
+
+    #[test]
+    fn can_read_component_from_entity_map() {
+        let mut ecs = ECS::new();
+        let entity = ecs.new_entity();
+        ecs.add_component(&entity, TestComponent {});
+
+        let component = ecs.read::<TestComponent>(&entity);
+        assert!(component.is_some());
+    }
+
+    #[test]
+    fn can_write_component_to_entity_map() {
+        let mut ecs = ECS::new();
+        let entity = ecs.new_entity();
+        ecs.add_component(&entity, TestComponent {});
+
+        let component = ecs.write::<TestComponent>(&entity);
+        assert!(component.is_some());
     }
 }

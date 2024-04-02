@@ -184,9 +184,9 @@ impl GameScene for MainGameScene {
         ecs.add_system(Box::new(arrow_move_system));
         ecs.add_system(Box::new(monster_damage_system));
         ecs.build_entity()
-            .add(OrthographicCamera::new(6.))
-            .add(CameraComponent::new())
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(6.))
+            .add_component(CameraComponent::new())
+            .add_component(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {
@@ -284,9 +284,9 @@ impl GameScene for DayGameScene {
         ecs.add_system(Box::new(mouse_cursor_system));
         ecs.add_system(Box::new(day_state_countdown));
         ecs.build_entity()
-            .add(OrthographicCamera::new(6.))
-            .add(CameraComponent::new())
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(6.))
+            .add_component(CameraComponent::new())
+            .add_component(TransformComponent::builder().build());
 
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_day(ecs);
@@ -343,9 +343,9 @@ impl GameScene for NightGameScene {
         ecs.add_system(Box::new(monster_damage_system));
         ecs.add_system(Box::new(day_state_countdown));
         ecs.build_entity()
-            .add(OrthographicCamera::new(6.))
-            .add(CameraComponent::new())
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(6.))
+            .add_component(CameraComponent::new())
+            .add_component(TransformComponent::builder().build());
         if ecs.read_res::<StateTimer>().countdown_s <= 0. {
             next_night(ecs);
         }
@@ -400,9 +400,9 @@ impl GameScene for MainMenuGameScene {
         let button_layer = ecs.read_res::<MenuScreen>().button_layer;
         ecs.add_component(&button_layer, ActiveCaptureLayer {});
         ecs.build_entity()
-            .add(OrthographicCamera::new(6.))
-            .add(CameraComponent::new())
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(6.))
+            .add_component(CameraComponent::new())
+            .add_component(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {

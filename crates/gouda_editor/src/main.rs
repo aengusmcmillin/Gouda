@@ -12,8 +12,8 @@ pub struct StartMenuScene {}
 impl GameScene for StartMenuScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
         ecs.build_entity()
-            .add(OrthographicCamera::new(8.))
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(8.))
+            .add_component(TransformComponent::builder().build());
     }
 
     fn on_scene_stop(&self, ecs: &mut ECS) {

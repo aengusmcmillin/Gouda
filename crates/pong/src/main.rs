@@ -58,12 +58,12 @@ impl Paddle {
         };
 
         ecs.build_entity()
-            .add(color)
-            .add(collider)
-            .add(velocity)
-            .add(transform)
-            .add(controls)
-            .add(Paddle {});
+            .add_component(color)
+            .add_component(collider)
+            .add_component(velocity)
+            .add_component(transform)
+            .add_component(controls)
+            .add_component(Paddle {});
     }
 
     pub fn createp2(ecs: &mut ECS) {
@@ -82,12 +82,12 @@ impl Paddle {
             down: AnyKey::Special(SpecialKeys::DownArrow),
         };
         ecs.build_entity()
-            .add(color)
-            .add(collider)
-            .add(velocity)
-            .add(transform)
-            .add(controls)
-            .add(Paddle {});
+            .add_component(color)
+            .add_component(collider)
+            .add_component(velocity)
+            .add_component(transform)
+            .add_component(controls)
+            .add_component(Paddle {});
     }
 
 }
@@ -108,11 +108,11 @@ impl Ball {
             height: 0.3,
         };
         ecs.build_entity()
-            .add(color)
-            .add(collider)
-            .add(velocity)
-            .add(transform)
-            .add(Ball {});
+            .add_component(color)
+            .add_component(collider)
+            .add_component(velocity)
+            .add_component(transform)
+            .add_component(Ball {});
     }
 }
 
@@ -251,8 +251,8 @@ pub struct MainGameScene {}
 impl GameScene for MainGameScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
         ecs.build_entity()
-            .add(OrthographicCamera::new(8.))
-            .add(TransformComponent::builder().build());
+            .add_component(OrthographicCamera::new(8.))
+            .add_component(TransformComponent::builder().build());
 
         Paddle::createp1(ecs);
         Paddle::createp2(ecs);

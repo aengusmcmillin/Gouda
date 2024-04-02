@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+
 use std::{
     collections::HashMap, env
 };
@@ -115,8 +116,8 @@ const RESOLUTION: i32 = 50;
 impl GameScene for MainGameScene {
     fn on_scene_start(&self, ecs: &mut ECS) {
         ecs.build_entity()
-            .add(Camera::Orthographic(OrthographicCamera::new(RESOLUTION as f32)))
-            .add(TransformComponent::builder().build());
+            .add_component(Camera::Orthographic(OrthographicCamera::new(RESOLUTION as f32)))
+            .add_component(TransformComponent::builder().build());
 
         let mut p: [usize; 512] = [0; 512];
         let permutations = &mut PERMUTATIONS.clone();
@@ -130,11 +131,11 @@ impl GameScene for MainGameScene {
                 let perlin = perlin(p, ((i + RESOLUTION) as f32) / 5., ((j + RESOLUTION) as f32) / 5.);
                 trace!("{}", perlin);
                 ecs.build_entity()
-                    .add(TransformComponent::builder()
+                    .add_component(TransformComponent::builder()
                         .position(i as f32, j as f32)
                         .scale(0.8, 0.8)
                         .build())
-                    .add(ColorBoxComponent::new([perlin, perlin, perlin]));
+                    .add_component(ColorBoxComponent::new([perlin, perlin, perlin]));
             }
         }
     }

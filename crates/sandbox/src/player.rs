@@ -29,13 +29,13 @@ impl Player {
             .build();
 
         ecs.build_entity()
-            .add(Player {
+            .add_component(Player {
                 selected_drawable,
                 current_tile: tile,
                 is_selected: false,
             })
-            .add(transform)
-            .add(spritesheet);
+            .add_component(transform)
+            .add_component(spritesheet);
     }
 
     pub fn draw(&self, scene: &Scene) {

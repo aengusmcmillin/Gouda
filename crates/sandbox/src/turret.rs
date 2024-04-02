@@ -32,7 +32,7 @@ impl Mutation for TurretSelectMutation {
         loc.scale = Vector3::new(3.0, 3.0, 1.);
         let range_sprite =
             SpriteComponent::new(ecs, "./assets/bitmap/range_indicator.png".to_string());
-        let range_indicator = Some(ecs.build_entity().add(range_sprite).add(loc).entity());
+        let range_indicator = Some(ecs.build_entity().add_component(range_sprite).add_component(loc).entity());
         let turret = ecs.write::<Turret>(&self.turret_e).unwrap();
         turret.selected = true;
         turret.range_indicator = range_indicator;
