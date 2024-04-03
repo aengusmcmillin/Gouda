@@ -34,10 +34,10 @@ use shapes::{Shape2d, ShapeLibrary};
 #[cfg(target_os = "macos")]
 pub use crate::platform::metal as rendering_platform;
 
-#[cfg(all(target_os = "windows", not(feature="use_d3d12")))]
+#[cfg(all(target_os = "windows", not(feature = "use_d3d12")))]
 pub use crate::platform::d3d11 as rendering_platform;
 
-#[cfg(all(target_os = "windows", feature="use_d3d12"))]
+#[cfg(all(target_os = "windows", feature = "use_d3d12"))]
 pub use crate::platform::d3d12 as rendering_platform;
 
 pub trait Renderable {
@@ -56,6 +56,11 @@ impl Vertex {
     pub fn new(x: f32, y: f32, z: f32) -> Vertex {
         Vertex { x, y, z }
     }
+}
+
+pub struct TextureDesc {
+    pub width: u32,
+    pub height: u32,
 }
 
 #[derive(Debug)]

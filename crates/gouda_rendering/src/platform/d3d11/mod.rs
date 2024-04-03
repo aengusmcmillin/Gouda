@@ -1,5 +1,4 @@
-#[cfg(all(target_os = "windows", not(feature="use_d3d12")))]
-
+#[cfg(all(target_os = "windows", not(feature = "use_d3d12")))]
 use gouda_window::PlatformWindow;
 use std::mem;
 use winapi::shared::dxgi::*;
@@ -12,12 +11,14 @@ use winapi::_core::ptr::null_mut;
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3dcommon::*;
 
+use crate::TextureDesc;
+
 use self::buffers::PlatformIndexBuffer;
+use self::texture::Texture;
 
 pub mod buffers;
 pub mod shader;
 pub mod texture;
-
 
 pub struct RenderDevice {
     swap_chain: Box<IDXGISwapChain>,
@@ -26,17 +27,11 @@ pub struct RenderDevice {
     render_target: *mut ID3D11RenderTargetView,
 }
 
-impl RenderDevice {
+impl RenderDevice {}
 
-}
+pub struct RenderContext {}
 
-pub struct RenderContext {
-
-}
-
-impl RenderContext {
-
-}
+impl RenderContext {}
 
 pub struct PlatformRenderer {
     swap_chain: Box<IDXGISwapChain>,
@@ -45,12 +40,14 @@ pub struct PlatformRenderer {
     render_target: *mut ID3D11RenderTargetView,
 }
 
-
 impl PlatformRenderer {
     pub fn new(platform_window: &PlatformWindow) -> Result<PlatformRenderer, String> {
         unsafe {
             let factory: *mut IDXGIFactory2 = null_mut();
-            if FAILED(CreateDXGIFactory(&IDXGIFactory::uuidof(), mem::transmute(&factory))) {
+            if FAILED(CreateDXGIFactory(
+                &IDXGIFactory::uuidof(),
+                mem::transmute(&factory),
+            )) {
                 return Err("Failed to create factory".into());
             }
 
